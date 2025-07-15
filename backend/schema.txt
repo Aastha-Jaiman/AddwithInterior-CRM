@@ -1,0 +1,325 @@
+ADMIN
+
+const AdminSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, "Name is required"],
+    trim: true,
+  },
+
+  email: {
+    type: String,
+    required: [true, "Email is required"],
+    unique: true,
+    lowercase: true,
+    match: [/\S+@\S+\.\S+/, "Invalid email format"],
+  },
+
+  phone: {
+    type: String,
+    required: [true, "Phone number is required"],
+    unique: true,
+    match: [/^\d{10}$/, "Phone number must be 10 digits"],
+  },
+
+  profile: {
+    url: {
+      type: String,
+      required: [true, "Profile image URL is required"],
+    },
+    public_id: {
+      type: String,
+      required: [true, "Cloudinary public_id is required"],
+    },
+  },
+
+  password: {
+    type: String,
+    required: [true, "Password is required"],
+    minlength: [6, "Password must be at least 6 characters"],
+    select: false,
+  },
+
+  address: {
+    type: String,
+    required: [true, "Address is required"],
+  },
+
+  role: {
+    type: String,
+    enum: ["admin", "salesperson", "designer", "carpenter"],
+    required: true,
+  },
+
+  permission: {
+    type: [String],
+    enum: [
+      // Salesperson Permissions
+      "upload_quotation",
+      "view_quotations",
+
+      // Designer Permissions
+      "upload_design",
+      "view_design_feedback",
+
+      // Carpenter Permissions
+      "upload_morning_update",
+      "upload_evening_update",
+      "view_daily_updates",
+
+      // Admin Permissions (frontend-controlled)
+      "create_project",
+      "assign_team",
+      "manage_users",
+      "manage_brochures",
+      "see_all_projects",
+
+      // Common Permissions
+      "view_client_info",
+      "view_payment",
+      "generate_invoice",
+
+      // Service Tracker
+      "assign_service",
+      "track_service",
+    ],
+    default: [],
+  },
+
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+
+  isactive: {
+    type: Boolean,
+    default: false,
+  },
+}, { timestamps: true });
+
+CLIENT
+
+const ClientSchema = new mongoose.Schema({
+  
+  name: {
+    type: String,
+    required: [true, "Client name is required"],
+    trim: true,
+  },
+
+  email: {
+    type: String,
+    required: [true, "Email is required"],
+    unique: true,
+    lowercase: true,
+    match: [/\S+@\S+\.\S+/, "Invalid email format"],
+  },
+
+  phone: {
+    type: String,
+    required: [true, "Phone number is required"],
+    match: [/^\d{10}$/, "Phone number must be 10 digits"],
+  },
+
+  address: {
+    type: String,
+    required: [true, "Address is required"],
+  },
+
+  profile: {
+    url: { type: String, required: true },
+    public_id: { type: String, required: true },
+  },
+
+  //  Linked Project & Quotation
+  project: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Project",
+  },
+
+  quotation: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Quotation",
+  },
+
+  // Messages with Admin
+  messages: [
+    {
+      sender: { type: String }, // "admin" or "client"
+      text: { type: String },
+      date: { type: Date, default: Date.now },
+    }
+  ],
+
+  //  Status
+  isActive: {
+    type: Boolean,
+    default: true,
+  }
+
+}, { timestamps: true });
+
+PROJECT
+
+const ProjectSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  location: String,
+  status: { type: String, enum: ["pending", "active", "completed"], default: "pending" },
+  client: { type: mongoose.Schema.Types.ObjectId, ref: "Client" },
+
+  salesperson: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+  designer: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+  carpenter: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+
+  quotation: { type: mongoose.Schema.Types.ObjectId, ref: "Quotation" },
+  designs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Design" }],
+  updates: [{ type: mongoose.Schema.Types.ObjectId, ref: "Update" }]
+}, { timestamps: true });
+
+QUOTATION 
+
+const QuotationSchema = new mongoose.Schema({
+  project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
+  uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" }, // salesperson
+  type: { type: String, enum: ["rough", "final"], required: true },
+  items: [
+    {
+      title: String,
+      quantity: Number,
+      rate: Number,
+      total: Number
+    }
+  ],
+  grandTotal: Number,
+  isApproved: { type: Boolean, default: false },
+  pdfUrl: String
+}, { timestamps: true });
+
+
+DESIGN 
+
+const DesignSchema = new mongoose.Schema({
+  project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
+  version: Number, // 1, 2, 3...
+  uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" }, // designer
+  pdfUrl: String,
+  isApproved: { type: Boolean, default: false },
+  feedback: String
+}, { timestamps: true });
+
+UPDATE 
+
+const UpdateSchema = new mongoose.Schema({
+  project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
+  uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" }, // carpenter
+  type: { type: String, enum: ["morning", "evening"], required: true },
+  message: String,
+  images: [String],
+  timestamp: { type: Date, default: Date.now }
+});
+
+BROCHURE 
+
+const BrochureSchema = new mongoose.Schema({
+  category: { type: String, enum: ["modular_kitchen", "furniture", "doors_windows"], required: true },
+  title: String,
+  pdfUrl: String,
+  uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" }
+}, { timestamps: true });
+
+MESSAGE 
+
+const MessageSchema = new mongoose.Schema({
+  project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
+  sender: { type: String, enum: ["admin", "client"] },
+  text: String,
+  date: { type: Date, default: Date.now }
+});
+
+CONTACT 
+
+const ContactFormSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  phone: String,
+  address: String,
+}, { timestamps: true });
+
+SERVICE HISTORY
+
+
+const ServiceHistorySchema = new mongoose.Schema({
+  client: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Client",
+    required: true
+  },
+
+  project: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Project",
+    required: true
+  },
+
+  type: {
+    type: String,
+    enum: ["free", "paid"],
+    required: true
+  },
+
+  visitDate: {
+    type: Date,
+    default: Date.now
+  },
+
+  remarks: {
+    type: String
+  },
+
+  visitMode: {
+    type: String,
+    enum: ["free_visit", "paid_visit"],
+    default: "free_visit"
+  },
+
+  totalAllowedVisits: {
+    type: Number,
+    default: function () {
+      return this.type === "free" ? 3 : 10;
+    }
+  },
+
+  visitNumber: {
+    type: Number,
+    required: true
+  },
+
+  reducedFromYear: {
+    type: Number // Only for 10-year paid plan
+  }
+}, { timestamps: true });
+
+const contactSchema = new mongoose.Schema({
+  name:{
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  phone: {
+    type: Number,
+    required: true,
+    unique: true
+  },
+  address: {
+    type: String,
+  },
+  message:{
+    type: String,
+    required: true,
+  }
+})
+
