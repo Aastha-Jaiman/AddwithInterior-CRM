@@ -11,21 +11,21 @@
 //   const [password, setPassword] = useState('');
 //   const [error, setError] = useState('');
 
-  // const handleLogin = (e) => {
-  //   e.preventDefault();
+//   const handleLogin = (e) => {
+//     e.preventDefault();
 
-  //   const user = dummyUsers.find(
-  //     (u) => u.username === username && u.password === password
-  //   );
+//     const user = dummyUsers.find(
+//       (u) => u.username === username && u.password === password
+//     );
 
-  //   if (!user) {
-  //     setError('Invalid credentials');
-  //   } else {
-  //     // Set user in localStorage for now
-  //     localStorage.setItem('crm_user', JSON.stringify(user));
-  //     router.push('/dashboard'); // redirect to dashboard
-  //   }
-  // };
+//     if (!user) {
+//       setError('Invalid credentials');
+//     } else {
+//       // Set user in localStorage for now
+//       localStorage.setItem('crm_user', JSON.stringify(user));
+//       router.push('/dashboard'); // redirect to dashboard
+//     }
+//   };
 
 //   return (
 //     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -65,13 +65,12 @@
 
 
 import AdminSignupForm from '@/components/auth/CreateAdmin'
-import AdminLoginPage from '@/components/auth/login'
 import React from 'react'
 
 export default function page() {
   return (
     <div>
-      <AdminLoginPage />
+      <AdminSignupForm />
     </div>
   )
 }
