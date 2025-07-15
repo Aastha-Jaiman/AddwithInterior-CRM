@@ -1,4 +1,3 @@
-'use client';
 import AdminDailyUpdates from '@/components/dailyupdates/AdminDailyupdates';
 import SidebarLayout from '@/components/sidebar/Sidebar';
 import React, { Suspense } from 'react';
