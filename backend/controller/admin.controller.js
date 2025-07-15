@@ -182,12 +182,13 @@ exports.login = async (req, res) => {
         id: user._id,
         email: user.email,
         name: user.name,
+        role: user.role,
       },
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}; 
+};
 
 exports.profiledData = async (req, res) => {
   try {

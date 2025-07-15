@@ -46,13 +46,14 @@ const ClientSchema = new mongoose.Schema({
   profile: {
     url: { type: String, required: true },
     public_id: { type: String, required: true },
+    initials: { type: String }
   },
 
   password: {
     type: String,
     required: [true, "Password is required"],
     minlength: [6, "Password must be at least 6 characters"],
-    select: false, 
+    // select: false, 
   },
 
   project: {

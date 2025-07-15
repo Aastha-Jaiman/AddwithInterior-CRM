@@ -2,15 +2,16 @@ const ClientModel = require('../model/client.model');
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
+const sendEmail = require('../utils/sendMail')
 
 
 exports.registerClientByAdmin = async (req, res) => {
       try {
             const { name, email, phone, password, address, project, quotation } = req.body;
-            const creator = req.user;
+            const userRole = req.user.role;
 
-            if (!creator || creator.role !== "admin") {
-                  return res.status(403).json({ message: "Only admin can register clients." });
+            if (!["admin"].includes(userRole)) {
+                  return res.status(403).json({ success: false, message: "Access denied" });
             }
 
             if (!name || !email || !password || !phone || !address) {
@@ -23,22 +24,30 @@ exports.registerClientByAdmin = async (req, res) => {
             const phoneExists = await ClientModel.findOne({ phone });
             if (phoneExists) return res.status(400).json({ message: "Phone number already exists." });
 
-            //     if (!req.file) {
-            //       return res.status(400).json({ message: "Profile picture is required." });
-            //     }
+            // Get initials from name
+            const firstLetter = name?.charAt(0)?.toUpperCase() || "U";
 
-            const uploaded = await uploadOnCloudinary(req.file.path, "profile");
-            if (!uploaded) {
-                  return res.status(500).json({ message: "Cloudinary upload failed." });
-            }
-
-            const profileData = {
-                  url: uploaded.secure_url,
-                  public_id: uploaded.public_id,
+            let profileData = {
+                  url: `https://ui-avatars.com/api/?name=${firstLetter}&background=random&color=fff`,
+                  public_id: null,
+                  initials: firstLetter,
             };
 
-            if (fs.existsSync(req.file.path)) {
-                  fs.unlinkSync(req.file.path);
+            if (req.file) {
+                  const uploaded = await uploadOnCloudinary(req.file.path, "profile");
+                  if (!uploaded) {
+                        return res.status(500).json({ message: "Cloudinary upload failed." });
+                  }
+
+                  profileData = {
+                        url: uploaded.secure_url,
+                        public_id: uploaded.public_id,
+                        initials: firstLetter,
+                  };
+
+                  if (fs.existsSync(req.file.path)) {
+                        fs.unlinkSync(req.file.path);
+                  }
             }
 
             let parsedAddress = address;
@@ -92,6 +101,7 @@ exports.registerClientByAdmin = async (req, res) => {
             res.status(500).json({ message: "Server error", error: error.message });
       }
 };
+
 
 exports.loginClient = async (req, res) => {
       try {
@@ -199,112 +209,272 @@ exports.logoutClient = async (req, res) => {
 
 
 exports.updateClientByAdmin = async (req, res) => {
+      try {
+            const { id } = req.params;
+            const userRole = req.user.role;
+
+            if (!["admin"].includes(userRole)) {
+                  return res.status(403).json({ success: false, message: "Access denied" });
+            }
+
+            const {
+                  name,
+                  email,
+                  phone,
+                  address,
+                  project,
+                  quotation,
+                  isActive
+            } = req.body;
+
+            const existEmail = await ClientModel.findOne({ email, _id: { $ne: id } });
+            if (existEmail) {
+                  return res.status(400).json({ message: "Email already exists." });
+            }
+
+            const existPhone = await ClientModel.findOne({ phone, _id: { $ne: id } });
+            if (existPhone) {
+                  return res.status(400).json({ message: "Phone number already exists." });
+            }
+
+
+            const updatedData = {
+                  name,
+                  email,
+                  phone,
+                  project,
+                  quotation,
+                  isActive,
+            };
+
+            let parsedAddress = address;
+
+            if (typeof address === "string") {
+                  try {
+                        parsedAddress = JSON.parse(address);
+                  } catch (err) {
+                        return res.status(400).json({ message: "Invalid address JSON." });
+                  }
+            }
+
+            if (parsedAddress && !Array.isArray(parsedAddress)) {
+                  return res.status(400).json({ message: "Address must be an array." });
+            }
+
+            if (Array.isArray(parsedAddress)) {
+                  for (const addr of parsedAddress) {
+                        if (
+                              !addr.addresstype ||
+                              !["home", "work", "other"].includes(addr.addresstype) ||
+                              !addr.addressinfo ||
+                              !addr.addressinfo.street ||
+                              !addr.addressinfo.city ||
+                              !addr.addressinfo.state ||
+                              !addr.addressinfo.country ||
+                              !addr.addressinfo.pincode
+                        ) {
+                              return res.status(400).json({ message: "Invalid address format." });
+                        }
+                  }
+
+                  updatedData.address = parsedAddress;
+            }
+
+            if (req.file) {
+                  const uploaded = await uploadOnCloudinary(req.file.path, "profile");
+
+                  if (!uploaded) {
+                        return res.status(500).json({ message: "Image upload failed." });
+                  }
+
+                  updatedData.profile = {
+                        url: uploaded.secure_url,
+                        public_id: uploaded.public_id,
+                  };
+
+                  if (fs.existsSync(req.file.path)) {
+                        fs.unlinkSync(req.file.path);
+                  }
+            }
+
+            const updatedClient = await ClientModel.findByIdAndUpdate(id, updatedData, {
+                  new: true,
+                  runValidators: true,
+                  select: "-password -__v",
+            });
+
+            if (!updatedClient) {
+                  return res.status(404).json({ message: "Client not found." });
+            }
+
+            res.status(200).json({
+                  success: true,
+                  message: "Client profile updated successfully.",
+                  client: updatedClient,
+            });
+      } catch (error) {
+            console.error("Update error:", error);
+            res.status(500).json({ message: "Server error", error: error.message });
+      }
+};
+
+exports.getAllClientByAdmin = async (req, res) => {
+      try {
+
+            const userRole = req.user.role;
+
+            if (!["admin"].includes(userRole)) {
+                  return res.status(401).json({ message: "Only Admin can Get ." })
+            }
+
+            const search = req.query.search || "";
+
+            const query = {
+                  name: { $regex: search, $options: "i" },
+            };
+
+            const client = await ClientModel.find(query).select("-password -__v");
+
+            res.status(200).json({
+                  success: true,
+                  message: "Succefully Fetch",
+                  total: client.length,
+                  client
+            })
+
+      } catch (error) {
+            return res.status(500).json({ message: "Server Error", error: error.message })
+      }
+}
+
+exports.resetPassword = async (req, res) => {
+      try {
+
+            const userId = req.user._id;
+
+            const { oldPassword, newPassword, confirmPassword } = req.body;
+
+            if (!oldPassword || !newPassword || !confirmPassword) {
+                  return res.status(400).json({ message: "All feilds are required." })
+            };
+
+            const client = await ClientModel.findById(userId).select("+password");
+            if (!client) {
+                  return res.status(404).json({ message: "User not found." });
+            }
+
+            const isMatch = await client.comparePassword(oldPassword);
+            if (!isMatch) {
+                  return res.status(400).json({ message: "Old password is incorrect." });
+            }
+
+            if (newPassword !== confirmPassword) {
+                  return res.status(400).json({ message: "newPassword and confirmPassword are not same." })
+            }
+
+            const isSame = await client.comparePassword(newPassword);
+
+            if (isSame) {
+                  return res.status(400).json({ message: "New password cannot be same as old password." });
+            };
+
+            client.password = newPassword;
+            await client.save();
+
+            res.status(200).json({ message: "Password changed successfully." });
+
+
+
+      } catch (error) {
+            return res.status(500).json({ message: "Server Error.", error: error.message })
+      }
+}
+
+exports.resetEmailToken = async (req, res) => {
   try {
-    const { id } = req.params;
-    const userRole = req.user.role;
 
-    if (!["admin"].includes(userRole)) {
-      return res.status(403).json({ success: false, message: "Access denied" });
-    }
+    const { email } = req.body;
 
-    const {
-      name,
-      email,
-      phone,
-      address,
-      password,
-      project,
-      quotation,
-      isActive
-    } = req.body;
+    const user = await ClientModel.findOne({ email });
 
-    const existEmail = await ClientModel.findOne({ email, _id: { $ne: id } });
-    if (existEmail) {
-      return res.status(400).json({ message: "Email already exists." });
-    }
-
-    const existPhone = await ClientModel.findOne({ phone, _id: { $ne: id } });
-    if (existPhone) {
-      return res.status(400).json({ message: "Phone number already exists." });
-    }
-
-
-    const updatedData = {
-      name,
-      email,
-      phone,
-      project,
-      quotation,
-      isActive,
+    if (!user) {
+      return res.status(400).json({
+        message: "email not found."
+      })
     };
 
-     let parsedAddress = address;
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET,
+      { expiresIn: "10m" }
+    )
 
-if (typeof address === "string") {
-  try {
-    parsedAddress = JSON.parse(address);
-  } catch (err) {
-    return res.status(400).json({ message: "Invalid address JSON." });
-  }
-}
+    user.resetToken = token;
+    await user.save();
 
-if (parsedAddress && !Array.isArray(parsedAddress)) {
-  return res.status(400).json({ message: "Address must be an array." });
-}
+    const resetLink = `http://localhost:3000/reset-password?token=${token}`; // Frontend route
+    const subject = "Reset Your Password - Staff";
+    const message = `
+      <h3>Hello ${user.name || "User"},</h3>
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetLink}" target="_blank">Reset Password</a>
+      <p><b>Note:</b> This link will expire in 10 minutes or after one use.</p>
+    `;
 
-if (Array.isArray(parsedAddress)) {
-  for (const addr of parsedAddress) {
-    if (
-      !addr.addresstype ||
-      !["home", "work", "other"].includes(addr.addresstype) ||
-      !addr.addressinfo ||
-      !addr.addressinfo.street ||
-      !addr.addressinfo.city ||
-      !addr.addressinfo.state ||
-      !addr.addressinfo.country ||
-      !addr.addressinfo.pincode
-    ) {
-      return res.status(400).json({ message: "Invalid address format." });
-    }
-  }
+    const sent = await sendEmail(user.email, subject, message);
 
-  updatedData.address = parsedAddress; 
-}
-
-    if (req.file) {
-      const uploaded = await uploadOnCloudinary(req.file.path, "profile");
-
-      if (!uploaded) {
-        return res.status(500).json({ message: "Image upload failed." });
-      }
-
-      updatedData.profile = {
-        url: uploaded.secure_url,
-        public_id: uploaded.public_id,
-      };
-
-      if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
+    if (!sent) {
+      return res.status(401).json({ message: "Faild to sent reset email" })
     }
 
-    const updatedClient = await ClientModel.findByIdAndUpdate(id, updatedData, {
-      new: true,
-      runValidators: true,
-      select: "-password -__v",
-    });
+    res.status(200).json({ message: "sucessfully sent reset toke on your email", token: token })
 
-    if (!updatedClient) {
-      return res.status(404).json({ message: "Client not found." });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Client profile updated successfully.",
-      client: updatedClient,
-    });
   } catch (error) {
-    console.error("Update error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
-};
+}
+
+const useToken = {};
+
+exports.changepassword = async (req, res) => {
+  try {
+
+    const { token, newPassword, confirmPassword } = req.body;
+
+    if (!token || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "All feilds are required." })
+    };
+
+    if (newPassword !== confirmPassword) {
+      return res.status(401).json({ message: "password doesn't match." })
+    }
+
+    if (useToken[token]) {
+      return res
+        .status(401)
+        .json({ message: "This token has already been used" });
+    }
+
+    let decoded;
+
+    try {
+
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
+    const user = await ClientModel.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.password = newPassword;
+    await user.save();
+
+    useToken[token] = true;
+
+    return res.status(200).json({ message: "Password changed successfully" });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+}
+
+
