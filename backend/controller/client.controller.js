@@ -1,5 +1,5 @@
 const ClientModel = require('../model/client.model');
-const jwt = require("jsonwebtoken");
+const Jwt = require("jsonwebtoken");
 const fs = require("fs");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const sendEmail = require('../utils/sendMail')
@@ -104,58 +104,56 @@ exports.registerClientByAdmin = async (req, res) => {
 
 
 exports.loginClient = async (req, res) => {
-      try {
+  try {
+    const { identifier, password } = req.body;
 
-            const { identifier, password } = req.body;
+    if (!identifier || !password) {
+      return res
+        .status(400)
+        .json({ message: "Identifier and password are required" });
+    }
 
-            if (!identifier || !password) {
-                  return res
-                        .status(400)
-                        .json({ message: "Identifier and password are required" });
-            }
+    const user = await ClientModel.findOne({
+      $or: [{ email: identifier }, { phone: identifier }],
+    }).select("+password");
 
-            const client = await ClientModel.findOne({
-                  $or: [{ email: identifier }, { phone: identifier }]
-            }).select("+password");
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-            if (!client) {
-                  return res.status(400).json({ message: "Invalid credentials" });
-            }
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-            const isMatch = await client.comparePassword(password);
-            if (!isMatch) {
-                  return res.status(400).json({
-                        message: "Passowrd is not correct."
-                  })
-            }
-
-            const token = jwt.sign(
-                  { id: client._id },
-                  process.env.JWT_SECRET,
-                  { expiresIn: "7d" }
-            )
-
-            res.cookie("token", token, {
-                  secure: false,
-                  httpOnly: true,
-                  maxAge: 7 * 24 * 60 * 60 * 1000,
-                  sameSite: "None"
-            });
-
-            res.json({
-                  message: "Login successful",
-                  token,
-                  client: {
-                        id: client._id,
-                        email: client.email,
-                        name: client.name,
-                  },
-            });
-
-      } catch (error) {
-            res.status(500).json({ message: "Server error", error: error.message });
+    const token = Jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
       }
-}
+    );
+
+    res.cookie("token", token, {
+      secure: false,
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: "lax",
+    });
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 exports.getProfile = async (req, res) => {
       try {
@@ -390,51 +388,49 @@ exports.resetPassword = async (req, res) => {
       }
 }
 
-exports.resetEmailToken = async (req, res) => {
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
   try {
+    const client = await ClientModel.findOne({ email });
+    if (!client) {
+      return res.status(404).json({ message: "client not found" });
+    }
 
-    const { email } = req.body;
+    const token = Jwt.sign({ clientId: client._id }, process.env.JWT_SECRET, {
+      expiresIn: "10m",
+    });
 
-    const user = await ClientModel.findOne({ email });
+    client.resetToken = token;
+    await client.save();
 
-    if (!user) {
-      return res.status(400).json({
-        message: "email not found."
-      })
-    };
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET,
-      { expiresIn: "10m" }
-    )
-
-    user.resetToken = token;
-    await user.save();
-
-    const resetLink = `http://localhost:3000/reset-password?token=${token}`; // Frontend route
-    const subject = "Reset Your Password - Staff";
+    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+    const subject = "Reset Your Password";
     const message = `
-      <h3>Hello ${user.name || "User"},</h3>
+      <h3>Hello ${client.name || "Client"},</h3>
       <p>Click the link below to reset your password:</p>
       <a href="${resetLink}" target="_blank">Reset Password</a>
       <p><b>Note:</b> This link will expire in 10 minutes or after one use.</p>
     `;
 
-    const sent = await sendEmail(user.email, subject, message);
-
+    const sent = await sendEmail(client.email, subject, message);
     if (!sent) {
-      return res.status(401).json({ message: "Faild to sent reset email" })
+      return res.status(500).json({ message: "Failed to send reset email" });
     }
 
-    res.status(200).json({ message: "sucessfully sent reset toke on your email", token: token })
-
+    res.status(200).json({
+      message: "Password reset link sent to email",
+      token: token,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Forgot Password Error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
-const useToken = {};
+const userToken = {};
 
-exports.changepassword = async (req, res) => {
+exports.changePassword = async (req, res) => {
   try {
 
     const { token, newPassword, confirmPassword } = req.body;
@@ -447,7 +443,7 @@ exports.changepassword = async (req, res) => {
       return res.status(401).json({ message: "password doesn't match." })
     }
 
-    if (useToken[token]) {
+    if (userToken[token]) {
       return res
         .status(401)
         .json({ message: "This token has already been used" });
@@ -457,18 +453,18 @@ exports.changepassword = async (req, res) => {
 
     try {
 
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = Jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
       return res.status(401).json({ message: "Invalid or expired token" });
     }
 
-    const user = await ClientModel.findById(decoded.id);
+    const user = await ClientModel.findById(decoded.clientId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.password = newPassword;
     await user.save();
 
-    useToken[token] = true;
+    userToken[token] = true;
 
     return res.status(200).json({ message: "Password changed successfully" });
 
@@ -476,5 +472,4 @@ exports.changepassword = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 }
-
 
