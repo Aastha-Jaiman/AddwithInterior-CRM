@@ -1,8 +1,9 @@
 const AdminModel = require("../model/admin.model");
+const ClientModel = require("../model/client.model")
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const fs = require("fs");
 const Jwt = require('jsonwebtoken')
-const sendEmail = require('../utils/sendMail')
+const sendEmail = require('../utils/sendMail');
 
 exports.createAdmin = async (req, res) => {
   try {
@@ -149,6 +150,8 @@ exports.login = async (req, res) => {
 
     const user = await AdminModel.findOne({
       $or: [{ email: identifier }, { phone: identifier }],
+      isactive: true,
+      isVerified: true
     }).select("+password");
 
     if (!user) {
@@ -182,12 +185,14 @@ exports.login = async (req, res) => {
         id: user._id,
         email: user.email,
         name: user.name,
+        role: user.role,
+        permission: user.permission
       },
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}; 
+};
 
 exports.profiledData = async (req, res) => {
   try {
@@ -218,6 +223,28 @@ exports.profiledData = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 }
+
+exports.getClientById = async (req, res) => {
+  try {
+    const userRole = req.user.role;
+    const { id } = req.params;
+
+    if (userRole !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const client = await ClientModel.findById(id).select("-password");
+
+    if (!client) {
+      return res.status(404).json({ success: false, message: "Client not found" });
+    }
+
+    res.status(200).json({ success: true, client });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
 
 exports.updateStaffByAdmin = async (req, res) => {
   try {
@@ -395,9 +422,8 @@ exports.logout = async (req, res) => {
 }
 
 exports.resetEmailToken = async (req, res) => {
+  const { email } = req.body;
   try {
-
-    const { email } = req.body;
 
     const user = await AdminModel.findOne({ email });
 

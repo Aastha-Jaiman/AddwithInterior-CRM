@@ -46,6 +46,7 @@ const ClientSchema = new mongoose.Schema({
   profile: {
     url: { type: String, required: true },
     public_id: { type: String, required: true },
+    initials: { type: String }
   },
 
   password: {
