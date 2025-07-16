@@ -2,7 +2,8 @@ const AdminModel = require("../model/admin.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const fs = require("fs");
 const Jwt = require('jsonwebtoken')
-const sendEmail = require('../utils/sendMail')
+const sendEmail = require('../utils/sendMail');
+const { permission } = require("process");
 
 exports.createAdmin = async (req, res) => {
   try {
@@ -149,6 +150,8 @@ exports.login = async (req, res) => {
 
     const user = await AdminModel.findOne({
       $or: [{ email: identifier }, { phone: identifier }],
+      isactive: true,
+      isVerified: true
     }).select("+password");
 
     if (!user) {
@@ -183,6 +186,7 @@ exports.login = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        permission: user.permission
       },
     });
   } catch (error) {
@@ -396,9 +400,8 @@ exports.logout = async (req, res) => {
 }
 
 exports.resetEmailToken = async (req, res) => {
+  const { email } = req.body;
   try {
-
-    const { email } = req.body;
 
     const user = await AdminModel.findOne({ email });
 
