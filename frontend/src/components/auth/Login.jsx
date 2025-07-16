@@ -54,7 +54,7 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="bg-white shadow-md rounded px-8 py-6 w-full max-w-sm"
       >
-        <h2 className="text-2xl font-bold mb-4 text-center text-[#b83535]">Login</h2>
+        <h2 className="text-2xl font-bold mb-4 text-center text-indigo-600">Login</h2>
 
         {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
@@ -76,7 +76,7 @@ export default function LoginPage() {
         />
         <button
           type="submit"
-          className="w-full bg-[#b83535] hover:bg-[#a62f2f] text-white py-2 rounded"
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 rounded"
           disabled={loading}
         >
           {loading ? 'Logging in...' : 'Login'}

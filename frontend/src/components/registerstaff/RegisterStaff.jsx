@@ -184,6 +184,7 @@ const StaffRegistrationForm = () => {
       
       // Handle success
       console.log("✅ Staff registered successfully:", response);
+      console.log("vghvhv", response)
       const successMsg = response.message || 'Staff registered successfully!';
       setSuccessMessage(successMsg);
       

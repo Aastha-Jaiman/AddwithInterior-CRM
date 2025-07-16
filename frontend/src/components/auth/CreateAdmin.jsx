@@ -1,8 +1,9 @@
 "use client"
 import React, { useState } from 'react';
-import { Upload, User, Mail, Phone, MapPin, Lock, Eye, EyeOff, UserCheck } from 'lucide-react';
+import { Upload, User, Mail, Phone, MapPin, Lock, Eye, EyeOff, UserCheck, LogIn, UserPlus  } from 'lucide-react';
 import { createAdmin } from '@/services/admin.services';
 import { useRouter } from "next/navigation";
+import Link from 'next/link';
 
 const CreateAdminForm = () => {
 
@@ -244,25 +245,43 @@ const CreateAdminForm = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`w-full py-3 px-6 rounded-lg font-medium text-white transition-all duration-200 ${isLoading
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105'
-                  }`}
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Creating Admin...
-                  </span>
-                ) : (
-                  'Create Admin Account'
-                )}
-              </button>
-            </div>
+<div className="pt-0">
+  <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+    {/* Submit Button */}
+    <button
+      type="submit"
+      disabled={isLoading}
+      className={`flex-1 flex justify-center items-center gap-2 py-3 px-6 rounded-lg font-medium text-white transition-all duration-200 shadow ${
+        isLoading
+          ? 'bg-gray-400 cursor-not-allowed'
+          : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform hover:scale-[1.02]'
+      }`}
+    >
+      {isLoading ? (
+        <>
+          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          Creating Admin...
+        </>
+      ) : (
+        <>
+          <UserPlus className="h-5 w-5" />
+          Create Admin Account
+        </>
+      )}
+    </button>
+
+    {/* Go to Login Page Button */}
+    <Link href="/login" passHref>
+      <button
+        type="button"
+        className="flex-1 flex justify-center items-center gap-2 py-3 px-6 rounded-lg font-medium text-blue-600 border border-blue-600 bg-white transition-all duration-200 hover:bg-blue-50 shadow"
+      >
+        <LogIn className="h-5 w-5" />
+        Go to Login Page
+      </button>
+    </Link>
+  </div>
+</div>
           </form>
         </div>
       </div>

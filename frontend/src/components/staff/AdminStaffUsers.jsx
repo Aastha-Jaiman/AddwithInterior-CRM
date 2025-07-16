@@ -2,8 +2,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Edit, Trash2, Save, User } from 'lucide-react';
 import { getAllStaff, updateStaffByAdmin } from '@/services/admin.services';
+import { useRouter } from 'next/navigation';
 
 const UserManagementComponent = () => {
+  const router = useRouter();
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -26,7 +28,8 @@ const UserManagementComponent = () => {
           phone: staff.phone || '',
           address: staff.address || '',
           role: staff.role || '',
-          avatar: staff.profile?.url || '👤'
+          avatar: staff.profile?.url || '👤',
+          isactive: staff.isactive
         })) : [];
         setUsers(staffData);
       } catch (err) {
@@ -110,11 +113,33 @@ const UserManagementComponent = () => {
     }
   };
 
-  const handleDelete = (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(user => user.id !== userId));
+  // const handleDelete = (userId) => {
+  //   if (window.confirm('Are you sure you want to delete this user?')) {
+  //     setUsers(users.filter(user => user.id !== userId));
+  //   }
+  // };
+
+  const handleToggleActive = async (user) => {
+    try {
+      const formData = new FormData();
+      formData.append("isactive", (!user.isactive).toString());
+
+      const updatedUser = await updateStaffByAdmin(user.id, formData);
+
+      if (!updatedUser) throw new Error("No response from updateStaffByAdmin");
+
+      setUsers(prev =>
+        prev.map(u =>
+          u.id === user.id ? { ...u, isactive: updatedUser.isactive } : u
+        )
+      );
+    } catch (err) {
+      console.error("Toggle active error:", err);
+      setError("Failed to toggle activation");
     }
   };
+
+
 
   const handleInputChange = (field, value) => {
     setEditingUser(prev => ({
@@ -192,6 +217,7 @@ const UserManagementComponent = () => {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Address</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -208,7 +234,13 @@ const UserManagementComponent = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {user.name || 'N/A'}
+                      </td> */}
+                      <td
+                        onClick={() => router.push(`/admin/staffusers/${user.id}`)}
+                        className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-700 hover:underline cursor-pointer"
+                      >
                         {user.name || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -229,19 +261,25 @@ const UserManagementComponent = () => {
                           {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleToggleActive(user)}
+                          className={`inline-block text-xs px-2 py-1 rounded-full font-semibold cursor-pointer transition-colors duration-200 ${user.isactive ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                            }`}
+                          title={user.isactive ? "Deactivate User" : "Activate User"}
+                        >
+                          {user.isactive ? "Active" : "Inactive"}
+                        </button>
+                      </td>
+
+                      <td className="px-6 py-4 text-center text-sm font-medium">
+                        <div className="flex justify-center space-x-2">
                           <button
                             onClick={() => handleEdit(user)}
                             className="text-indigo-600 hover:text-indigo-900 p-1.5 hover:bg-indigo-50 rounded transition-colors duration-200"
                           >
                             <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user.id)}
-                            className="text-red-600 hover:text-red-900 p-1.5 hover:bg-red-50 rounded transition-colors duration-200"
-                          >
-                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

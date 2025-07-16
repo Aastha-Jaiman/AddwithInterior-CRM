@@ -35,6 +35,7 @@ const navigationItemsByRole = {
     { name: 'Reports', href: '/admin/reports', icon: Users },
     { name: 'Daily Updates', href: '/admin/daily-updates', icon: MessageSquareText },
     { name: 'Register Staff', href: '/admin/registerstaff', icon: User2 },
+    { name: 'Register Client', href: '/admin/registerclient', icon: User2 },
     { name: 'Services', href: '/admin/services', icon: MessageSquareQuote },
   ],
   salesperson: [
