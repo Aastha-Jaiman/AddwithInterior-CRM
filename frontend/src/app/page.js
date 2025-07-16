@@ -7,7 +7,7 @@ export default function HomePage() {
   const router = useRouter();
 
   const handleNavigate = () => {
-    router.push('/login');
+    router.push('/signup');
   };
 
   return (
@@ -18,7 +18,7 @@ export default function HomePage() {
         onClick={handleNavigate}
         className="bg-[#3569b8] hover:bg-[#2f41a6] text-white px-6 py-2 rounded-lg text-sm"
       >
-        Go to Login
+        Go to Signup Or Login
       </button>
     </div>
   );
