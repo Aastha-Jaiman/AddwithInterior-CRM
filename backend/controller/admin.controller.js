@@ -1,5 +1,5 @@
 const AdminModel = require("../model/admin.model");
-const ClientModel = require("../model/client.model")
+// const ClientModel = require("../model/client.model")
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const fs = require("fs");
 const Jwt = require('jsonwebtoken')
@@ -224,22 +224,22 @@ exports.profiledData = async (req, res) => {
   }
 }
 
-exports.getClientById = async (req, res) => {
+exports.getStaffById = async (req, res) => {
   try {
     const userRole = req.user.role;
     const { id } = req.params;
 
-    if (userRole !== "admin") {
-      return res.status(403).json({ success: false, message: "Access denied" });
-    }
+    if (!["admin"].includes(userRole)) {
+                  return res.status(403).json({ success: false, message: "Only admin can get profile" });
+            }
 
-    const client = await ClientModel.findById(id).select("-password");
+    const staff = await AdminModel.findById(id).select("-password");
 
-    if (!client) {
+    if (!staff) {
       return res.status(404).json({ success: false, message: "Client not found" });
     }
 
-    res.status(200).json({ success: true, client });
+    res.status(200).json({ success: true, staff });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
