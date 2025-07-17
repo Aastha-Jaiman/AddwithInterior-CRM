@@ -238,7 +238,7 @@ const UserManagementComponent = () => {
                         {user.name || 'N/A'}
                       </td> */}
                       <td
-                        onClick={() => router.push(`/admin/staffusers/${user.id}`)}
+                        onClick={() => router.push(`/admin/staffusers/${user._id}`)}
                         className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-700 hover:underline cursor-pointer"
                       >
                         {user.name || 'N/A'}

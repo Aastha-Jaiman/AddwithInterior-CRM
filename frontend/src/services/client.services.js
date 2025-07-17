@@ -32,6 +32,15 @@ export const getAllClientsByAdmin = async () => {
   return response.data;
 };
 
+export const getClientByIdService = async (id) => {
+  try {
+    const response = await api.get(`/client/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { success: false, message: "Unknown error" };
+  }
+};
+
 // 6. Update Client by Admin
 export const updateClientByAdmin = async (id, formData) => {
   const response = await api.put(`/client/update/${id}`, formData, {

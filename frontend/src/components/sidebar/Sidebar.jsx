@@ -27,6 +27,7 @@ const navigationItemsByRole = {
   admin: [
     { name: 'Dashboard', href: '/admin/', icon: LayoutDashboard },
     { name: 'Quotation', href: '/admin/quotation', icon: FileText },
+    { name: 'Profile', href: '/admin/profile', icon: FileText },
     { name: 'Brochure', href: '/admin/brochure', icon: ReceiptIndianRupee },
     { name: 'Staff-Users', href: '/admin/staffusers', icon: FileQuestion },
     { name: 'Clients', href: '/admin/clients', icon: NotebookPen },
