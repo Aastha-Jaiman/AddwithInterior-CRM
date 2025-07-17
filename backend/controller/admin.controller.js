@@ -329,24 +329,25 @@ exports.updateStaffByAdmin = async (req, res) => {
   }
 }
 
-exports.updateAdminSelf = async (req, res) => {
+exports.updateMyProfile = async (req, res) => {
   try {
-
     const userId = req.user.id;
     const userRole = req.user.role;
 
-    const { name, email, address, phone } = req.body;
+    const { name, address, email, phone } = req.body;
 
     const updateData = {};
 
-    if (userRole === "designer" || "carpenter" || "salesperson") {
+    if (["designer", "carpenter", "salesperson"].includes(userRole)) {
       if (email || phone) {
-        return res.status(401).json({ message: "you update only your name, address and profile picture." })
+        return res.status(401).json({
+          message: "You can only update your name, address, and profile picture.",
+        });
       }
-    };
-
-    if (name) updateData.name = name;
-    if (address) updateData.address = address;
+    
+      if (name) updateData.name = name;
+      if (address) updateData.address = address;
+    }
 
     if (["admin"].includes(userRole)) {
       if (name) updateData.name = name;
@@ -356,19 +357,17 @@ exports.updateAdminSelf = async (req, res) => {
     }
 
     if (req.file) {
-      const upload = await uploadOnCloudinary(req.file.path, "profile");
-
-      updateData.profiledata = {
-        url: upload.secure_url,
-        public_id: upload.public_id
-      }
-
+      const uploaded = await uploadOnCloudinary(req.file.path, "profile");
+      updateData.profile = {
+        url: uploaded.secure_url,
+        public_id: uploaded.public_id,
+      };
       if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path)
+        fs.unlinkSync(req.file.path);
       }
     }
 
-    const updateUser = await AdminModel.findByIdAndUpdate(userId, updateData, {
+    const updatedUser = await AdminModel.findByIdAndUpdate(userId, updateData, {
       new: true,
       runValidators: true,
       select: "-password -__v",
@@ -376,15 +375,16 @@ exports.updateAdminSelf = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "sucessfully update your profile.",
-      updateUser
-    })
-
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error", error: error.message })
+    console.error("Profile update error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
-}
+};
+
 
 exports.logout = async (req, res) => {
   try {
