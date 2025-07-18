@@ -41,7 +41,7 @@ export const getProfile = async () => {
 };
 
 // 5.  Logout
-export const logout = async () => {
+export const logoutService = async () => {
   const res = await api.get('/admin/logout');
   return res.data;
 };
