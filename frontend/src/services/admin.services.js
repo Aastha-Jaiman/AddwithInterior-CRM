@@ -65,7 +65,7 @@ export const updateStaffByAdmin = async (id, formData) => {
 
 export const getStaffByIdService = async (id, token) => {
   try {
-    const { data } = await api.get(`/api/admin/staffusers/${id}`, {
+    const { data } = await api.get(`/admin/staffusers/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
