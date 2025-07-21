@@ -2,6 +2,7 @@
 
 // import Navbar from '@/components/navbar/Navbar';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -9,6 +10,14 @@ export default function HomePage() {
   const handleNavigate = () => {
     router.push('/signup');
   };
+
+  
+  useEffect(() => {
+    const storedUser = localStorage.getItem('crm_user');
+    if (storedUser) {
+      router.replace('/dashboard');
+    }
+  }, [router]);
 
   return (
     <div className="p-10 text-center flex flex-col items-center justify-center min-h-screen bg-gray-50">

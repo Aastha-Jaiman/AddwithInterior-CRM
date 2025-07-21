@@ -242,7 +242,8 @@ const ContactFormSchema = new mongoose.Schema({
   name: String,
   email: String,
   phone: String,
-  address: String,
+  subject: String,
+  message: String
 }, { timestamps: true });
 
 SERVICE HISTORY

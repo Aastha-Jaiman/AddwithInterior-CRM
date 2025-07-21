@@ -205,7 +205,6 @@ exports.logoutClient = async (req, res) => {
       }
 }
 
-
 exports.updateClientByAdmin = async (req, res) => {
       try {
             const { id } = req.params;
@@ -472,4 +471,25 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 }
+
+exports.getClientById = async (req, res) => {
+  try {
+    const userRole = req.user.role;
+    const { id } = req.params;
+
+    if (!["admin"].includes(userRole)) {
+                  return res.status(403).json({ success: false, message: "Only admin can get profile" });
+            }
+
+    const client = await ClientModel.findById(id).select("-password");
+
+    if (!client) {
+      return res.status(404).json({ success: false, message: "Client not found" });
+    }
+
+    res.status(200).json({ success: true, client });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
 

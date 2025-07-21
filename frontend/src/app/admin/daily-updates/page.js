@@ -1,18 +1,13 @@
-import AdminDailyUpdates from '@/components/dailyupdates/AdminDailyupdates';
-import SidebarLayout from '@/components/sidebar/Sidebar';
-import React, { Suspense } from 'react';
+import AdminDailyUpdates from '@/components/dailyupdates/AdminDailyupdates'
+import SidebarLayout from '@/components/sidebar/Sidebar'
+import React from 'react'
 
-
-
-export default function Page() {
+export default function page() {
   return (
     <div>
       <SidebarLayout>
-        {/* ✅ Suspense wrap to fix useSearchParams issue */}
-        <Suspense fallback={<div>Loading...</div>}>
-          <AdminDailyUpdates />
-        </Suspense>
+        <AdminDailyUpdates />
       </SidebarLayout>
     </div>
-  );
+  )
 }
