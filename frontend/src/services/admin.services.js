@@ -41,7 +41,7 @@ export const getProfile = async () => {
 };
 
 // 5.  Logout
-export const logout = async () => {
+export const logoutService = async () => {
   const res = await api.get('/admin/logout');
   return res.data;
 };
@@ -51,6 +51,7 @@ export const getAllStaff = async () => {
   const res = await api.get('/admin/staffs');
   return res.data;
 };
+
 
 // 7.  Update Staff (by Admin)
 export const updateStaffByAdmin = async (id, formData) => {
@@ -62,20 +63,28 @@ export const updateStaffByAdmin = async (id, formData) => {
   return res.data;
 };
 
-// 10. Get Single Client by ID (Admin)
-export const getClientById = async (id) => {
-  const response = await api.get(`/client/${id}`);
-  return response.data;
+export const getStaffByIdService = async (id, token) => {
+  try {
+    const token = localStorage.getItem('adminToken'); 
+    const { data } = await api.get(`/admin/staffusers/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return data;
+  } catch (err) {
+    throw err;
+  }
 };
 
+
 // 8. Update Own Profile (Admin/Staff)
-export const updateAdminSelf = async (formData) => {
-  const res = await api.put('/admin/user', formData, {
+export const updateMyProfileService = (formData) => {
+  return api.put("admin/user", formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
-  return res.data;
 };
 
 // 9. Forgot Password (send token to email)
@@ -95,3 +104,4 @@ export const resetPassword = async (data) => {
   const res = await api.put('/admin/reset-password', data);
   return res.data;
 };
+

@@ -2,10 +2,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Edit, Trash2, Save, User } from 'lucide-react';
 import { getAllStaff, updateStaffByAdmin } from '@/services/admin.services';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const UserManagementComponent = () => {
-  const router = useRouter();
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -238,10 +237,14 @@ const UserManagementComponent = () => {
                         {user.name || 'N/A'}
                       </td> */}
                       <td
-                        onClick={() => router.push(`/admin/staffusers/${user.id}`)}
                         className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-700 hover:underline cursor-pointer"
                       >
-                        {user.name || 'N/A'}
+                        <Link
+                          href={`/admin/staffusers/${user.id}`}
+                          className="text-indigo-700 hover:underline"
+                        >
+                          {user.name || 'N/A'}
+                        </Link>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {user.email || 'N/A'}

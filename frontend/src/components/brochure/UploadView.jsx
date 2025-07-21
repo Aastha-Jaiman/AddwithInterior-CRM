@@ -1,405 +1,177 @@
-"use client"
+"use client";
 
-import React, { useState, useRef } from 'react';
-import { Upload, FileText, X, ArrowLeft, Camera, MapPin, User, Calendar, DollarSign, Home } from 'lucide-react';
+import React, { useState, useRef } from "react";
+import { Upload, X, FileText } from "lucide-react";
 
-const UploadView = ({ setBrochures, setCurrentView, isAdmin }) => {
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadForm, setUploadForm] = useState({
-    name: '',
-    category: '',
-    designer: '',
-    description: '',
-    tags: '',
-    projectLocation: '',
-    projectYear: new Date().getFullYear().toString(),
-    clientType: 'Residential',
-    budget: '',
-    area: ''
-  });
-
+const UploadBrochure = ({ onUploadSuccess, onClose }) => {
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadError, setUploadError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
-  const categories = ['Living Room', 'Bedroom', 'Kitchen', 'Bathroom', 'Office', 'Commercial', 'Traditional'];
-  const clientTypes = ['Residential', 'Commercial', 'Hospitality', 'Office', 'Retail'];
+  const handleFileChange = (file) => {
+    if (!file) return;
 
-  // Redirect non-admin users
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-blue-50/40 flex items-center justify-center">
-        <div className="bg-white rounded-2xl p-8 shadow-lg text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
-          <p className="text-gray-600 mb-6">Only admin users can upload designs.</p>
-          <button
-            onClick={() => setCurrentView('dashboard')}
-            className="bg-gradient-to-r from-blue-600 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-700 transition-all duration-300 font-medium"
-          >
-            Go Back to Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setSelectedFiles(prevFiles => [...prevFiles, ...files]);
-  };
-
-  const removeFile = (index) => {
-    setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-  };
-
-  const handleUpload = async () => {
-    if (selectedFiles.length === 0) {
-      alert('Please select at least one file');
+    if (!file.type.includes("pdf")) {
+      setUploadError("Only PDF files are allowed");
       return;
     }
 
-    if (!uploadForm.name || !uploadForm.category || !uploadForm.designer) {
-      alert('Please fill in all required fields');
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("File size must be less than 10MB");
       return;
     }
 
-    setIsUploading(true);
+    setUploadFile(file);
+    setUploadError("");
+  };
 
+  const handleInputChange = (e) => {
+    handleFileChange(e.target.files[0]);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    handleFileChange(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleUploadSubmit = async () => {
+    if (!uploadFile) {
+      setUploadError("Please select a file to upload");
+      return;
+    }
+
+    setUploading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      selectedFiles.forEach((file, index) => {
-        const newBrochure = {
-          id: Date.now() + index,
-          name: uploadForm.name || file.name.replace(/\.[^/.]+$/, ""),
-          type: file.type.split('/')[1]?.toUpperCase() || 'PDF',
-          size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
-          uploadDate: new Date().toISOString().split('T')[0],
-          thumbnail: '/api/placeholder/300/400',
-          url: URL.createObjectURL(file),
-          category: uploadForm.category,
-          status: 'active',
-          downloads: 0,
-          starred: false,
-          tags: uploadForm.tags ? uploadForm.tags.split(',').map(tag => tag.trim()) : ['new'],
-          description: uploadForm.description || 'No description provided',
-          designer: uploadForm.designer,
-          projectLocation: uploadForm.projectLocation || 'Not specified',
-          projectYear: uploadForm.projectYear,
-          clientType: uploadForm.clientType,
-          budget: uploadForm.budget || 'Not specified',
-          area: uploadForm.area || 'Not specified'
-        };
-        setBrochures(prev => [newBrochure, ...prev]);
-      });
-
-      alert('Files uploaded successfully!');
-      setSelectedFiles([]);
-      setUploadForm({
-        name: '',
-        category: '',
-        designer: '',
-        description: '',
-        tags: '',
-        projectLocation: '',
-        projectYear: new Date().getFullYear().toString(),
-        clientType: 'Residential',
-        budget: '',
-        area: ''
-      });
-      setCurrentView('dashboard');
-
-    } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Upload failed. Please try again.');
+      // Simulate upload with dummy data
+      const newBrochure = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: uploadFile.name,
+        url: "#",
+        uploadedAt: new Date().toISOString(),
+        category: "General",
+        views: 0,
+      };
+      onUploadSuccess(newBrochure);
+      alert("Brochure uploaded successfully");
+    } catch (err) {
+      setUploadError("Failed to upload brochure");
     } finally {
-      setIsUploading(false);
+      setUploading(false);
     }
   };
 
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  const handleClearFile = () => {
+    setUploadFile(null);
+    setUploadError("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-blue-50/40">
-      {/* Header */}
-      <div className="bg-white/90 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setCurrentView('dashboard')}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-all duration-200"
-              >
-                <ArrowLeft className="w-6 h-6 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Add New Design</h1>
-                <p className="text-sm text-gray-500">Upload your interior design brochure</p>
-              </div>
+    <div className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-2xl border border-blue-100/50">
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 flex items-center">
+          <FileText className="mr-2 w-6 h-6 text-blue-600" />
+          Upload New Brochure
+        </h2>
+        <button
+          onClick={onClose}
+          className="text-gray-600 hover:bg-gray-200 p-2 rounded-full transition-colors duration-200"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
+      <div
+        className={`p-4 sm:p-6 rounded-xl border-2 border-dashed ${
+          isDragging ? "border-blue-500 bg-blue-100/50" : "border-gray-300 bg-white"
+        } transition-all duration-200`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="bg-blue-100 p-3 rounded-full">
+              <Upload className="w-8 h-8 text-blue-600" />
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 lg:px-8 py-8">
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-sm p-8">
-          {/* Upload Area */}
-          <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-4">
-              Upload Design Files *
-            </label>
-            <div
-              className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-blue-400 transition-all duration-300 cursor-pointer group"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Upload className="w-8 h-8 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Drop your files here, or click to browse
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Support for PDF, JPG, PNG files up to 10MB each
-              </p>
-              <div className="flex justify-center space-x-4 text-sm text-gray-500">
-                <span className="flex items-center">
-                  <FileText className="w-4 h-4 mr-1" />
-                  PDF
-                </span>
-                <span className="flex items-center">
-                  <Camera className="w-4 h-4 mr-1" />
-                  Images
-                </span>
-              </div>
-            </div>
+          <p className="text-sm font-medium text-gray-600 mb-3">
+            {uploadFile ? (
+              <span className="flex items-center justify-center space-x-2">
+                <FileText className="w-5 h-5 text-red-500" />
+                <span>{uploadFile.name}</span>
+                <button
+                  onClick={handleClearFile}
+                  className="text-red-600 hover:text-red-800 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </span>
+            ) : (
+              "Drag & drop a PDF file here or click to select"
+            )}
+          </p>
+          <label className="block">
             <input
-              ref={fileInputRef}
+              id="brochure-upload"
               type="file"
-              multiple
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={handleFileUpload}
+              accept="application/pdf"
+              onChange={handleInputChange}
+              ref={fileInputRef}
               className="hidden"
             />
-          </div>
-
-          {/* Selected Files */}
-          {selectedFiles.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Selected Files</h3>
-              <div className="space-y-3">
-                {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{file.name}</p>
-                        <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeFile(index)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <span className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg font-medium shadow-md hover:from-blue-600 hover:to-indigo-600 cursor-pointer transition-all duration-200">
+              <Upload className="mr-2 w-5 h-5" />
+              Choose PDF File
+            </span>
+          </label>
+          <p className="text-xs text-gray-500 mt-3">PDF only, max 10MB</p>
+          {uploadError && (
+            <p className="text-red-500 text-sm mt-3 bg-red-50 p-2 rounded-md">{uploadError}</p>
           )}
-
-          {/* Form Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Name *
-              </label>
-              <input
-                type="text"
-                value={uploadForm.name}
-                onChange={(e) => setUploadForm({...uploadForm, name: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-                placeholder="Enter project name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category *
-              </label>
-              <select
-                value={uploadForm.category}
-                onChange={(e) => setUploadForm({...uploadForm, category: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-              >
-                <option value="">Select category</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Designer Name *
-              </label>
-              <div className="relative">
-                <User className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={uploadForm.designer}
-                  onChange={(e) => setUploadForm({...uploadForm, designer: e.target.value})}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-                  placeholder="Enter designer name"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Location
-              </label>
-              <div className="relative">
-                <MapPin className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={uploadForm.projectLocation}
-                  onChange={(e) => setUploadForm({...uploadForm, projectLocation: e.target.value})}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-                  placeholder="e.g., Mumbai, India"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Year
-              </label>
-              <div className="relative">
-                <Calendar className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <input
-                  type="number"
-                  value={uploadForm.projectYear}
-                  onChange={(e) => setUploadForm({...uploadForm, projectYear: e.target.value})}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-                  placeholder="2024"
-                  min="2000"
-                  max="2030"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Client Type
-              </label>
-              <select
-                value={uploadForm.clientType}
-                onChange={(e) => setUploadForm({...uploadForm, clientType: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-              >
-                {clientTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Budget Range
-              </label>
-              <div className="relative">
-                <DollarSign className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={uploadForm.budget}
-                  onChange={(e) => setUploadForm({...uploadForm, budget: e.target.value})}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-                  placeholder="e.g., ₹8-12 Lakhs"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Area
-              </label>
-              <div className="relative">
-                <Home className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={uploadForm.area}
-                  onChange={(e) => setUploadForm({...uploadForm, area: e.target.value})}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-                  placeholder="e.g., 1200 sq ft"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <textarea
-              value={uploadForm.description}
-              onChange={(e) => setUploadForm({...uploadForm, description: e.target.value})}
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-              placeholder="Describe your interior design project..."
-            />
-          </div>
-
-          <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tags
-            </label>
-            <input
-              type="text"
-              value={uploadForm.tags}
-              onChange={(e) => setUploadForm({...uploadForm, tags: e.target.value})}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 transition-all"
-              placeholder="modern, luxury, contemporary (separated by commas)"
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4">
-            <button
-              onClick={() => setCurrentView('dashboard')}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleUpload}
-              disabled={isUploading || selectedFiles.length === 0}
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-600 text-white rounded-xl hover:from-blue-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium flex items-center space-x-2"
-            >
-              {isUploading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Uploading...</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5" />
-                  <span>Upload Design</span>
-                </>
-              )}
-            </button>
-          </div>
         </div>
+      </div>
+      <div className="mt-6 flex justify-end space-x-4">
+        <button
+          onClick={onClose}
+          className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleUploadSubmit}
+          disabled={uploading || !uploadFile}
+          className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium shadow-md hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 flex items-center transition-all duration-200"
+        >
+          {uploading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Upload className="w-5 h-5 mr-2" />
+              Upload Brochure
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
 };
 
-export default UploadView;
+export default UploadBrochure;

@@ -1,5 +1,5 @@
 
-import ClientManagement from '@/components/client/Client'
+import ClientManagementComponent from '@/components/client/Client'
 import SidebarLayout from '@/components/sidebar/Sidebar'
 import React from 'react'
 
@@ -8,7 +8,7 @@ export default function page() {
     <div>
       <SidebarLayout>
 
-        <ClientManagement />
+        <ClientManagementComponent />
       </SidebarLayout>
     </div>
   )

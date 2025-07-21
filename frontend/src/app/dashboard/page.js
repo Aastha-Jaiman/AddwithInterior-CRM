@@ -15,19 +15,19 @@ export default function DashboardPage() {
 
       switch (parsed.role) {
         case 'admin':
-          router.push('/admin');
+          router.push('/admin-dashboard');
           break;
         case 'salesperson':
-          router.push('/salesperson');
+          router.push('/salesperson-dashboard');
           break;
         case 'client':
-          router.push('/client');
+          router.push('/client-dashboard');
           break;
         case 'designer':
-          router.push('/designer');
+          router.push('/designer-dashboard');
           break;
         case 'carpenter':
-          router.push('/carpenter');
+          router.push('/carpenter-dashboard');
           break;
         default:
           router.push('/login');
@@ -35,7 +35,7 @@ export default function DashboardPage() {
     } else {
       router.push('/login');
     }
-  }, [router]);
+  }, []);
 
   return <div className="text-center p-10">Redirecting...</div>;
 }

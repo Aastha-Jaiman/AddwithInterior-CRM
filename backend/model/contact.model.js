@@ -19,7 +19,6 @@ const ContactSchema = new mongoose.Schema({
   subject: {
     type: String,
     required: true,
-    trim: true
   },
   message: {
     type: String,
@@ -28,4 +27,3 @@ const ContactSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Contact', ContactSchema);
-// module.exports = Contact;

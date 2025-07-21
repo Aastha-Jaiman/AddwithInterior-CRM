@@ -17,6 +17,6 @@ router.put('/user', authMiddleware,upload.single('profile'), updateMyProfile)
 router.post('/forgot-password', resetEmailToken);
 router.post('/password', changePassword)
 router.put('/reset-password',authMiddleware, resetPassword)
-router.get("/:id", adminauthMiddleware,authMiddleware, getStaffById);
+router.get("/staffusers/:id", adminauthMiddleware,authMiddleware, getStaffById);
 
 module.exports = router;
