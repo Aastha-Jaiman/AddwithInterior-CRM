@@ -280,6 +280,8 @@ import { routePermissionMap } from "../ProtectedRoute/routePermissions";
 import { logout } from "@/store/authSlice";
 import { useDispatch } from "react-redux";
 import { logoutService } from "@/services/admin.services";
+import { logoutClient } from '@/services/client.services';
+
 
 export default function SidebarLayout({ children }) {
   const pathname = usePathname();
@@ -307,7 +309,8 @@ export default function SidebarLayout({ children }) {
 
   const checkPermission = (routePath) => {
     const required = routePermissionMap[routePath];
-    // console.log(required)
+    console.log(required)
+    
     // Admin bypass
     if (user?.role === "admin") return true;
 
@@ -336,16 +339,23 @@ export default function SidebarLayout({ children }) {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      await logoutService();
+      if (userRole === 'client') {
+        await logoutClient();
+      } else {
+        await logoutService();
+      }
     } catch (err) {
       console.error("Logout API failed, proceeding with local logout", err);
     } finally {
       setLoading(false);
+      dispatch(logout());
+      localStorage.removeItem('crm_user');
+      localStorage.removeItem('clientToken');
+      localStorage.removeItem('adminToken');
+      router.push('/login'); // Redirect to login after logout
     }
-
-    dispatch(logout());
-    router.push("/signup");
   };
+
 
   const dashboardRouteByRole = {
     admin: "/admin-dashboard",
@@ -412,6 +422,15 @@ export default function SidebarLayout({ children }) {
     { name: 'Services', href: '/admin/services', icon: MessageSquareQuote },
   ];
 
+  const clientNavigationItems = [
+    { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
+    { name: 'My Projects', href: '/client/projects', icon: ClipboardList },
+    { name: 'Payments', href: '/client/payments', icon: ReceiptIndianRupee },
+    { name: 'Quotations', href: '/client/quotation', icon: FileText },
+    { name: 'Daily Updates', href: '/client/daily-updates', icon: MessageSquareText },
+  ];
+
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Mobile overlay */}
@@ -424,11 +443,9 @@ export default function SidebarLayout({ children }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:sticky top-0 bottom-0 left-0 z-50 flex flex-col h-full ${
-          collapsed ? "w-20" : "w-72"
-        } ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        } transition-all duration-300 ease-in-out bg-white shadow-lg`}
+        className={`fixed md:sticky top-0 bottom-0 left-0 z-50 flex flex-col h-full ${collapsed ? "w-20" : "w-72"
+          } ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          } transition-all duration-300 ease-in-out bg-white shadow-lg`}
       >
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-slate-100">
@@ -468,7 +485,9 @@ export default function SidebarLayout({ children }) {
           <div className="space-y-1.5">
             {(userRole === "admin"
               ? adminNavigationItems
-              : navigationItems.filter(
+              : userRole === "client"
+                ? clientNavigationItems
+                : navigationItems.filter(
                   (item) => item.alwaysVisible || checkPermission(item.href)
                 )
             ).map((item) => {
@@ -481,29 +500,25 @@ export default function SidebarLayout({ children }) {
                 <button
                   key={item.name}
                   onClick={() => handleNavigation(item.href)}
-                  className={`w-full text-left flex items-center ${
-                    collapsed ? "justify-center" : ""
-                  } px-3 py-2.5 rounded-xl group transition-all duration-200 ${
-                    isActive
+                  className={`w-full text-left flex items-center ${collapsed ? "justify-center" : ""
+                    } px-3 py-2.5 rounded-xl group transition-all duration-200 ${isActive
                       ? "bg-gradient-to-r from-indigo-50 to-blue-50 shadow-sm"
                       : "text-slate-600 hover:bg-slate-100"
-                  }`}
+                    }`}
                 >
                   <div
-                    className={`flex items-center justify-center min-w-10 h-10 rounded-lg ${
-                      isActive
-                        ? "bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-md"
-                        : "bg-slate-200 text-slate-600 group-hover:bg-slate-300"
-                    } transition-all duration-200`}
+                    className={`flex items-center justify-center min-w-10 h-10 rounded-lg ${isActive
+                      ? "bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-md"
+                      : "bg-slate-200 text-slate-600 group-hover:bg-slate-300"
+                      } transition-all duration-200`}
                   >
                     <Icon size={18} />
                   </div>
                   {!collapsed && (
                     <div className="ml-3 flex-grow">
                       <span
-                        className={`font-medium text-sm ${
-                          isActive ? "text-indigo-800" : "text-slate-700"
-                        }`}
+                        className={`font-medium text-sm ${isActive ? "text-indigo-800" : "text-slate-700"
+                          }`}
                       >
                         {item.name}
                       </span>
@@ -521,9 +536,8 @@ export default function SidebarLayout({ children }) {
         {/* Footer */}
         <div className="px-3 py-4 border-t border-slate-100 mt-auto">
           <div
-            className={`flex items-center ${
-              collapsed ? "justify-center" : "justify-between"
-            } text-slate-600`}
+            className={`flex items-center ${collapsed ? "justify-center" : "justify-between"
+              } text-slate-600`}
           >
             {!collapsed && (
               <div className="flex flex-col text-left">
