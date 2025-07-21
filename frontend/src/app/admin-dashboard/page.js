@@ -5,8 +5,7 @@ export default function page() {
   return (
     <div>
       <SidebarLayout>
-
-      Admin Dashbaord
+        Admin Dashbaord
       </SidebarLayout>
     </div>
   )
