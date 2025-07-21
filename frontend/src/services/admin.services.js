@@ -65,6 +65,7 @@ export const updateStaffByAdmin = async (id, formData) => {
 
 export const getStaffByIdService = async (id, token) => {
   try {
+    const token = localStorage.getItem('adminToken'); 
     const { data } = await api.get(`/admin/staffusers/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -75,6 +76,7 @@ export const getStaffByIdService = async (id, token) => {
     throw err;
   }
 };
+
 
 // 8. Update Own Profile (Admin/Staff)
 export const updateMyProfileService = (formData) => {
