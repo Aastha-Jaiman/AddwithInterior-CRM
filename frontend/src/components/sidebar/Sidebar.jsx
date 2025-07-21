@@ -398,14 +398,14 @@ export default function SidebarLayout({ children }) {
     { name: 'Dashboard', href: '/admin-dashboard', icon: LayoutDashboard },
     { name: 'Quotation', href: '/admin/quotation', icon: FileText },
     { name: 'Brochure', href: '/admin/brochure', icon: ReceiptIndianRupee },
+    { name: 'registerstaff', href: '/admin/registerstaff', icon: MessageSquareText },
+    { name: 'registerclient', href: '/admin/registerclient', icon: MessageSquareText },
     { name: 'Staff-Users', href: '/admin/staffusers', icon: FileQuestion },
     { name: 'Clients', href: '/admin/clients', icon: NotebookPen },
     { name: 'Projects', href: '/admin/projects', icon: ClipboardList },
     { name: 'Payment History', href: '/admin/paymenthistory', icon: User2 },
-    { name: 'Reports', href: '/admin/reports', icon: Users },
     { name: 'Daily Updates', href: '/admin/daily-updates', icon: MessageSquareText },
-    { name: 'registerstaff', href: '/admin/registerstaff', icon: MessageSquareText },
-    { name: 'registerclient', href: '/admin/registerclient', icon: MessageSquareText },
+    { name: 'Reports', href: '/admin/reports', icon: Users },
     { name: 'Services', href: '/admin/services', icon: MessageSquareQuote },
   ];
 

@@ -9,10 +9,14 @@ export const registerClientByAdmin = async (formData) => {
 };
 
 // 2. Client Login
-export const loginClient = async (credentials) => {
-  const response = await api.post('/client/login', credentials);
+export const loginClient = async ({ email, identifier, password }) => {
+  const response = await api.post('/client/login', {
+        identifier: identifier || email, //  fallback logic
+    password,
+  });
   return response.data;
 };
+
 
 // 3. Get Client Profile
 export const getClientProfile = async () => {

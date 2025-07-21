@@ -437,7 +437,7 @@ const StaffRegistrationForm = () => {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
                 <Shield className="inline h-4 w-4 mr-1" />
-                Permissions (Optional)
+                Permissions
               </label>
               <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">

@@ -86,7 +86,6 @@
 //   );
 // }
 
-
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -95,6 +94,7 @@ import { useDispatch } from 'react-redux';
 import { loginAdmin } from '@/services/admin.services';
 import { loginSuccess } from '@/store/authSlice';
 import PublicRoute from './PublicRoutes';
+import { loginClient } from '@/services/client.services';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -104,6 +104,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userType, setUserType] = useState('staff'); // 'staff' or 'client'
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -111,18 +112,27 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await loginAdmin({ email, password });
+      let result;
+
+      if (userType === 'staff') {
+        result = await loginAdmin({ email, password });
+      } else {
+        result = await loginClient({ email, identifier: email, password });
+      }
+
       const userPayload = {
         name: result.user.name,
         email: result.user.email,
-        role: result.user.role,
+        role: result.user.role || userType,
         permission: result.user.permission || [],
       };
 
       localStorage.setItem('crm_user', JSON.stringify(userPayload));
-      localStorage.setItem('adminToken', result.token);
+      localStorage.setItem(userType === 'staff' ? 'adminToken' : 'clientToken', result.token);
 
       dispatch(loginSuccess(userPayload));
+
+      // Redirect based on type (you can change routes accordingly)
       router.replace('/dashboard');
     } catch (err) {
       const msg = err?.response?.data?.message || 'Login failed';
@@ -133,14 +143,42 @@ export default function LoginPage() {
   };
 
   return (
-    <PublicRoute >
+    <PublicRoute>
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <form
           onSubmit={handleLogin}
           className="bg-white shadow-md rounded px-8 py-6 w-full max-w-sm"
         >
           <h2 className="text-2xl font-bold mb-4 text-center text-indigo-600">Login</h2>
+
+          {/* Toggle login type */}
+          <div className="flex justify-center gap-4 mb-5">
+            <button
+              type="button"
+              onClick={() => setUserType('staff')}
+              className={`px-4 py-1 rounded-full border ${
+                userType === 'staff'
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-white text-indigo-600 border-indigo-300'
+              }`}
+            >
+              Login as Staff
+            </button>
+            <button
+              type="button"
+              onClick={() => setUserType('client')}
+              className={`px-4 py-1 rounded-full border ${
+                userType === 'client'
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-white text-indigo-600 border-indigo-300'
+              }`}
+            >
+              Login as Client
+            </button>
+          </div>
+
           {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+
           <input
             type="email"
             placeholder="Email"
@@ -162,7 +200,7 @@ export default function LoginPage() {
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 rounded"
             disabled={loading}
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? `Logging in as ${userType}...` : `Login as ${userType}`}
           </button>
         </form>
       </div>

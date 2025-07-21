@@ -57,28 +57,46 @@
 
 //   return <>{children}</>;
 // }
-
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
 import { loginSuccess } from '@/store/authSlice';
 import { getProfile } from '@/services/admin.services';
+import { getClientProfile } from '@/services/client.services';
 
 export default function ProtectedRoute({ children }) {
   const dispatch = useDispatch();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const res = await getProfile();
+        const storedUser = JSON.parse(localStorage.getItem('crm_user'));
+
+        // ✅ Redirect if no user info in storage
+        if (!storedUser) {
+          router.replace('/login'); // 👈 update with your actual login route
+          return;
+        }
+
+        let res;
+        if (storedUser.role === 'staff') {
+          res = await getProfile();
+        } else {
+          res = await getClientProfile();
+        }
+
         if (res.success) {
           dispatch(loginSuccess(res.user));
+        } else {
+          router.replace('/login');
         }
       } catch (err) {
-        console.error('Failed to load profile', err);
+        console.error('Failed to load profile:', err);
+        router.replace('/login'); // 👈 fallback in case of error
       } finally {
         setLoading(false);
       }
