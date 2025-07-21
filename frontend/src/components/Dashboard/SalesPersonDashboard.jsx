@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import {
   LayoutDashboard,
   FileText,
-  Hammer,
+  DollarSign,
   Users,
   User,
   FolderOpen,
@@ -18,7 +18,6 @@ import {
   Menu,
   X,
   TrendingUp,
-  DollarSign,
   CheckCircle,
   Home,
   ChevronDown,
@@ -27,94 +26,94 @@ import {
   Eye,
   Download,
   Plus,
-  Sunrise,
-  Sunset,
+  Briefcase,
+  Send,
 } from "lucide-react";
 
-const CarpenterDashboard = () => {
+const SalesPersonDashboard = () => {
   const statsCards = [
     {
-      title: "Morning Updates",
-      value: "18",
-      change: "+3 today",
+      title: "Total Sales",
+      value: "$245,000",
+      change: "+$15,000 this month",
       trend: "up",
-      icon: Sunrise,
-      color: "from-yellow-500 to-yellow-600",
-      bgColor: "from-yellow-50 to-yellow-100",
-      textColor: "text-yellow-600",
-    },
-    {
-      title: "Evening Updates",
-      value: "15",
-      change: "+2 today",
-      trend: "up",
-      icon: Sunset,
-      color: "from-orange-500 to-orange-600",
-      bgColor: "from-orange-50 to-orange-100",
-      textColor: "text-orange-600",
-    },
-    {
-      title: "Daily Tasks Completed",
-      value: "42",
-      change: "+5 this week",
-      trend: "up",
-      icon: CheckCircle,
+      icon: DollarSign,
       color: "from-green-500 to-green-600",
       bgColor: "from-green-50 to-green-100",
       textColor: "text-green-600",
     },
     {
-      title: "Active Projects",
-      value: "10",
-      change: "+1 this month",
+      title: "Active Leads",
+      value: "62",
+      change: "+8 today",
       trend: "up",
-      icon: Hammer,
+      icon: UserPlus,
       color: "from-blue-500 to-blue-600",
       bgColor: "from-blue-50 to-blue-100",
       textColor: "text-blue-600",
+    },
+    {
+      title: "Quotations Sent",
+      value: "35",
+      change: "+5 this week",
+      trend: "up",
+      icon: Send,
+      color: "from-yellow-500 to-yellow-600",
+      bgColor: "from-yellow-50 to-yellow-100",
+      textColor: "text-yellow-600",
+    },
+    {
+      title: "Projects Handled",
+      value: "22",
+      change: "+2 this month",
+      trend: "up",
+      icon: Briefcase,
+      color: "from-purple-500 to-purple-600",
+      bgColor: "from-purple-50 to-purple-100",
+      textColor: "text-purple-600",
     },
   ];
 
   const recentActivities = [
     {
       id: 1,
-      action: "Morning update logged",
-      user: "Table Project",
-      time: "8:00 AM",
-      type: "morning",
-      icon: Sunrise,
+      action: "Quotation sent",
+      user: "TechCorp",
+      time: "9:00 AM",
+      type: "quotation",
+      icon: Send,
     },
     {
       id: 2,
-      action: "Evening update logged",
-      user: "Cabinet Project",
-      time: "6:30 PM",
-      type: "evening",
-      icon: Sunset,
+      action: "Lead converted",
+      user: "Jane Smith",
+      time: "11:30 AM",
+      type: "lead",
+      icon: UserCheck,
     },
     {
       id: 3,
-      action: "Task completed",
-      user: "Chair Repair",
-      time: "4:00 PM",
-      type: "completed",
-      icon: CheckCircle,
+      action: "Project assigned",
+      user: "Office Furniture",
+      time: "2:00 PM",
+      type: "project",
+      icon: Briefcase,
     },
     {
       id: 4,
-      action: "New project assigned",
-      user: "Bookshelf Design",
-      time: "10:00 AM",
-      type: "project",
-      icon: Hammer,
+      action: "Client meeting scheduled",
+      user: "ABC Corp",
+      time: "4:00 PM",
+      type: "meeting",
+      icon: Calendar,
     },
     {
       id: 5,
-      action: "Client feedback received",
-      user: "Custom Desk",
-      time: "2:00 PM",
-      type: "feedback",
-      icon: UserCheck,
+      action: "Daily update logged",
+      user: "Sales Report",
+      time: "6:00 PM",
+      type: "update",
+      icon: FileText,
     },
   ];
 
@@ -122,35 +121,33 @@ const CarpenterDashboard = () => {
     {
       id: 1,
       date: "July 21, 2025",
-      morning:
-        "Started work on Table Project, prepared materials for Cabinet Project",
-      evening:
-        "Completed Table Project assembly, started Cabinet Project installation",
+      update:
+        "Closed deal with TechCorp ($25,000), followed up with 3 leads, sent 2 quotations",
       status: "On Track",
     },
     {
       id: 2,
       date: "July 20, 2025",
-      morning: "Began Chair Repair, sourced wood for Bookshelf Design",
-      evening: "Finished Chair Repair, planned Bookshelf Design layout",
+      update:
+        "Met with ABC Corp, prepared quotation for Office Furniture, updated CRM",
       status: "Completed",
     },
     {
       id: 3,
       date: "July 19, 2025",
-      morning: "Started Custom Desk frame, reviewed client specifications",
-      evening: "Completed Custom Desk frame, sent update to client",
+      update:
+        "Followed up with 5 leads, scheduled meeting with XYZ Industries, logged sales report",
       status: "On Track",
     },
   ];
 
   const getActivityIcon = (type) => {
     const iconMap = {
-      morning: Sunrise,
-      evening: Sunset,
-      completed: CheckCircle,
-      project: Hammer,
-      feedback: UserCheck,
+      quotation: Send,
+      lead: UserCheck,
+      project: Briefcase,
+      meeting: Calendar,
+      update: FileText,
     };
     return iconMap[type] || Activity;
   };
@@ -165,7 +162,7 @@ const CarpenterDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  Carpenter Dashboard
+                  Salesperson Dashboard
                 </h1>
                 <p className="text-sm text-gray-500 font-medium">
                   {new Date().toLocaleDateString("en-US", {
@@ -182,14 +179,14 @@ const CarpenterDashboard = () => {
                   <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                   <input
                     type="text"
-                    placeholder="Search projects..."
+                    placeholder="Search clients or projects..."
                     className="pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 shadow-sm transition-all w-64"
                   />
                 </div>
                 <button className="relative p-3 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors duration-200 shadow-sm">
                   <Bell size={20} className="text-gray-600" />
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                    5
+                    6
                   </div>
                 </button>
               </div>
@@ -204,7 +201,7 @@ const CarpenterDashboard = () => {
               <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search projects..."
+                placeholder="Search clients or projects..."
                 className="pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 shadow-sm transition-all w-64"
               />
             </div>
@@ -215,10 +212,10 @@ const CarpenterDashboard = () => {
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
               <div className="relative z-10">
                 <h1 className="text-3xl font-bold mb-2">
-                  Good morning, Carpenter Admin!
+                  Good morning, Salesperson!
                 </h1>
                 <p className="text-blue-100 text-lg">
-                  Here's an overview of your woodworking projects today.
+                  Here's an overview of your sales activities today.
                 </p>
               </div>
             </div>
@@ -336,14 +333,7 @@ const CarpenterDashboard = () => {
                           </span>
                         </div>
                         <div className="text-sm text-gray-600">
-                          <p>
-                            <span className="font-medium">Morning:</span>{" "}
-                            {update.morning}
-                          </p>
-                          <p>
-                            <span className="font-medium">Evening:</span>{" "}
-                            {update.evening}
-                          </p>
+                          <p>{update.update}</p>
                         </div>
                       </div>
                     ))}
@@ -360,23 +350,23 @@ const CarpenterDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                   {
-                    label: "Log Morning Update",
-                    icon: Sunrise,
-                    color: "from-yellow-500 to-yellow-600",
-                  },
-                  {
-                    label: "Log Evening Update",
-                    icon: Sunset,
-                    color: "from-orange-500 to-orange-600",
-                  },
-                  {
-                    label: "Add New Project",
-                    icon: Hammer,
+                    label: "Log Daily Update",
+                    icon: FileText,
                     color: "from-blue-500 to-blue-600",
                   },
                   {
-                    label: "Generate Report",
-                    icon: BarChart3,
+                    label: "Generate Quotation",
+                    icon: Send,
+                    color: "from-yellow-500 to-yellow-600",
+                  },
+                  {
+                    label: "Add New Project",
+                    icon: Briefcase,
+                    color: "from-purple-500 to-purple-600",
+                  },
+                  {
+                    label: "Add New Lead",
+                    icon: UserPlus,
                     color: "from-green-500 to-green-600",
                   },
                 ].map((action, index) => (
@@ -403,4 +393,4 @@ const CarpenterDashboard = () => {
   );
 };
 
-export default CarpenterDashboard;
+export default SalesPersonDashboard;
