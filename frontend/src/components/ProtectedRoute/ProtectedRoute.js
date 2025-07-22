@@ -77,7 +77,7 @@ export default function ProtectedRoute({ children }) {
         const storedUser = JSON.parse(localStorage.getItem("crm_user"));
 
         console.log(
-          "🔍 Checking stored user:",
+          " Checking stored user:",
           storedUser === null
             ? "null"
             : ["admin", "salesperson", "designer", "carpenter"].includes(

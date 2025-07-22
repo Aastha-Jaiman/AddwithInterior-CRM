@@ -305,12 +305,29 @@ export default function SidebarLayout({ children }) {
       setUserRole(parsed.role);
       setUserName(parsed.name || parsed.email || "User");
     }
+    // Handle responsive sidebar behavior
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+        setCollapsed(false);
+      } else if (window.innerWidth < 1024) {
+        setCollapsed(true);
+        setSidebarOpen(true);
+      } else {
+        setCollapsed(false);
+        setSidebarOpen(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const checkPermission = (routePath) => {
     const required = routePermissionMap[routePath];
     console.log(required)
-    
+
     // Admin bypass
     if (user?.role === "admin") return true;
 
@@ -385,6 +402,7 @@ export default function SidebarLayout({ children }) {
     //   icon: MessageSquareQuote,
     // },
     { name: "Design", href: "/design", icon: NotebookPen },
+    { name: "Profile", href: "/profile", icon: NotebookPen },
 
     {
       name: "Morning Update",
@@ -413,6 +431,7 @@ export default function SidebarLayout({ children }) {
     { name: "Dashboard", href: "/admin-dashboard", icon: LayoutDashboard },
     { name: "Quotation", href: "/admin/quotation", icon: FileText },
     { name: "Brochure", href: "/admin/brochure", icon: ReceiptIndianRupee },
+    { name: "Profile", href: "/profile", icon: NotebookPen },
     {
       name: "registerstaff",
       href: "/admin/registerstaff",
@@ -442,11 +461,19 @@ export default function SidebarLayout({ children }) {
     { name: 'Payments', href: '/client/payments', icon: ReceiptIndianRupee },
     { name: 'Quotations', href: '/client/quotation', icon: FileText },
     { name: 'Daily Updates', href: '/client/daily-updates', icon: MessageSquareText },
+    { name: "Profile", href: "/profile", icon: NotebookPen },
   ];
 
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen bg-slate-50">
+      {/* Mobile menu button */}
+      <button
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -457,9 +484,9 @@ export default function SidebarLayout({ children }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:sticky top-0 bottom-0 left-0 z-50 flex flex-col h-full ${collapsed ? "w-20" : "w-72"
-          } ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-          } transition-all duration-300 ease-in-out bg-white shadow-lg`}
+        className={`fixed md:sticky top-0 bottom-0 left-0 z-50 flex flex-col h-full transition-all duration-300 ease-in-out bg-white shadow-lg
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          ${collapsed ? "w-16 md:w-20" : "w-64 md:w-72"}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-slate-100">
@@ -473,7 +500,7 @@ export default function SidebarLayout({ children }) {
             </div>
           )}
 
-          <div className="flex items-center">
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => setCollapsed(!collapsed)}
               className="hidden md:flex items-center justify-center p-1 rounded-md text-slate-500 hover:bg-slate-100"
@@ -548,7 +575,7 @@ export default function SidebarLayout({ children }) {
         </nav>
 
         {/* Footer */}
-        <div className="px-3 py-4 border-t border-slate-100 mt-auto">
+        <div className="px-3 py-4 border-t border-slate-100 mt-auto sticky bottom-0 bg-white z-10">
           <div
             className={`flex items-center ${collapsed ? "justify-center" : "justify-between"
               } text-slate-600`}
