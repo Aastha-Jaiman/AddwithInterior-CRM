@@ -1,9 +1,11 @@
-import React from 'react'
+import SalesPersonDashboard from "@/components/Dashboard/SalesPersonDashboard";
+import SidebarLayout from "@/components/sidebar/Sidebar";
+import React from "react";
 
 export default function page() {
   return (
-    <div>
-      
-    </div>
-  )
+    <SidebarLayout>
+      <SalesPersonDashboard />
+    </SidebarLayout>
+  );
 }

@@ -26,7 +26,7 @@
 
 //           if (res.user.role !== 'admin') {
 //             toast.error('Only admin can access this panel');
-            
+
 //           }
 //         } else {
 //           if (!publicRoutes.includes(pathname)) {
@@ -57,14 +57,14 @@
 
 //   return <>{children}</>;
 // }
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useRouter } from 'next/navigation';
-import { loginSuccess } from '@/store/authSlice';
-import { getProfile } from '@/services/admin.services';
-import { getClientProfile } from '@/services/client.services';
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { useRouter } from "next/navigation";
+import { loginSuccess } from "@/store/authSlice";
+import { getProfile } from "@/services/admin.services";
+import { getClientProfile } from "@/services/client.services";
 
 export default function ProtectedRoute({ children }) {
   const dispatch = useDispatch();
@@ -74,16 +74,31 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const storedUser = JSON.parse(localStorage.getItem('crm_user'));
+        const storedUser = JSON.parse(localStorage.getItem("crm_user"));
 
-        // ✅ Redirect if no user info in storage
+        console.log(
+          " Checking stored user:",
+          storedUser === null
+            ? "null"
+            : ["admin", "salesperson", "designer", "carpenter"].includes(
+                storedUser.role
+              )
+            ? storedUser.role
+            : "client"
+        );
+
         if (!storedUser) {
-          router.replace('/login'); // 👈 update with your actual login route
+          router.replace("/login");
           return;
         }
 
         let res;
-        if (storedUser.role === 'staff') {
+
+        if (
+          ["admin", "salesperson", "designer", "carpenter"].includes(
+            storedUser.role
+          )
+        ) {
           res = await getProfile();
         } else {
           res = await getClientProfile();
@@ -92,11 +107,11 @@ export default function ProtectedRoute({ children }) {
         if (res.success) {
           dispatch(loginSuccess(res.user));
         } else {
-          router.replace('/login');
+          router.replace("/login");
         }
       } catch (err) {
-        console.error('Failed to load profile:', err);
-        router.replace('/login'); // 👈 fallback in case of error
+        console.error("Failed to load profile:", err);
+        router.replace("/login");
       } finally {
         setLoading(false);
       }
