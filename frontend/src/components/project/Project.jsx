@@ -1,23 +1,22 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ProjectsList from "./ProjectList";
 import ProjectDetails from "./ProjectDetails";
 import ProjectForm from "./ProjectForm";
 
-
 const ProjectsPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  // Get current view and ID from URL parameters
-  const currentView = searchParams.get('view') || 'list'; // list, create, edit, details
+  
+  const currentView = searchParams.get('view') || 'list';
   const currentId = searchParams.get('id');
-
+  
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
 
-  // Mock data with proper document structure
+  // Mock data - only for initial setup, will be removed after first real project
   const mockProjects = [
     {
       id: 1,
@@ -38,42 +37,36 @@ const ProjectsPage = () => {
       location: "Mumbai, Maharashtra",
       description: "Complete modular kitchen with modern appliances",
       documents: {
-        roughQuotation: "rough_quotation_001.pdf",
-        designPdf: "kitchen_design_001.pdf", // Added design PDF
-        finalQuotation: "final_quotation_001.pdf"
-      }
-    },
-    {
-      id: 2,
-      image: "https://via.placeholder.com/80x60",
-      name: "Bedroom Furniture Set",
-      category: "Inplace Furniture",
-      customerName: "Jane Smith",
-      customerNumber: "+91 8765432109",
-      customerEmail: "jane@example.com",
-      customerAddress: "456 Oak Ave, Delhi",
-      estimatedBudget: 150000,
-      finalBudget: null,
-      designStatus: "uploaded",
-      startingDate: "2024-02-01",
-      designer: "Alex Cooper",
-      salesperson: "Lisa Anderson",
-      carpenter: ["Robert Davis"],
-      location: "Delhi, NCR",
-      description: "Custom bedroom furniture with wardrobe",
-      documents: {
-        roughQuotation: "rough_quotation_002.pdf",
-        designPdf: "bedroom_design_002.pdf", // Added design PDF
-        finalQuotation: null
-      }
+        roughQuotation: {
+          filename: "rough_quotation_001.pdf",
+          uploadDate: "2024-01-15"
+        },
+        designPdf: {
+          filename: "kitchen_design_001.pdf",
+          uploadDate: "2024-01-20"
+        },
+        finalQuotation: {
+          filename: "final_quotation_001.pdf",
+          uploadDate: "2024-01-25"
+        }
+      },
+      isDummy: true
     }
   ];
 
-  // Load projects from localStorage or use mock data
+  // Load projects and remove dummy data if real projects exist
   useEffect(() => {
     const savedProjects = localStorage.getItem('crm_projects');
     if (savedProjects) {
-      setProjects(JSON.parse(savedProjects));
+      const parsedProjects = JSON.parse(savedProjects);
+      const realProjects = parsedProjects.filter(p => !p.isDummy);
+      
+      if (realProjects.length > 0) {
+        setProjects(realProjects);
+        localStorage.setItem('crm_projects', JSON.stringify(realProjects));
+      } else {
+        setProjects(mockProjects);
+      }
     } else {
       setProjects(mockProjects);
       localStorage.setItem('crm_projects', JSON.stringify(mockProjects));
@@ -89,7 +82,6 @@ const ProjectsPage = () => {
     }
   }, [currentView, currentId, projects]);
 
-  // Navigation functions
   const navigateToView = (view, id = null) => {
     const params = new URLSearchParams();
     params.set('view', view);
@@ -106,9 +98,14 @@ const ProjectsPage = () => {
   };
 
   const handleProjectSave = (projectData) => {
-    console.log("Saving project:", projectData);
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    // Preserve existing documents when editing
+    let existingDocs = {};
+    if (currentView === 'edit' && selectedProject?.documents) {
+      existingDocs = { ...selectedProject.documents };
+    }
 
-    // Create new project with unique ID
     const newProject = {
       id: currentView === 'edit' && selectedProject ? selectedProject.id : Date.now(),
       image: projectData.projectImage ? URL.createObjectURL(projectData.projectImage) : "https://via.placeholder.com/80x60",
@@ -124,36 +121,43 @@ const ProjectsPage = () => {
       startingDate: projectData.startingDate,
       designer: projectData.designer,
       salesperson: projectData.salesperson,
-      carpenter: projectData.carpenters.filter(c => c), // Remove empty entries
+      carpenter: projectData.carpenters.filter(c => c),
       location: projectData.location,
       description: projectData.description,
       documents: {
-        roughQuotation: projectData.roughQuotation?.name || (selectedProject?.documents?.roughQuotation || null),
-        designPdf: projectData.designPdf?.name || (selectedProject?.documents?.designPdf || null),
-        finalQuotation: projectData.finalQuotation?.name || (selectedProject?.documents?.finalQuotation || null)
-      }
+        ...existingDocs,
+        ...(projectData.roughQuotation && {
+          roughQuotation: {
+            filename: projectData.roughQuotation.name,
+            uploadDate: currentDate
+          }
+        }),
+        ...(projectData.finalQuotation && {
+          finalQuotation: {
+            filename: projectData.finalQuotation.name,
+            uploadDate: currentDate
+          }
+        })
+      },
+      isDummy: false
     };
 
     let updatedProjects;
-
     if (currentView === 'edit' && selectedProject) {
-      // Update existing project
       updatedProjects = projects.map(p =>
         p.id === selectedProject.id ? newProject : p
       );
     } else {
-      // Add new project to list
-      updatedProjects = [...projects, newProject];
+      // Remove dummy data when adding first real project
+      const realProjects = projects.filter(p => !p.isDummy);
+      updatedProjects = [...realProjects, newProject];
     }
 
-    // Save to both state and localStorage
     setProjects(updatedProjects);
     localStorage.setItem('crm_projects', JSON.stringify(updatedProjects));
-
     navigateToList();
   };
 
-  // Render different views based on currentView
   if (currentView === 'create' || currentView === 'edit') {
     return (
       <ProjectForm
@@ -176,7 +180,6 @@ const ProjectsPage = () => {
     );
   }
 
-  // Default list view
   return (
     <ProjectsList
       projects={projects}

@@ -1,18 +1,9 @@
 "use client";
+
 import React from "react";
-import {
-  ArrowLeft,
-  Edit3,
-  Calendar,
-  MapPin,
-  DollarSign,
-  User,
-  Phone,
-  Mail,
-  FileText,
-  Users,
-  Download,
-  Camera,
+import { 
+  ArrowLeft, Edit3, Calendar, MapPin, DollarSign, 
+  User, Phone, Mail, FileText, Users, Download, Camera 
 } from "lucide-react";
 
 const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handleDownloadDocument }) => {
@@ -25,7 +16,7 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
       },
       uploaded: {
         bg: "bg-blue-100 dark:bg-blue-900/30",
-        text: "text-blue-800 dark:text-blue-300",
+        text: "text-blue-800 dark:text-blue-300", 
         border: "border-blue-200 dark:border-blue-800",
       },
       finalize: {
@@ -37,330 +28,303 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
 
     const config = statusConfig[status];
     return (
-      <span
-        className={`px-4 py-2 rounded-full text-sm font-medium border ${config.bg} ${config.text} ${config.border}`}
-      >
+      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${config.bg} ${config.text} ${config.border}`}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
 
   const InfoCard = ({ icon, title, children, className = "" }) => (
-    <div className={`bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl p-6 ring-1 ring-black/5 dark:ring-white/10 ${className}`}>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50 dark:from-slate-700 dark:to-slate-600">
-          {icon}
-        </div>
-        <h3 className="font-semibold text-gray-900 dark:text-white">{title}</h3>
-      </div>
+    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 ${className}`}>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        {icon}
+        {title}
+      </h3>
       {children}
     </div>
   );
 
+  const InfoItem = ({ label, value, icon }) => (
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+      <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 mb-1 sm:mb-0">
+        {icon && icon}
+        {label}
+      </div>
+      <div className="text-sm sm:text-right text-gray-900 dark:text-white font-medium">
+        {value}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={navigateToList}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            Back to Projects
-          </button>
-
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {selectedProject.name}
-              </h1>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">{selectedProject.category}</p>
-            </div>
-
-            <button
-              onClick={navigateToEdit}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-            >
-              <Edit3 className="h-5 w-5" />
-              Edit Project
-            </button>
-          </div>
-        </div>
-
-        {/* Project Image and Description */}
-        <div className="mb-8">
-          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-2xl p-6 shadow-xl ring-1 ring-black/5 dark:ring-white/10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Project Image */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Camera className="h-5 w-5 text-blue-600" />
-                  Project Image
-                </h3>
-                <img
-                  src={selectedProject.image}
-                  alt={selectedProject.name}
-                  className="w-full h-64 object-cover rounded-lg shadow-lg"
-                />
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="p-4 sm:p-6">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <button
+                  onClick={navigateToList}
+                  className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors w-fit"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="text-sm font-medium">Back to Projects</span>
+                </button>
+                
+                <div className="flex items-center gap-4">
+                  <img
+                    src={selectedProject.image}
+                    alt={selectedProject.name}
+                    className="w-16 h-12 sm:w-20 sm:h-15 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                      {selectedProject.name}
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {selectedProject.category}
+                      </span>
+                      {getStatusBadge(selectedProject.designStatus)}
+                    </div>
+                  </div>
+                </div>
               </div>
-
-              {/* Project Description */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-green-600" />
-                  Description
-                </h3>
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              
+              <button
+                onClick={navigateToEdit}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span className="text-sm font-medium">Edit Project</span>
+              </button>
+            </div>
+            
+            {selectedProject.description && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-gray-700 dark:text-gray-300 text-sm">
                   {selectedProject.description}
                 </p>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Budget and Status Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 ring-1 ring-green-200 dark:ring-green-800">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-6 w-6 text-green-600" />
-              <span className="text-sm font-medium text-green-800 dark:text-green-300">Estimated Budget</span>
-            </div>
-            <p className="text-3xl font-bold text-green-900 dark:text-green-100">
-              ₹{selectedProject.estimatedBudget?.toLocaleString()}
-            </p>
-          </div>
-
-          {selectedProject.finalBudget && (
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-6 ring-1 ring-blue-200 dark:ring-blue-800">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="h-6 w-6 text-blue-600" />
-                <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Final Budget</span>
-              </div>
-              <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">
-                ₹{selectedProject.finalBudget.toLocaleString()}
-              </p>
-            </div>
-          )}
-
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-6 ring-1 ring-purple-200 dark:ring-purple-800">
-            <div className="flex items-center gap-2 mb-2">
-              <FileText className="h-6 w-6 text-purple-600" />
-              <span className="text-sm font-medium text-purple-800 dark:text-purple-300">Design Status</span>
-            </div>
-            <div className="mt-3">
-              {getStatusBadge(selectedProject.designStatus)}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Details Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Project Information */}
-          <InfoCard
-            icon={<FileText className="h-5 w-5 text-blue-600" />}
-            title="Project Information"
-          >
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-5 w-5 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Starting Date</p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {new Date(selectedProject.startingDate).toLocaleDateString('en-IN', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Location</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{selectedProject.location}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <FileText className="h-5 w-5 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Category</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{selectedProject.category}</p>
-                </div>
-              </div>
-            </div>
-          </InfoCard>
-
-          {/* Customer Information */}
-          <InfoCard
-            icon={<User className="h-5 w-5 text-green-600" />}
-            title="Client Details"
-          >
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Customer Name</p>
-                <p className="font-medium text-gray-900 dark:text-white">{selectedProject.customerName}</p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Phone Number</p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    <a href={`tel:${selectedProject.customerNumber}`} className="hover:text-blue-600 transition-colors">
-                      {selectedProject.customerNumber}
-                    </a>
-                  </p>
-                </div>
-              </div>
-
-              {selectedProject.customerEmail && (
-                <div className="flex items-center gap-3">
-                  <Mail className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      <a href={`mailto:${selectedProject.customerEmail}`} className="hover:text-blue-600 transition-colors">
-                        {selectedProject.customerEmail}
-                      </a>
-                    </p>
+          <div className="lg:col-span-2 space-y-6">
+            {/* Budget & Timeline */}
+            <InfoCard icon={<DollarSign className="w-5 h-5" />} title="Budget & Timeline">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+                    Estimated Budget
+                  </div>
+                  <div className="text-lg font-bold text-blue-900 dark:text-blue-200">
+                    ₹{selectedProject.estimatedBudget?.toLocaleString()}
                   </div>
                 </div>
-              )}
-
-              {selectedProject.customerAddress && (
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Address</p>
-                    <p className="text-gray-900 dark:text-white leading-relaxed">{selectedProject.customerAddress}</p>
+                
+                {selectedProject.finalBudget && (
+                  <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+                    <div className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">
+                      Final Budget
+                    </div>
+                    <div className="text-lg font-bold text-green-900 dark:text-green-200">
+                      ₹{selectedProject.finalBudget.toLocaleString()}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </InfoCard>
-        </div>
-
-        {/* Team Members */}
-        <div className="mb-8">
-          <InfoCard
-            icon={<Users className="h-5 w-5 text-purple-600" />}
-            title="Team Members"
-            className="lg:col-span-2"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Salesperson</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white font-semibold text-sm">
-                    {selectedProject.salesperson?.charAt(0)}
-                  </div>
-                  <p className="font-medium text-gray-900 dark:text-white">{selectedProject.salesperson}</p>
-                </div>
+                )}
               </div>
-
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Designer</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                    {selectedProject.designer?.charAt(0)}
-                  </div>
-                  <p className="font-medium text-gray-900 dark:text-white">{selectedProject.designer}</p>
-                </div>
+              
+              <div className="mt-4 space-y-2">
+                <InfoItem
+                  label="Starting Date"
+                  value={new Date(selectedProject.startingDate).toLocaleDateString('en-IN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                  icon={<Calendar className="w-4 h-4" />}
+                />
+                <InfoItem
+                  label="Location"
+                  value={selectedProject.location}
+                  icon={<MapPin className="w-4 h-4" />}
+                />
+                <InfoItem
+                  label="Category"
+                  value={selectedProject.category}
+                  icon={<FileText className="w-4 h-4" />}
+                />
               </div>
+            </InfoCard>
 
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Carpenters</p>
-                <div className="space-y-3">
-                  {selectedProject.carpenter?.map((carpenter, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-semibold text-sm">
-                        {carpenter?.charAt(0)}
-                      </div>
-                      <p className="font-medium text-gray-900 dark:text-white">{carpenter}</p>
+            {/* Customer Information */}
+            <InfoCard icon={<User className="w-5 h-5" />} title="Customer Information">
+              <div className="space-y-2">
+                <InfoItem
+                  label="Customer Name"
+                  value={selectedProject.customerName}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <InfoItem
+                  label="Phone Number"
+                  value={selectedProject.customerNumber}
+                  icon={<Phone className="w-4 h-4" />}
+                />
+                {selectedProject.customerEmail && (
+                  <InfoItem
+                    label="Email"
+                    value={selectedProject.customerEmail}
+                    icon={<Mail className="w-4 h-4" />}
+                  />
+                )}
+                {selectedProject.customerAddress && (
+                  <InfoItem
+                    label="Address"
+                    value={selectedProject.customerAddress}
+                    icon={<MapPin className="w-4 h-4" />}
+                  />
+                )}
+              </div>
+            </InfoCard>
+
+            {/* Team Information */}
+            <InfoCard icon={<Users className="w-5 h-5" />} title="Team Information">
+              <div className="space-y-2">
+                <InfoItem
+                  label="Salesperson"
+                  value={selectedProject.salesperson}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <InfoItem
+                  label="Designer"
+                  value={selectedProject.designer}
+                  icon={<User className="w-4 h-4" />}
+                />
+                <InfoItem
+                  label="Carpenters"
+                  value=""
+                  icon={<Users className="w-4 h-4" />}
+                />
+                <div className="pl-6">
+                  {selectedProject.carpenter.map((carpenter, index) => (
+                    <div key={index} className="text-sm text-gray-700 dark:text-gray-300 py-1">
+                      • {carpenter}
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
-          </InfoCard>
+            </InfoCard>
+          </div>
+
+          {/* Documents */}
+          <div className="lg:col-span-1">
+            <InfoCard icon={<FileText className="w-5 h-5" />} title="Documents">
+              <div className="space-y-3">
+                {/* Only show uploaded documents */}
+                {selectedProject.documents?.roughQuotation && (
+                  <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          Rough Quotation
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDownloadDocument(
+                          selectedProject.id,
+                          'roughQuotation',
+                          selectedProject.documents.roughQuotation.filename
+                        )}
+                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {selectedProject.documents.roughQuotation.filename}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Uploaded: {selectedProject.documents.roughQuotation.uploadDate}
+                    </div>
+                  </div>
+                )}
+
+                {selectedProject.documents?.designPdf && (
+                  <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          Design PDF
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDownloadDocument(
+                          selectedProject.id,
+                          'designPdf',
+                          selectedProject.documents.designPdf.filename
+                        )}
+                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {selectedProject.documents.designPdf.filename}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Uploaded: {selectedProject.documents.designPdf.uploadDate}
+                    </div>
+                  </div>
+                )}
+
+                {selectedProject.documents?.finalQuotation && (
+                  <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          Final Quotation
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDownloadDocument(
+                          selectedProject.id,
+                          'finalQuotation',
+                          selectedProject.documents.finalQuotation.filename
+                        )}
+                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {selectedProject.documents.finalQuotation.filename}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Uploaded: {selectedProject.documents.finalQuotation.uploadDate}
+                    </div>
+                  </div>
+                )}
+
+                {/* Show message if no documents */}
+                {!selectedProject.documents?.roughQuotation && 
+                 !selectedProject.documents?.designPdf && 
+                 !selectedProject.documents?.finalQuotation && (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No documents uploaded yet</p>
+                  </div>
+                )}
+              </div>
+            </InfoCard>
+          </div>
         </div>
-
-        {/* Project Documents */}
-        {/* Project Documents */}
-        <div className="mb-8">
-          <InfoCard
-            icon={<Download className="h-5 w-5 text-indigo-600" />}
-            title="Project Documents"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {selectedProject.documents.roughQuotation && (
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700/70 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-8 w-8 text-green-600" />
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Rough Quotation</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">PDF file</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownloadDocument(selectedProject.id, 'rough', selectedProject.documents.roughQuotation)}
-                    className="p-2 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-                  >
-                    <Download className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  </button>
-                </div>
-              )}
-
-              {selectedProject.documents.design && (
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700/70 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-8 w-8 text-purple-600" />
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Design PDF</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">PDF file</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownloadDocument(selectedProject.id, 'design', selectedProject.documents.design)}
-                    className="p-2 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-                  >
-                    <Download className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  </button>
-                </div>
-              )}
-
-              {selectedProject.documents.finalQuotation && (
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700/70 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-8 w-8 text-blue-600" />
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Final Quotation</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">PDF file</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownloadDocument(selectedProject.id, 'final', selectedProject.documents.finalQuotation)}
-                    className="p-2 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-                  >
-                    <Download className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  </button>
-                </div>
-              )}
-
-              {!selectedProject.documents.roughQuotation && !selectedProject.documents.design && !selectedProject.documents.finalQuotation && (
-                <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
-                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No documents uploaded yet</p>
-                </div>
-              )}
-            </div>
-          </InfoCard>
-        </div>
-
       </div>
     </div>
   );
