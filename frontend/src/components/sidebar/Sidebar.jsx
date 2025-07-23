@@ -206,7 +206,7 @@ export default function SidebarLayout({ children }) {
     { name: 'Payments', href: '/client/payments', icon: ReceiptIndianRupee },
     { name: 'Quotations', href: '/client/quotation', icon: FileText },
     { name: 'Daily Updates', href: '/client/daily-updates', icon: MessageSquareText },
-    { name: "Profile", href: "/profile", icon: NotebookPen },
+    { name: "Profile", href: "/client/profile", icon: NotebookPen },
   ];
 
 
