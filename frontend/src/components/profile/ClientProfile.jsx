@@ -1,569 +1,487 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Camera,
-  Lock,
-  Edit3,
-  Save,
-  X,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+"use client"
+import { useState, useEffect } from 'react';
 import { 
-  getClientProfile, 
-  resetClientPassword,
-  updateClientByAdmin 
-} from "@/services/client.services";
+  UserIcon, 
+  MailIcon, 
+  PhoneIcon, 
+  MapPinIcon, 
+  CalendarIcon,
+  KeyIcon,
+  EyeIcon,
+  EyeOffIcon,
+  CheckCircleIcon,
+  AlertCircleIcon,
+  HomeIcon,
+  XIcon
+} from 'lucide-react';
 
-const ProfilePage = () => {
-  const [user, setUser] = useState(null);
-  const [showUpdateForm, setShowUpdateForm] = useState(false);
+// Import your API services
+import { getClientProfile, resetClientPassword } from '../../services/client.services'; // Adjust path as needed
+
+const ClientProfile = () => {
+  const [profileLoading, setProfileLoading] = useState(true);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [showOldPassword, setShowOldPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    profileImage: null,
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({
+    oldPassword: false,
+    newPassword: false,
+    confirmPassword: false
   });
 
+  // Password form state
   const [passwordData, setPasswordData] = useState({
-    oldPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   });
 
+  // Initialize empty client data
+  const [clientData, setClientData] = useState({
+    _id: '',
+    name: '',
+    email: '',
+    phone: '',
+    profile: { url: '', public_id: '' },
+    address: [],
+    isActive: false,
+    createdAt: '',
+    updatedAt: ''
+  });
+  
+  // Fetch client profile on component mount
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const data = await getClientProfile();
-        console.log("Fetched profile data:", data);
-
-        setUser(data);
-        const userData = data.user;
-
-        setFormData({
-          name: userData.name || "",
-          email: userData.email || "",
-          phone: userData.phone || "",
-          address: userData.address || "",
-          profileImage: null,
-        });
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        alert("Failed to load profile data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
+    fetchClientProfile();
   }, []);
 
-  const handleUpdateClick = () => {
-    setShowUpdateForm(true);
-    setShowPasswordForm(false);
-  };
-
-  const handleResetPasswordClick = () => {
-    setShowPasswordForm(true);
-    setShowUpdateForm(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "profileImage") {
-      setFormData({ ...formData, profileImage: files[0] });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
-
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordData({ ...passwordData, [name]: value });
-  };
-
-  const handleUpdateSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!user?.user?.id) {
-      alert("User ID not found. Please refresh and try again.");
-      return;
-    }
-
-    const submissionData = new FormData();
-    submissionData.append("name", formData.name);
-    submissionData.append("email", formData.email);
-    submissionData.append("phone", formData.phone);
-    submissionData.append("address", formData.address);
-    
-    if (formData.profileImage) {
-      submissionData.append("profileImage", formData.profileImage);
-    }
-
+  const fetchClientProfile = async () => {
+    setProfileLoading(true);
     try {
-      setLoading(true);
-      // Using updateClientByAdmin service - you might need a self-update service
-      const updated = await updateClientByAdmin(user.user.id, submissionData);
+      const response = await getClientProfile();
       
-      // Refresh profile data after update
-      const refreshedData = await getClientProfile();
-      setUser(refreshedData);
-      
-      // Reset form data with updated values
-      const userData = refreshedData.user;
-      setFormData({
-        name: userData.name || "",
-        email: userData.email || "",
-        phone: userData.phone || "",
-        address: userData.address || "",
-        profileImage: null,
-      });
-      
-      setShowUpdateForm(false);
-      alert("Profile updated successfully!");
+      if (response.success && response.client) {
+        const clientProfileData = {
+          _id: response.client._id || '',
+          name: response.client.name || '',
+          email: response.client.email || '',
+          phone: response.client.phone || '',
+          profile: response.client.profile || { url: '', public_id: '' },
+          address: response.client.address || [],
+          isActive: response.client.isActive || false,
+          createdAt: response.client.createdAt || '',
+          updatedAt: response.client.updatedAt || ''
+        };
+        
+        setClientData(clientProfileData);
+      } else {
+        throw new Error(response.message || 'Failed to fetch profile');
+      }
     } catch (error) {
-      console.error("Update failed:", error);
-      alert(error.response?.data?.message || "Failed to update profile.");
+      console.error('Error fetching client profile:', error);
+      alert(error.message || 'Failed to load profile. Please try again.');
     } finally {
-      setLoading(false);
+      setProfileLoading(false);
     }
   };
 
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
+  const handlePasswordChange = (field, value) => {
+    setPasswordData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  const validatePasswordForm = () => {
     const { oldPassword, newPassword, confirmPassword } = passwordData;
-
-    // Validation
-    if (!oldPassword || !newPassword || !confirmPassword) {
-      alert("All fields are required.");
-      return;
+    
+    if (!oldPassword.trim()) {
+      alert('Please enter your current password');
+      return false;
     }
-
-    if (newPassword !== confirmPassword) {
-      alert("New passwords do not match.");
-      return;
+    
+    if (!newPassword.trim()) {
+      alert('Please enter a new password');
+      return false;
     }
-
-    if (oldPassword === newPassword) {
-      alert("New password cannot be same as old password.");
-      return;
-    }
-
+    
     if (newPassword.length < 6) {
-      alert("New password must be at least 6 characters long.");
+      alert('New password must be at least 6 characters long');
+      return false;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      alert('New password and confirm password do not match');
+      return false;
+    }
+    
+    if (oldPassword === newPassword) {
+      alert('New password must be different from current password');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    
+    if (!validatePasswordForm()) {
       return;
     }
 
+    setPasswordLoading(true);
     try {
-      setLoading(true);
-      await resetClientPassword({ 
-        oldPassword, 
-        newPassword, 
-        confirmPassword 
+      const response = await resetClientPassword({
+        oldPassword: passwordData.oldPassword,
+        newPassword: passwordData.newPassword,
+        confirmPassword: passwordData.confirmPassword
       });
-      
-      alert("Password changed successfully!");
-      setShowPasswordForm(false);
-      setPasswordData({ 
-        oldPassword: "", 
-        newPassword: "", 
-        confirmPassword: "" 
-      });
+
+      if (response.success) {
+        alert('Password reset successfully!');
+        // Reset form
+        setPasswordData({
+          oldPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        setShowPasswordForm(false);
+      } else {
+        throw new Error(response.message || 'Failed to reset password');
+      }
     } catch (error) {
-      console.error("Password reset failed:", error.response?.data || error.message);
-      alert(error.response?.data?.message || "Failed to change password.");
+      console.error('Error resetting password:', error);
+      alert(error.response?.data?.message || error.message || 'Failed to reset password. Please try again.');
     } finally {
-      setLoading(false);
+      setPasswordLoading(false);
     }
   };
 
-  if (loading && !user) {
+  const cancelPasswordReset = () => {
+    setPasswordData({
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setShowPasswordForm(false);
+    setShowPasswords({
+      oldPassword: false,
+      newPassword: false,
+      confirmPassword: false
+    });
+  };
+
+  const getStatusColor = (status) => {
+    return status 
+      ? 'bg-green-100 text-green-800 border-green-200'
+      : 'bg-red-100 text-red-800 border-red-200';
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Show loading state while fetching profile
+  if (profileLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-2xl font-semibold text-gray-600">Loading profile...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Your dgrtgrg</h1>
-          <p className="text-gray-600">Manage your personal information and account settings</p>
-        </div>
-
-        {/* Main Profile Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          {/* Profile Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-12">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="relative group">
-                <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
-                  <img
-                    src={
-                      formData.profileImage
-                        ? URL.createObjectURL(formData.profileImage)
-                        : user?.user?.profile?.url || "https://via.placeholder.com/150?text=Profile"
-                    }
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                {showUpdateForm && (
-                  <label className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                    <Camera className="w-8 h-8 text-white" />
-                    <input
-                      type="file"
-                      name="profileImage"
-                      accept="image/*"
-                      onChange={handleInputChange}
-                      className="hidden"
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-6">
+                {/* Avatar Section */}
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white">
+                    <img
+                      src={clientData.profile?.url || '/default-avatar.png'}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
                     />
-                  </label>
-                )}
-              </div>
-
-              <div className="text-center md:text-left text-white">
-                <h2 className="text-2xl font-bold mb-2">{user?.user?.name || "User Name"}</h2>
-                <p className="text-blue-100 mb-4">{user?.user?.email || "user@example.com"}</p>
-                <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                  <div className="bg-white bg-opacity-20 rounded-lg px-3 py-1">
-                    <span className="text-sm">Client ID: {user?.user?.id}</span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Profile Details */}
-          <div className="p-8">
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-gray-50 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <User className="w-5 h-5 text-blue-600" />
+                {/* Client Info */}
+                <div className="text-white">
+                  <h1 className="text-3xl font-bold">{clientData.name || 'No Name'}</h1>
+                  
+                  <div className="flex items-center gap-4 mt-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(clientData.isActive)}`}>
+                      {clientData.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    {clientData._id && (
+                      <span className="text-white/80">ID: {clientData._id}</span>
+                    )}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Full Name</h3>
-                    <p className="text-gray-600">{user?.user?.name || "Not provided"}</p>
-                  </div>
+
+                  {clientData.createdAt && (
+                    <div className="flex items-center gap-2 mt-3 text-white/80 text-sm">
+                      <CalendarIcon className="w-4 h-4" />
+                      <span>Joined {formatDate(clientData.createdAt)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Email</h3>
-                    <p className="text-gray-600">{user?.user?.email || "Not provided"}</p>
-                  </div>
-                </div>
+              {/* Password Reset Button */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowPasswordForm(!showPasswordForm)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg backdrop-blur transition-colors"
+                >
+                  <KeyIcon className="w-4 h-4" />
+                  {showPasswordForm ? 'Cancel' : 'Reset Password'}
+                </button>
               </div>
-
-              <div className="bg-gray-50 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Phone className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Phone</h3>
-                    <p className="text-gray-600">{user?.user?.phone || "Not provided"}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Address</h3>
-                    <p className="text-gray-600">{user?.user?.address || "Not provided"}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4 justify-center">
-              <button
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleUpdateClick}
-                disabled={loading}
-              >
-                <Edit3 className="w-5 h-5" />
-                {loading ? "Loading..." : "Update Profile"}
-              </button>
-              <button
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleResetPasswordClick}
-                disabled={loading}
-              >
-                <Lock className="w-5 h-5" />
-                Reset Password
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Update Profile Form */}
-        {showUpdateForm && (
-          <form
-            onSubmit={handleUpdateSubmit}
-            className="bg-white rounded-xl shadow-xl p-8 mt-6 space-y-6"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Update Profile</h2>
-              <button
-                type="button"
-                onClick={() => setShowUpdateForm(false)}
-                className="text-gray-500 hover:text-gray-700"
-                disabled={loading}
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Contact Information - Read Only */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <UserIcon className="w-5 h-5 text-blue-600" />
+              Contact Information
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <MailIcon className="w-5 h-5 text-gray-400" />
+                <span className="text-gray-700">{clientData.email || 'No email'}</span>
+              </div>
 
-            {/* Profile Image Upload */}
-            <div className="flex flex-col items-center mb-6">
-              <div className="relative group mb-4">
-                <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300">
-                  <img
-                    src={
-                      formData.profileImage
-                        ? URL.createObjectURL(formData.profileImage)
-                        : user?.user?.profile?.url || "https://via.placeholder.com/150?text=Profile"
-                    }
-                    alt="Profile Preview"
-                    className="w-full h-full object-cover"
-                  />
+              <div className="flex items-center gap-3">
+                <PhoneIcon className="w-5 h-5 text-gray-400" />
+                <span className="text-gray-700">{clientData.phone || 'No phone'}</span>
+              </div>
+
+              {clientData.updatedAt && (
+                <div className="flex items-center gap-3">
+                  <CalendarIcon className="w-5 h-5 text-gray-400" />
+                  <span className="text-gray-700">
+                    Last Updated: {formatDate(clientData.updatedAt)}
+                  </span>
                 </div>
-                <label className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                  <Camera className="w-6 h-6 text-white" />
-                  <input
-                    type="file"
-                    name="profileImage"
-                    accept="image/*"
-                    onChange={handleInputChange}
-                    className="hidden"
-                    disabled={loading}
-                  />
-                </label>
-              </div>
-              <p className="text-sm text-gray-500">Click on image to change profile picture</p>
+              )}
             </div>
+          </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block font-semibold text-gray-700 mb-2">Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your full name"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 mb-2">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your email"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 mb-2">Phone</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your phone number"
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 mb-2">Address</label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your address"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-4 justify-end pt-6">
-              <button
-                type="button"
-                onClick={() => setShowUpdateForm(false)}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                <Save className="w-5 h-5" />
-                {loading ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Reset Password Form */}
-        {showPasswordForm && (
-          <form
-            onSubmit={handlePasswordSubmit}
-            className="bg-white rounded-xl shadow-xl p-8 mt-6 space-y-6"
-          >
+          {/* Address Information - Read Only */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Reset Password</h2>
-              <button
-                type="button"
-                onClick={() => setShowPasswordForm(false)}
-                className="text-gray-500 hover:text-gray-700"
-                disabled={loading}
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <MapPinIcon className="w-5 h-5 text-blue-600" />
+                Addresses
+              </h3>
             </div>
 
             <div className="space-y-4">
+              {clientData.address.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <MapPinIcon className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>No addresses added yet</p>
+                </div>
+              ) : (
+                clientData.address.map((addr) => (
+                  <div key={addr._id} className="border rounded-lg p-4">
+                    <div className="flex items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <HomeIcon className="w-4 h-4 text-blue-600" />
+                          <span className="font-semibold text-gray-900 capitalize">
+                            {addr.addresstype}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 text-sm leading-relaxed">
+                          {addr.addressinfo.street}<br />
+                          {addr.addressinfo.city}, {addr.addressinfo.state}<br />
+                          {addr.addressinfo.country} - {addr.addressinfo.pincode}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Password Reset Form - Shows at bottom when button is clicked */}
+        {showPasswordForm && (
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <KeyIcon className="w-5 h-5 text-blue-600" />
+                Reset Password
+              </h3>
+              <button
+                onClick={cancelPasswordReset}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <XIcon className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              {/* Current Password */}
               <div>
-                <label className="block font-semibold text-gray-700 mb-2">Old Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Password *
+                </label>
                 <div className="relative">
                   <input
-                    type={showOldPassword ? "text" : "password"}
-                    name="oldPassword"
+                    type={showPasswords.oldPassword ? 'text' : 'password'}
                     value={passwordData.oldPassword}
-                    onChange={handlePasswordChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent pr-12"
-                    placeholder="Enter old password"
+                    onChange={(e) => handlePasswordChange('oldPassword', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                    placeholder="Enter your current password"
                     required
-                    disabled={loading}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    onClick={() => togglePasswordVisibility('oldPassword')}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    disabled={loading}
                   >
-                    {showOldPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPasswords.oldPassword ? (
+                      <EyeOffIcon className="w-5 h-5" />
+                    ) : (
+                      <EyeIcon className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
 
+              {/* New Password */}
               <div>
-                <label className="block font-semibold text-gray-700 mb-2">New Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Password *
+                </label>
                 <div className="relative">
                   <input
-                    type={showNewPassword ? "text" : "password"}
-                    name="newPassword"
+                    type={showPasswords.newPassword ? 'text' : 'password'}
                     value={passwordData.newPassword}
-                    onChange={handlePasswordChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent pr-12"
-                    placeholder="Enter new password"
+                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                    placeholder="Enter your new password"
                     required
-                    minLength={6}
-                    disabled={loading}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    onClick={() => togglePasswordVisibility('newPassword')}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    disabled={loading}
                   >
-                    {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPasswords.newPassword ? (
+                      <EyeOffIcon className="w-5 h-5" />
+                    ) : (
+                      <EyeIcon className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Password must be at least 6 characters long
+                </p>
               </div>
 
+              {/* Confirm Password */}
               <div>
-                <label className="block font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm New Password *
+                </label>
                 <div className="relative">
                   <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
+                    type={showPasswords.confirmPassword ? 'text' : 'password'}
                     value={passwordData.confirmPassword}
-                    onChange={handlePasswordChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent pr-12"
-                    placeholder="Confirm new password"
+                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                    placeholder="Confirm your new password"
                     required
-                    minLength={6}
-                    disabled={loading}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onClick={() => togglePasswordVisibility('confirmPassword')}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    disabled={loading}
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPasswords.confirmPassword ? (
+                      <EyeOffIcon className="w-5 h-5" />
+                    ) : (
+                      <EyeIcon className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
+                {passwordData.newPassword && passwordData.confirmPassword && 
+                 passwordData.newPassword !== passwordData.confirmPassword && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <AlertCircleIcon className="w-3 h-3" />
+                    Passwords do not match
+                  </p>
+                )}
+                {passwordData.newPassword && passwordData.confirmPassword && 
+                 passwordData.newPassword === passwordData.confirmPassword && (
+                  <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
+                    <CheckCircleIcon className="w-3 h-3" />
+                    Passwords match
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div className="flex gap-4 justify-end pt-6">
-              <button
-                type="button"
-                onClick={() => setShowPasswordForm(false)}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                <Lock className="w-5 h-5" />
-                {loading ? "Changing..." : "Change Password"}
-              </button>
-            </div>
-          </form>
+              {/* Form Actions */}
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors"
+                >
+                  {passwordLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <KeyIcon className="w-4 h-4" />
+                      Update Password
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelPasswordReset}
+                  className="px-6 py-3 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         )}
       </div>
     </div>
   );
 };
 
-export default ProfilePage;
+export default ClientProfile;

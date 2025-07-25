@@ -11,7 +11,7 @@ export const registerClientByAdmin = async (formData) => {
 // 2. Client Login
 export const loginClient = async ({ email, identifier, password }) => {
   const response = await api.post('/client/login', {
-        identifier: identifier || email, //  fallback logic
+    identifier: identifier || email, //  fallback logic
     password,
   });
   return response.data;
@@ -65,8 +65,11 @@ export const changeClientPassword = async (data) => {
   return response.data;
 };
 
-// 9. Reset Password (Requires login)
 export const resetClientPassword = async (data) => {
-  const response = await api.put('/client/reset-password', data);
-  return response.data;
+  try {
+    const response = await api.put('/client/reset-password', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
