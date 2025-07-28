@@ -357,35 +357,6 @@ export default function DailyUpdates() {
                 </div>
               </div>
             )}
-
-            {/* Additional Information */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900">Additional Information</h2>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
-                    <h3 className="font-semibold text-gray-900 mb-2">Update ID</h3>
-                    <p className="text-gray-700">#{selectedUpdate.id.toString().padStart(6, '0')}</p>
-                  </div>
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                    <h3 className="font-semibold text-gray-900 mb-2">Project Status</h3>
-                    <p className="text-gray-700 capitalize">{selectedUpdate.status.replace('-', ' ')}</p>
-                  </div>
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
-                    <h3 className="font-semibold text-gray-900 mb-2">Direct Link</h3>
-                    <p className="text-sm text-gray-700 break-all">
-                      {window.location.href}
-                    </p>
-                  </div>
-                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 border border-yellow-200">
-                    <h3 className="font-semibold text-gray-900 mb-2">Shareable</h3>
-                    <p className="text-gray-700">Copy URL to share this update</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 

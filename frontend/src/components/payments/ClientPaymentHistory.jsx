@@ -507,7 +507,7 @@ Contact: support@company.com | Phone: (555) 123-4567
             </div>
           </div>
 
-          <div className="bg-white p-3 md:p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+          {/* <div className="bg-white p-3 md:p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs md:text-sm font-medium text-gray-600">Last Visit</p>
@@ -519,7 +519,7 @@ Contact: support@company.com | Phone: (555) 123-4567
                 <Clock className="w-5 h-5 md:w-6 md:h-6 text-cyan-600" />
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Navigation Tabs */}

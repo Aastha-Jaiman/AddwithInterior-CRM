@@ -196,12 +196,12 @@ export default function SidebarLayout({ children }) {
       href: "/admin/daily-updates",
       icon: MessageSquareText,
     },
-    { name: "Reports", href: "/admin/reports", icon: Users },
-    { name: "Services", href: "/admin/services", icon: MessageSquareQuote },
+    // { name: "Reports", href: "/admin/reports", icon: Users },
+    // { name: "Services", href: "/admin/services", icon: MessageSquareQuote },
   ];
 
   const clientNavigationItems = [
-    { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
+    // { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
     { name: 'My Projects', href: '/client/projects', icon: ClipboardList },
     { name: 'Payments', href: '/client/payments', icon: ReceiptIndianRupee },
     { name: 'Quotations', href: '/client/quotation', icon: FileText },
