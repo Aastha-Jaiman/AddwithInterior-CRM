@@ -351,7 +351,7 @@ const ClientProfile = () => {
               {/* Current Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Password *
+                  Current Password * 
                 </label>
                 <div className="relative">
                   <input
