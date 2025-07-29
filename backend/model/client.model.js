@@ -44,11 +44,18 @@ const ClientSchema = new mongoose.Schema({
 ],
 
   profile: {
-    url: { type: String, required: true },
-    public_id: { type: String, required: true },
+    url: { type: String,},
+    public_id: { type: String,},
     initials: { type: String }
   },
-
+  aadharCardNumber: {
+      type: String,
+      match: [/^\d{12}$/, "Aadhar must be a 12-digit number"],
+    },
+    idProof: {
+      url: { type: String },
+      public_id: { type: String },
+    },
   password: {
     type: String,
     required: [true, "Password is required"],
@@ -65,21 +72,6 @@ const ClientSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Quotation",
   },
-
-  // messages: [
-  //   {
-  //     sender: {
-  //       type: String,
-  //       enum: ["admin", "client"],
-  //     },
-  //     text: String,
-  //     date: {
-  //       type: Date,
-  //       default: Date.now,
-  //     },
-  //   },
-  // ],
-
   isActive: {
     type: Boolean,
     default: true,
