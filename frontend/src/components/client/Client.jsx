@@ -27,6 +27,7 @@ const ClientManagementComponent = () => {
     try {
       setIsLoading(true);
       const response = await getAllClientsByAdmin();
+      console.log("Fetched clients:", response);
       const clientList = Array.isArray(response.client) ? response.client : [];
 
       const mappedClients = clientList.map(client => ({
