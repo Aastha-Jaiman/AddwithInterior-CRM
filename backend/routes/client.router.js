@@ -7,7 +7,11 @@ const authMiddleware = require('../middleware/allAuthmiddleware')
 const clientauthMiddleware = require('../middleware/clientAuthmiddleware')
 
 
-router.post('/add',adminauthMiddleware, authMiddleware, upload.single('profile'), registerClientByAdmin)
+router.post('/add',adminauthMiddleware, authMiddleware, 
+      upload.fields([
+    { name: "profile", maxCount: 1 },
+    { name: "idProof", maxCount: 1 }
+  ]), registerClientByAdmin)
 router.post('/login', loginClient )
 router.get('/profile',clientauthMiddleware , getProfile)
 router.get('/logout', clientauthMiddleware, logoutClient)

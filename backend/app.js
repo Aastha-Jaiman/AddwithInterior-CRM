@@ -24,10 +24,12 @@ app.get("/", (req, res) => {
 const adminRoute = require('./routes/admin.router');
 const clientRoute = require('./routes/client.router');
 const contactRoute = require('./routes/contact.router');
+const projectRoute = require('./routes/project.router')
 
-// console.log(userRoute)
 
 app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/client", clientRoute);
 app.use("/api/v1/contact", contactRoute);
+app.use("/api/v1/project", projectRoute)
+
 module.exports = app;

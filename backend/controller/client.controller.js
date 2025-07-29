@@ -6,102 +6,130 @@ const sendEmail = require('../utils/sendMail')
 
 
 exports.registerClientByAdmin = async (req, res) => {
-      try {
-            const { name, email, phone, password, address, project, quotation } = req.body;
-            const userRole = req.user.role;
+  try {
+    const {
+      name,
+      email,
+      phone,
+      password,
+      address,
+      project,
+      quotation,
+      aadharCardNumber,
+    } = req.body;
 
-            if (!["admin"].includes(userRole)) {
-                  return res.status(403).json({ success: false, message: "Access denied" });
-            }
+    const userRole = req.user?.role;
 
-            if (!name || !email || !password || !phone || !address) {
-                  return res.status(400).json({ message: "All fields are required." });
-            }
+    if (userRole !== "admin") {
+      return res.status(403).json({ message: "Only admin can create clients." });
+    }
 
-            const emailExists = await ClientModel.findOne({ email });
-            if (emailExists) return res.status(400).json({ message: "Email already exists." });
+    if (!name || !email || !password || !phone || !address) {
+      return res.status(400).json({ message: "All required fields must be filled." });
+    }
 
-            const phoneExists = await ClientModel.findOne({ phone });
-            if (phoneExists) return res.status(400).json({ message: "Phone number already exists." });
+    if (aadharCardNumber && !/^\d{12}$/.test(aadharCardNumber)) {
+      return res.status(400).json({ message: "Aadhar number must be exactly 12 digits." });
+    }
 
-            // Get initials from name
-            const firstLetter = name?.charAt(0)?.toUpperCase() || "U";
+    const [emailExists, phoneExists] = await Promise.all([
+      ClientModel.findOne({ email }),
+      ClientModel.findOne({ phone }),
+    ]);
 
-            let profileData = {
-                  url: `https://ui-avatars.com/api/?name=${firstLetter}&background=random&color=fff`,
-                  public_id: null,
-                  initials: firstLetter,
-            };
+    if (emailExists) {
+      return res.status(400).json({ message: "Email already exists." });
+    }
 
-            if (req.file) {
-                  const uploaded = await uploadOnCloudinary(req.file.path, "profile");
-                  if (!uploaded) {
-                        return res.status(500).json({ message: "Cloudinary upload failed." });
-                  }
+    if (phoneExists) {
+      return res.status(400).json({ message: "Phone number already exists." });
+    }
 
-                  profileData = {
-                        url: uploaded.secure_url,
-                        public_id: uploaded.public_id,
-                        initials: firstLetter,
-                  };
+    if (!req.files?.idProof) {
+      return res.status(400).json({ message: "ID proof image is required." });
+    }
 
-                  if (fs.existsSync(req.file.path)) {
-                        fs.unlinkSync(req.file.path);
-                  }
-            }
+    let profileData = {
+      url: null,
+      public_id: null,
+      initials: null,
+    };
 
-            let parsedAddress = address;
-            if (typeof address === "string") {
-                  parsedAddress = JSON.parse(address);
-            }
+    if (req.files?.profile) {
+      const profileUpload = await uploadOnCloudinary(req.files.profile[0].path, "client-profile");
+      profileData = {
+        url: profileUpload.secure_url,
+        public_id: profileUpload.public_id,
+        initials: name.trim()[0].toUpperCase(),
+      };
 
-            if (!Array.isArray(parsedAddress)) {
-                  return res.status(400).json({ message: "Address must be an array." });
-            }
-
-            for (const addr of parsedAddress) {
-                  if (
-                        !addr.addresstype ||
-                        !["home", "work", "other"].includes(addr.addresstype) ||
-                        !addr.addressinfo ||
-                        !addr.addressinfo.street ||
-                        !addr.addressinfo.city ||
-                        !addr.addressinfo.state ||
-                        !addr.addressinfo.country ||
-                        !addr.addressinfo.pincode
-                  ) {
-                        return res.status(400).json({ message: "Invalid address format." });
-                  }
-            }
-
-            const newClient = new ClientModel({
-                  name,
-                  email,
-                  password,
-                  phone,
-                  address: parsedAddress,
-                  profile: profileData,
-                  isActive: true,
-                  project: project || null,
-                  quotation: quotation || null,
-            });
-
-            await newClient.save();
-
-            res.status(201).json({
-                  message: "Client registered successfully.",
-                  client: {
-                        ...newClient.toObject(),
-                        password: undefined,
-                  },
-            });
-
-      } catch (error) {
-            console.error("Register error:", error);
-            res.status(500).json({ message: "Server error", error: error.message });
+      if (fs.existsSync(req.files.profile[0].path)) {
+        fs.unlinkSync(req.files.profile[0].path);
       }
-};
+    } else {
+      profileData = {
+        url: `https://ui-avatars.com/api/?name=${name.trim()[0].toUpperCase()}&background=random&color=fff`,
+        public_id: null,
+        initials: name.trim()[0].toUpperCase(),
+      };
+    }
 
+    const idProofUpload = await uploadOnCloudinary(req.files.idProof[0].path, "client-idproof");
+
+    if (fs.existsSync(req.files.idProof[0].path)) {
+      fs.unlinkSync(req.files.idProof[0].path);
+    }
+
+    let parsedAddress = address;
+    if (typeof address === "string") {
+      parsedAddress = JSON.parse(address);
+    }
+
+    if (!Array.isArray(parsedAddress)) {
+      return res.status(400).json({ message: "Address must be an array." });
+    }
+
+    for (const addr of parsedAddress) {
+      const info = addr.addressinfo;
+      if (
+        !addr.addresstype || !["home", "work", "other"].includes(addr.addresstype) ||
+        !info || !info.street || !info.city || !info.state || !info.country || !info.pincode
+      ) {
+        return res.status(400).json({ message: "Invalid address format." });
+      }
+    }
+
+    const newClient = new ClientModel({
+      name,
+      email,
+      phone,
+      password,
+      aadharCardNumber: aadharCardNumber || null,
+      address: parsedAddress,
+      profile: profileData,
+      idProof: {
+        url: idProofUpload.secure_url,
+        public_id: idProofUpload.public_id,
+      },
+      project: project || null,
+      quotation: quotation || null,
+      isActive: true,
+    });
+
+    await newClient.save();
+
+    res.status(200).json({
+      message: "Client registered successfully.",
+      client: {
+        ...newClient.toObject(),
+        password: undefined,
+      },
+    });
+  } catch (error) {
+    console.error("Error registering client:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
 
 exports.loginClient = async (req, res) => {
   try {
@@ -206,113 +234,125 @@ exports.logoutClient = async (req, res) => {
 }
 
 exports.updateClientByAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userRole = req.user?.role;
+
+    if (userRole !== "admin") {
+      return res.status(403).json({ message: "Only admin can update clients." });
+    }
+
+    const {
+      name,
+      email,
+      phone,
+      address,
+      project,
+      quotation,
+      aadharCardNumber,
+      isActive,
+    } = req.body;
+
+    if (!name || !email || !phone || !address) {
+      return res.status(400).json({ message: "All required fields must be filled." });
+    }
+
+    if (aadharCardNumber && !/^\d{12}$/.test(aadharCardNumber)) {
+      return res.status(400).json({ message: "Aadhar number must be exactly 12 digits." });
+    }
+
+    const [emailExists, phoneExists] = await Promise.all([
+      ClientModel.findOne({ email, _id: { $ne: id } }),
+      ClientModel.findOne({ phone, _id: { $ne: id } }),
+    ]);
+
+    if (emailExists) {
+      return res.status(400).json({ message: "Email already exists." });
+    }
+
+    if (phoneExists) {
+      return res.status(400).json({ message: "Phone number already exists." });
+    }
+
+    // Parse address
+    let parsedAddress = address;
+    if (typeof address === "string") {
       try {
-            const { id } = req.params;
-            const userRole = req.user.role;
-
-            if (!["admin"].includes(userRole)) {
-                  return res.status(403).json({ success: false, message: "Access denied" });
-            }
-
-            const {
-                  name,
-                  email,
-                  phone,
-                  address,
-                  project,
-                  quotation,
-                  isActive
-            } = req.body;
-
-            const existEmail = await ClientModel.findOne({ email, _id: { $ne: id } });
-            if (existEmail) {
-                  return res.status(400).json({ message: "Email already exists." });
-            }
-
-            const existPhone = await ClientModel.findOne({ phone, _id: { $ne: id } });
-            if (existPhone) {
-                  return res.status(400).json({ message: "Phone number already exists." });
-            }
-
-
-            const updatedData = {
-                  name,
-                  email,
-                  phone,
-                  project,
-                  quotation,
-                  isActive,
-            };
-
-            let parsedAddress = address;
-
-            if (typeof address === "string") {
-                  try {
-                        parsedAddress = JSON.parse(address);
-                  } catch (err) {
-                        return res.status(400).json({ message: "Invalid address JSON." });
-                  }
-            }
-
-            if (parsedAddress && !Array.isArray(parsedAddress)) {
-                  return res.status(400).json({ message: "Address must be an array." });
-            }
-
-            if (Array.isArray(parsedAddress)) {
-                  for (const addr of parsedAddress) {
-                        if (
-                              !addr.addresstype ||
-                              !["home", "work", "other"].includes(addr.addresstype) ||
-                              !addr.addressinfo ||
-                              !addr.addressinfo.street ||
-                              !addr.addressinfo.city ||
-                              !addr.addressinfo.state ||
-                              !addr.addressinfo.country ||
-                              !addr.addressinfo.pincode
-                        ) {
-                              return res.status(400).json({ message: "Invalid address format." });
-                        }
-                  }
-
-                  updatedData.address = parsedAddress;
-            }
-
-            if (req.file) {
-                  const uploaded = await uploadOnCloudinary(req.file.path, "profile");
-
-                  if (!uploaded) {
-                        return res.status(500).json({ message: "Image upload failed." });
-                  }
-
-                  updatedData.profile = {
-                        url: uploaded.secure_url,
-                        public_id: uploaded.public_id,
-                  };
-
-                  if (fs.existsSync(req.file.path)) {
-                        fs.unlinkSync(req.file.path);
-                  }
-            }
-
-            const updatedClient = await ClientModel.findByIdAndUpdate(id, updatedData, {
-                  new: true,
-                  runValidators: true,
-                  select: "-password -__v",
-            });
-
-            if (!updatedClient) {
-                  return res.status(404).json({ message: "Client not found." });
-            }
-
-            res.status(200).json({
-                  success: true,
-                  message: "Client profile updated successfully.",
-                  client: updatedClient,
-            });
-      } catch (error) {
-            console.error("Update error:", error);
-            res.status(500).json({ message: "Server error", error: error.message });
+        parsedAddress = JSON.parse(address);
+      } catch (err) {
+        return res.status(400).json({ message: "Invalid address JSON format." });
       }
+    }
+
+    if (!Array.isArray(parsedAddress)) {
+      return res.status(400).json({ message: "Address must be an array." });
+    }
+
+    for (const addr of parsedAddress) {
+      const info = addr.addressinfo;
+      if (
+        !addr.addresstype ||
+        !["home", "work", "other"].includes(addr.addresstype) ||
+        !info ||
+        !info.street ||
+        !info.city ||
+        !info.state ||
+        !info.country ||
+        !info.pincode
+      ) {
+        return res.status(400).json({ message: "Invalid address format." });
+      }
+    }
+
+    // Prepare updated data
+    const updatedData = {
+      name,
+      email,
+      phone,
+      address: parsedAddress,
+      project: project || null,
+      quotation: quotation || null,
+      aadharCardNumber: aadharCardNumber || null,
+      isActive: isActive !== undefined ? isActive : true,
+    };
+
+    // Profile image handling (single file expected as req.file)
+    if (req.file) {
+      const uploaded = await uploadOnCloudinary(req.file.path, "client-profile");
+
+      if (!uploaded) {
+        return res.status(500).json({ message: "Image upload failed." });
+      }
+
+      updatedData.profile = {
+        url: uploaded.secure_url,
+        public_id: uploaded.public_id,
+        initials: name.trim()[0].toUpperCase(),
+      };
+
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+    }
+
+    const updatedClient = await ClientModel.findByIdAndUpdate(id, updatedData, {
+      new: true,
+      runValidators: true,
+      select: "-password -__v",
+    });
+
+    if (!updatedClient) {
+      return res.status(404).json({ message: "Client not found." });
+    }
+
+    res.status(200).json({
+      message: "Client updated successfully.",
+      client: updatedClient,
+    });
+  } catch (error) {
+    console.error("Error updating client:", error);
+    res.status(500).json({ message: "Internal server error.", error: error.message });
+  }
 };
 
 exports.getAllClientByAdmin = async (req, res) => {

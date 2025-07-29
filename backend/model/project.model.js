@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 
 const ProjectSchema = new mongoose.Schema(
   {
- 
     title: {
       type: String,
       required: [true, "Project title is required"],
@@ -12,11 +11,15 @@ const ProjectSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-
+    category: {
+      type: String,
+      enum: ["modular_Kitchen", "inPlace_Furniture"],
+      required: [true, "Category is required"],
+    },
     status: {
       type: String,
-      enum: ["Pending", "Active", "In-Process" ,"Completed"],
-      default: "Pending",
+      enum: ["Active", "In-Process" ,"Completed"],
+      default: "Active",
     },
 
     client: {

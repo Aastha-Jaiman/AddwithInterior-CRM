@@ -1,5 +1,4 @@
 const AdminModel = require("../model/admin.model");
-// const ClientModel = require("../model/client.model")
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const fs = require("fs");
 const Jwt = require('jsonwebtoken')
@@ -67,45 +66,76 @@ exports.createAdmin = async (req, res) => {
 
 exports.registerStaffByAdmin = async (req, res) => {
   try {
-    const { name, email, password, phone, address, role, permission } = req.body;
+    const {
+      name,
+      email,
+      password,
+      phone,
+      secondaryPhone,
+      aadhaarNumber,
+      address,
+      role,
+      permission,
+    } = req.body;
 
-    const creator = req.user;
+    const userRole = req.user?.role;
 
-    if (!creator || !["admin"].includes(creator.role)) {
-      return res.status(403).json({ message: "Only admin  can create staff." });
+    if (userRole !== "admin") {
+      return res.status(403).json({ message: "Only admin can create staff." });
     }
 
-    if (!name || !email || !password || !phone || !address || !role) {
-      return res.status(400).json({ message: "All fields are required" });
+    if (!name || !email || !password || !phone || !address || !role || !aadhaarNumber) {
+      return res.status(400).json({ message: "All required fields must be filled." });
+    }
+
+     if (!/^\d{12}$/.test(aadhaarNumber)) {
+      return res.status(400).json({ message: "Aadhaar number must be exactly 12 digits." });
     }
 
     if (role === "admin") {
-      return res.status(400).json({ message: "You cannot create another admin" });
+      return res.status(400).json({ message: "You cannot create another admin." });
     }
 
     const emailExists = await AdminModel.findOne({ email });
     if (emailExists) {
-      return res.status(400).json({ message: "Email already exists" });
+      return res.status(400).json({ message: "Email already exists." });
     }
 
     const phoneExists = await AdminModel.findOne({ phone });
     if (phoneExists) {
-      return res.status(400).json({ message: "Phone number already exists" });
+      return res.status(400).json({ message: "Phone number already exists." });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ message: "Profile image is required" });
+    if (!req.files?.idProof) {
+      return res.status(400).json({ message: "ID proof image is required." });
     }
 
-    const uploaded = await uploadOnCloudinary(req.file.path, "profile");
-
-    const profiledata = {
-      url: uploaded.secure_url,
-      public_id: uploaded.public_id,
+    let profileData = {
+      url: null,
+      public_id: null,
     };
 
-    if (fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+    if (req.files?.profile) {
+      const profileUpload = await uploadOnCloudinary(req.files.profile[0].path, "profile");
+      profileData = {
+        url: profileUpload.secure_url,
+        public_id: profileUpload.public_id,
+      };
+      if (fs.existsSync(req.files.profile[0].path)) {
+        fs.unlinkSync(req.files.profile[0].path);
+      }
+    } else {
+      const firstLetter = name.trim()[0].toUpperCase();
+      profileData = {
+        url: firstLetter,
+        public_id: null,
+      };
+    }
+
+    const idProofUpload = await uploadOnCloudinary(req.files.idProof[0].path, "idProof");
+
+    if (fs.existsSync(req.files.idProof[0].path)) {
+      fs.unlinkSync(req.files.idProof[0].path);
     }
 
     let finalPermissions = permission;
@@ -118,9 +148,15 @@ exports.registerStaffByAdmin = async (req, res) => {
       email,
       password,
       phone,
+      secondaryPhone: secondaryPhone || null,
+      aadhaarNumber,
       address,
       role,
-      profile: profiledata,
+      profile: profileData,
+      uploadIdProof: {
+        url: idProofUpload.secure_url,
+        public_id: idProofUpload.public_id,
+      },
       permission: finalPermissions,
       isVerified: true,
       isactive: true,
@@ -129,17 +165,18 @@ exports.registerStaffByAdmin = async (req, res) => {
     await newStaff.save();
 
     res.status(200).json({
-      message: "Staff registered successfully. Awaiting verification.",
+      message: "Staff registered successfully.",
       staff: newStaff,
     });
   } catch (error) {
     console.error("Error registering staff:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error." });
   }
 };
 
 exports.login = async (req, res) => {
   try {
+    // console.log("dfghjkl")
     const { identifier, password } = req.body;
 
     if (!identifier || !password) {
@@ -245,70 +282,45 @@ exports.getStaffById = async (req, res) => {
   }
 };
 
-
 exports.updateStaffByAdmin = async (req, res) => {
   try {
-
     const { id } = req.params;
-    const userRole = req.user.role;
-
-    if (!["admin"].includes(userRole)) {
-      return res.status(403).json({ success: false, message: "Access denied" });
-    }
-
-    console.log(req.body, "data")
 
     const {
       name,
       email,
       phone,
+      secondaryPhone,
       address,
       role,
       permission,
       isVerified,
-      isactive
+      isactive,
     } = req.body;
 
-
-
-    const existEmail = await AdminModel.findOne({ email, _id: { $ne: id } })
+    const existEmail = await AdminModel.findOne({ email, _id: { $ne: id } });
     if (existEmail) {
-      return res.status(400).json({ message: "Email is already exist." })
+      return res.status(400).json({ message: "Email already exists." });
     }
 
-    const existphone = await AdminModel.findOne({ phone, _id: { $ne: id } })
-    if (existphone) {
-      return res.status(400).json({ message: "phone is already exist." })
+    const existPhone = await AdminModel.findOne({ phone, _id: { $ne: id } });
+    if (existPhone) {
+      return res.status(400).json({ message: "Phone already exists." });
     }
 
     const updateData = {
       name,
       email,
       phone,
+      secondaryPhone,
       address,
       role,
-      permission: Array.isArray(permission) ? permission : [permission],
       isVerified,
-      isactive
-    }
+      isactive,
+    };
 
-
-
-    if (role === "employee" && permission) {
-      updateData.permission = Array.isArray(permission)
-        ? permission
-        : [permission];
-    }
-
-    if (req.file) {
-      const uploaded = await uploadOnCloudinary(req.file.path, "profile");
-      updateData.profile = {
-        url: uploaded.secure_url,
-        public_id: uploaded.public_id,
-      };
-      if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
+    if (permission !== undefined) {
+      updateData.permission = Array.isArray(permission) ? permission : [permission];
     }
 
     const updatedUser = await AdminModel.findByIdAndUpdate(id, updateData, {
@@ -317,25 +329,25 @@ exports.updateStaffByAdmin = async (req, res) => {
       select: "-password -__v",
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Staff profile updated successfully",
       user: updatedUser,
     });
-
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-
+    console.error("Update Error:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
-}
+};
 
 exports.updateMyProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
-
     const { name, address, email, phone } = req.body;
-
     const updateData = {};
 
     if (["designer", "carpenter", "salesperson"].includes(userRole)) {
@@ -344,7 +356,6 @@ exports.updateMyProfile = async (req, res) => {
           message: "You can only update your name, address, and profile picture.",
         });
       }
-    
       if (name) updateData.name = name;
       if (address) updateData.address = address;
     }
@@ -380,11 +391,9 @@ exports.updateMyProfile = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Profile update error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 exports.logout = async (req, res) => {
   try {
