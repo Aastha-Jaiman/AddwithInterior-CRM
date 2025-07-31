@@ -124,13 +124,10 @@ export const createAdmin = async (formData) => {
 
 // 2. Register Staff (by Admin)
 export const registerStaffByAdmin = async (formData) => {
-  const res = await api.post('/admin/add', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const res = await api.post('/admin/add', formData);
   return res.data;
 };
+
 
 // 3. Login (Admin/Staff)
 export const loginAdmin = async ({ email, identifier, password }) => {
@@ -182,11 +179,7 @@ export const updateStaffByAdmin = async (id, formData) => {
 
 // 9. Update Own Profile (Admin or Staff)
 export const updateMyProfileService = async (formData) => {
-  const res = await api.put('/admin/user', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const res = await api.put('/admin/user', formData);
   return res.data;
 };
 
