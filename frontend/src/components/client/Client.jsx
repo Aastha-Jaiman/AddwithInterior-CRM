@@ -94,11 +94,11 @@ const ClientManagementComponent = () => {
       Array.isArray(client.address) && client.address[0]
         ? client.address[0]
         : {
-            addresstype: "home",
-            addressinfo: {
-              street: "", city: "", state: "", country: "", pincode: ""
-            }
-          };
+          addresstype: "home",
+          addressinfo: {
+            street: "", city: "", state: "", country: "", pincode: ""
+          }
+        };
 
     setEditFormData({
       name: client.name,
@@ -336,12 +336,12 @@ const ClientManagementComponent = () => {
                       <span>Contact</span>
                     </div>
                   </th>
-                  <th className="px-6 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                  {/* <th className="px-6 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                     <div className="flex items-center space-x-2">
                       <Activity className="w-5 h-5 text-blue-600" />
                       <span>Status</span>
                     </div>
-                  </th>
+                  </th> */}
                   <th className="px-6 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-5 h-5 text-blue-600" />
@@ -400,9 +400,8 @@ const ClientManagementComponent = () => {
                 {filteredClients.map((client, index) => (
                   <React.Fragment key={client.id}>
                     <tr
-                      className={`hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 ${
-                        index % 2 === 0 ? 'bg-gray-25' : 'bg-white'
-                      }`}
+                      className={`hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 ${index % 2 === 0 ? 'bg-gray-25' : 'bg-white'
+                        }`}
                     >
                       <td className="px-6 py-5">
                         <div className="flex items-center space-x-4">
@@ -419,9 +418,8 @@ const ClientManagementComponent = () => {
                               )}
                             </div>
                             <div
-                              className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${
-                                client.isActive ? 'bg-green-400' : 'bg-gray-400'
-                              }`}
+                              className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${client.isActive ? 'bg-green-400' : 'bg-gray-400'
+                                }`}
                             ></div>
                           </div>
                           <div>
@@ -446,7 +444,7 @@ const ClientManagementComponent = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-5 whitespace-nowrap">
+                      {/* <td className="px-6 py-5 whitespace-nowrap">
                         <button
                           onClick={() => handleToggleActive(client)}
                           className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold cursor-pointer transition-all duration-300 transform hover:scale-105 shadow-md ${
@@ -459,7 +457,7 @@ const ClientManagementComponent = () => {
                           <div className={`w-2 h-2 rounded-full mr-2 ${client.isActive ? 'bg-white' : 'bg-gray-100'}`}></div>
                           {client.isActive ? "Active" : "Inactive"}
                         </button>
-                      </td>
+                      </td> */}
                       <td className="px-6 py-5 text-gray-600 font-medium">
                         {client.createdAt ? new Date(client.createdAt).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -570,84 +568,7 @@ const ClientManagementComponent = () => {
                                   />
                                 </div>
 
-                                {/* Address Type */}
-                                <div className="group">
-                                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                                    <MapPin className="w-5 h-5 inline mr-2 text-blue-600" />
-                                    Address Type
-                                  </label>
-                                  <select
-                                    value={editFormData.addresstype}
-                                    onChange={e => handleInputChange("addresstype", e.target.value)}
-                                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all mb-4"
-                                  >
-                                    <option value="home">Home</option>
-                                    <option value="work">Work</option>
-                                    <option value="other">Other</option>
-                                  </select>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <input
-                                      type="text"
-                                      value={editFormData.addressinfo.street}
-                                      onChange={e =>
-                                        handleInputChange("addressinfo", {
-                                          ...editFormData.addressinfo,
-                                          street: e.target.value,
-                                        })
-                                      }
-                                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
-                                      placeholder="Street"
-                                    />
-                                    <input
-                                      type="text"
-                                      value={editFormData.addressinfo.city}
-                                      onChange={e =>
-                                        handleInputChange("addressinfo", {
-                                          ...editFormData.addressinfo,
-                                          city: e.target.value,
-                                        })
-                                      }
-                                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
-                                      placeholder="City"
-                                    />
-                                    <input
-                                      type="text"
-                                      value={editFormData.addressinfo.state}
-                                      onChange={e =>
-                                        handleInputChange("addressinfo", {
-                                          ...editFormData.addressinfo,
-                                          state: e.target.value,
-                                        })
-                                      }
-                                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
-                                      placeholder="State"
-                                    />
-                                    <input
-                                      type="text"
-                                      value={editFormData.addressinfo.country}
-                                      onChange={e =>
-                                        handleInputChange("addressinfo", {
-                                          ...editFormData.addressinfo,
-                                          country: e.target.value,
-                                        })
-                                      }
-                                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
-                                      placeholder="Country"
-                                    />
-                                    <input
-                                      type="text"
-                                      value={editFormData.addressinfo.pincode}
-                                      onChange={e =>
-                                        handleInputChange("addressinfo", {
-                                          ...editFormData.addressinfo,
-                                          pincode: e.target.value,
-                                        })
-                                      }
-                                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
-                                      placeholder="Pincode"
-                                    />
-                                  </div>
-                                </div>
+
                               </div>
 
                               {/* Right column */}
@@ -683,7 +604,7 @@ const ClientManagementComponent = () => {
                                 </div>
 
                                 {/* ID Proof Upload */}
-                                <div className="group">
+                                {/* <div className="group">
                                   <label className="block text-sm font-bold text-gray-700 mb-2">
                                     <Shield className="w-5 h-5 inline mr-2 text-blue-600" />
                                     Upload ID Proof
@@ -694,7 +615,7 @@ const ClientManagementComponent = () => {
                                     onChange={e => handleInputChange('idProof', e.target.files[0])}
                                     className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200"
                                   />
-                                </div>
+                                </div> */}
 
                                 {/* Active Toggle */}
                                 <div className="group pt-4">
@@ -712,8 +633,88 @@ const ClientManagementComponent = () => {
                                   </label>
                                 </div>
                               </div>
+
+                              {/* Address Type */}
+
                             </div>
 
+                            <div className="group">
+                              <label className="block text-sm font-bold text-gray-700 mb-2">
+                                <MapPin className="w-5 h-5 inline mr-2 text-blue-600" />
+                                Address Type
+                              </label>
+                              <select
+                                value={editFormData.addresstype}
+                                onChange={e => handleInputChange("addresstype", e.target.value)}
+                                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all mb-4"
+                              >
+                                <option value="home">Home</option>
+                                <option value="work">Work</option>
+                                <option value="other">Other</option>
+                              </select>
+                              <div className="grid grid-cols-2 gap-4">
+                                <input
+                                  type="text"
+                                  value={editFormData.addressinfo.street}
+                                  onChange={e =>
+                                    handleInputChange("addressinfo", {
+                                      ...editFormData.addressinfo,
+                                      street: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
+                                  placeholder="Street"
+                                />
+                                <input
+                                  type="text"
+                                  value={editFormData.addressinfo.city}
+                                  onChange={e =>
+                                    handleInputChange("addressinfo", {
+                                      ...editFormData.addressinfo,
+                                      city: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
+                                  placeholder="City"
+                                />
+                                <input
+                                  type="text"
+                                  value={editFormData.addressinfo.state}
+                                  onChange={e =>
+                                    handleInputChange("addressinfo", {
+                                      ...editFormData.addressinfo,
+                                      state: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
+                                  placeholder="State"
+                                />
+                                <input
+                                  type="text"
+                                  value={editFormData.addressinfo.country}
+                                  onChange={e =>
+                                    handleInputChange("addressinfo", {
+                                      ...editFormData.addressinfo,
+                                      country: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
+                                  placeholder="Country"
+                                />
+                                <input
+                                  type="text"
+                                  value={editFormData.addressinfo.pincode}
+                                  onChange={e =>
+                                    handleInputChange("addressinfo", {
+                                      ...editFormData.addressinfo,
+                                      pincode: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 group-hover:border-gray-300"
+                                  placeholder="Pincode"
+                                />
+                              </div>
+                            </div>
                             {/* Action Buttons */}
                             <div className="flex justify-end pt-6 border-t border-gray-200 space-x-4">
                               <button

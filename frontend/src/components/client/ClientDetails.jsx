@@ -20,7 +20,7 @@ const ClientDetailsPage = () => {
 
   // Edit form state
   const [editFormData, setEditFormData] = useState({
-    name: '', email: '', phone: '', project: '', quotation: ''
+    name: '', email: '', phone: '', aadharCardNumber: '',
   });
   const [editAddresses, setEditAddresses] = useState([]);
   const [editProfileFile, setEditProfileFile] = useState(null);
@@ -50,7 +50,7 @@ const ClientDetailsPage = () => {
     try {
       const formData = new FormData();
       formData.append('isActive', !client.isActive);
-      
+
       await updateClientByAdmin(id, formData);
       setClient(prev => ({ ...prev, isActive: !prev.isActive }));
     } catch (err) {
@@ -66,15 +66,14 @@ const ClientDetailsPage = () => {
       name: client.name || '',
       email: client.email || '',
       phone: client.phone || '',
-      project: client.project || '',
-      quotation: client.quotation || ''
+      aadharCardNumber: client.aadharCardNumber || '',
     });
-    
+
     setEditAddresses(client.address?.length > 0 ? client.address : [{
       addresstype: 'home',
       addressinfo: { street: '', city: '', state: '', country: '', pincode: '' }
     }]);
-    
+
     setEditPreviewUrl(client.profile?.url || null);
     setEditErrors({});
     setShowEditForm(true);
@@ -140,6 +139,8 @@ const ClientDetailsPage = () => {
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^[0-9]{10,15}$/;
+    const aadharCardNumberRegex = /^[0-9]{12}$/;
+
 
     if (!editFormData.name.trim()) newErrors.name = 'Name is required';
     if (!editFormData.email.trim()) newErrors.email = 'Email is required';
@@ -147,6 +148,11 @@ const ClientDetailsPage = () => {
 
     if (!editFormData.phone.trim()) newErrors.phone = 'Phone is required';
     else if (!phoneRegex.test(editFormData.phone)) newErrors.phone = 'Invalid phone';
+
+    if (!editFormData.aadharCardNumber.trim()) { newErrors.aadharCardNumber = 'Aadhar is required'; }
+    else if (!aadharCardNumberRegex.test(editFormData.aadharCardNumber)) {
+      newErrors.aadharCardNumber = 'Aadhar must be exactly 12 digits';
+    }
 
 
     editAddresses.forEach((addr, i) => {
@@ -172,7 +178,7 @@ const ClientDetailsPage = () => {
     setUpdating(true);
     try {
       const formDataToSend = new FormData();
-      
+
       Object.entries(editFormData).forEach(([key, val]) => {
         if (val.trim()) {
           formDataToSend.append(key, val);
@@ -183,7 +189,7 @@ const ClientDetailsPage = () => {
       if (editProfileFile) formDataToSend.append('profile', editProfileFile);
 
       await updateClientByAdmin(id, formDataToSend);
-      
+
       await fetchClientDetails(id);
       setShowEditForm(false);
       alert('Client updated successfully');
@@ -214,7 +220,7 @@ const ClientDetailsPage = () => {
     );
   }
 
-if (error) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4">
@@ -269,9 +275,8 @@ if (error) {
                       <User className="w-8 h-8 text-white" />
                     </div>
                   )}
-                  <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${
-                    client.isActive ? 'bg-green-500' : 'bg-red-500'
-                  }`}>
+                  <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center ${client.isActive ? 'bg-green-500' : 'bg-red-500'
+                    }`}>
                     {client.isActive ? (
                       <Shield className="w-3 h-3 text-white" />
                     ) : (
@@ -283,11 +288,10 @@ if (error) {
                   <h1 className="text-3xl font-bold text-white">{client.name}</h1>
                   <p className="text-blue-100 text-lg">{client.role || "Client"}</p>
                   <div className="flex items-center mt-2 space-x-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      client.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${client.isActive
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                      }`}>
                       {client.isActive ? 'Active' : 'Inactive'}
                     </span>
                     <span className="text-blue-100 text-sm flex items-center">
@@ -301,11 +305,10 @@ if (error) {
                 <button
                   onClick={toggleClientStatus}
                   disabled={togglingStatus}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
-                    client.isActive
-                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                      : 'bg-green-100 text-green-700 hover:bg-green-200'
-                  } disabled:opacity-50`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${client.isActive
+                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                    } disabled:opacity-50`}
                 >
                   {togglingStatus ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
@@ -413,9 +416,8 @@ if (error) {
                       name="name"
                       value={editFormData.name}
                       onChange={handleEditInputChange}
-                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        editErrors.name ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${editErrors.name ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="Enter full name"
                     />
                     {editErrors.name && <p className="text-red-500 text-sm mt-1">{editErrors.name}</p>}
@@ -431,9 +433,8 @@ if (error) {
                       name="email"
                       value={editFormData.email}
                       onChange={handleEditInputChange}
-                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        editErrors.email ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${editErrors.email ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="Enter email address"
                     />
                     {editErrors.email && <p className="text-red-500 text-sm mt-1">{editErrors.email}</p>}
@@ -449,14 +450,32 @@ if (error) {
                       name="phone"
                       value={editFormData.phone}
                       onChange={handleEditInputChange}
-                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        editErrors.phone ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${editErrors.phone ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       placeholder="Enter phone number"
                     />
                     {editErrors.phone && <p className="text-red-500 text-sm mt-1">{editErrors.phone}</p>}
                   </div>
 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Phone className="inline mr-1" size={16} />
+                      Aadhar Number *
+                    </label>
+                    <input
+                      type="text"
+                      name="aadharCardNumber"
+                      value={editFormData.aadharCardNumber}
+                      onChange={handleEditInputChange}
+                      maxLength={12}
+                      pattern="\d{12}"
+                      inputMode="numeric"
+                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${editErrors.aadharCardNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      placeholder="Enter 12-digit Aadhar number"
+                    />
+                    {editErrors.aadharCardNumber && <p className="text-red-500 text-sm mt-1">{editErrors.aadharCardNumber}</p>}
+                  </div>
                 </div>
               </div>
 
@@ -516,9 +535,8 @@ if (error) {
                           type="text"
                           value={address.addressinfo.street}
                           onChange={(e) => handleEditAddressChange(index, 'street', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            editErrors[`address_${index}_street`] ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${editErrors[`address_${index}_street`] ? 'border-red-500' : 'border-gray-300'
+                            }`}
                           placeholder="Enter street address"
                         />
                         {editErrors[`address_${index}_street`] && (
@@ -534,9 +552,8 @@ if (error) {
                           type="text"
                           value={address.addressinfo.city}
                           onChange={(e) => handleEditAddressChange(index, 'city', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            editErrors[`address_${index}_city`] ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${editErrors[`address_${index}_city`] ? 'border-red-500' : 'border-gray-300'
+                            }`}
                           placeholder="Enter city"
                         />
                         {editErrors[`address_${index}_city`] && (
@@ -552,9 +569,8 @@ if (error) {
                           type="text"
                           value={address.addressinfo.state}
                           onChange={(e) => handleEditAddressChange(index, 'state', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            editErrors[`address_${index}_state`] ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${editErrors[`address_${index}_state`] ? 'border-red-500' : 'border-gray-300'
+                            }`}
                           placeholder="Enter state"
                         />
                         {editErrors[`address_${index}_state`] && (
@@ -570,9 +586,8 @@ if (error) {
                           type="text"
                           value={address.addressinfo.country}
                           onChange={(e) => handleEditAddressChange(index, 'country', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            editErrors[`address_${index}_country`] ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${editErrors[`address_${index}_country`] ? 'border-red-500' : 'border-gray-300'
+                            }`}
                           placeholder="Enter country"
                         />
                         {editErrors[`address_${index}_country`] && (
@@ -588,9 +603,8 @@ if (error) {
                           type="text"
                           value={address.addressinfo.pincode}
                           onChange={(e) => handleEditAddressChange(index, 'pincode', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            editErrors[`address_${index}_pincode`] ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${editErrors[`address_${index}_pincode`] ? 'border-red-500' : 'border-gray-300'
+                            }`}
                           placeholder="Enter pincode"
                         />
                         {editErrors[`address_${index}_pincode`] && (
@@ -756,11 +770,10 @@ if (error) {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <span className="text-gray-600">Status</span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      client.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${client.isActive
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                      }`}>
                       {client.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
