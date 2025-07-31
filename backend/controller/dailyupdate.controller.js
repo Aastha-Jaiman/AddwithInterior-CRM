@@ -1,4 +1,4 @@
-const UpdateModel = require("../model/update.model");
+const UpdateModel = require("../model/dailyupdate.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const fs = require("fs");
 const Jwt = require('jsonwebtoken')
@@ -17,7 +17,7 @@ exports.addUpdates = async (req, res) => {
 
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        const result = await cloudinary.uploader.upload(file.path, {
+        const result = await uploadOnCloudinary(file.path, {
           folder: "updates",
         });
 

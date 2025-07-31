@@ -16,7 +16,12 @@ const clientauthMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: "User not found." });
     }
 
-    req.user = user;
+    req.user = {
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      role: "client",
+    };
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token", error: err.message });
