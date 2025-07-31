@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Edit, Trash2, Save, User, Shield, Phone, Mail, MapPin, UserCheck, UserX, Filter, RefreshCw } from 'lucide-react';
+import { Search, Eye, Phone, Mail, MapPin, UserCheck, UserX, Filter, RefreshCw, User, Grid3X3, List, User2 } from 'lucide-react';
 import { getAllStaff, updateStaffByAdmin } from '@/services/admin.services';
 import Link from 'next/link';
 
@@ -8,10 +8,9 @@ const UserManagementComponent = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
-  const [editingUserId, setEditingUserId] = useState(null);
-  const [editingUser, setEditingUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
 
   const roles = ['carpenter', 'designer', 'salesperson'];
 
@@ -20,7 +19,6 @@ const UserManagementComponent = () => {
       try {
         setIsLoading(true);
         const response = await getAllStaff();
-        console.log("response", response)
         const staffData = Array.isArray(response.staff) ? response.staff.map(staff => ({
           id: staff._id || '',
           name: staff.name || '',
@@ -61,62 +59,6 @@ const UserManagementComponent = () => {
     });
   }, [users, searchTerm, selectedRole]);
 
-  const handleEdit = (user) => {
-    setEditingUserId(user.id);
-    setEditingUser({ ...user });
-  };
-
-  const handleSave = async () => {
-    if (!editingUser) {
-      setError('No user data to update');
-      return;
-    }
-
-    if (!editingUser.name || !editingUser.email || !editingUser.role) {
-      setError('Name, email, and role are required');
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('name', editingUser.name.trim());
-      formData.append('email', editingUser.email.trim());
-      formData.append('phone', editingUser.phone ? editingUser.phone.trim() : '');
-      formData.append('secondaryPhone', editingUser.secondaryPhone ? editingUser.secondaryPhone.trim() : '');
-      formData.append('address', editingUser.address ? editingUser.address.trim() : '');
-      formData.append('role', editingUser.role.trim());
-      formData.append('aadhaarNumber', editingUser.aadhaarNumber ? editingUser.aadhaarNumber.trim() : '');
-
-      const updatedUser = await updateStaffByAdmin(editingUser.id, formData);
-
-      if (!updatedUser) {
-        throw new Error('No response from updateStaffByAdmin');
-      }
-
-      const mappedUpdatedUser = {
-        ...editingUser,
-        id: updatedUser._id || editingUser.id,
-        name: updatedUser.name || editingUser.name,
-        email: updatedUser.email || editingUser.email,
-        phone: updatedUser.phone || editingUser.phone,
-        secondaryPhone: updatedUser.secondaryPhone || editingUser.secondaryPhone,
-        address: updatedUser.address || editingUser.address,
-        role: updatedUser.role || editingUser.role,
-        aadhaarNumber: updatedUser.aadhaarNumber || editingUser.aadhaarNumber,
-        avatar: updatedUser.profile?.url || editingUser.avatar || '👤'
-      };
-
-      setUsers(users.map(user => user.id === editingUser.id ? mappedUpdatedUser : user));
-      setEditingUserId(null);
-      setEditingUser(null);
-      setError(null);
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to update user';
-      setError(`Failed to update user: ${errorMessage}`);
-      console.error('Update user error:', err);
-    }
-  };
-
   const handleToggleActive = async (user) => {
     try {
       const formData = new FormData();
@@ -132,19 +74,9 @@ const UserManagementComponent = () => {
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setEditingUser(prev => ({ ...prev, [field]: value }));
-  };
-
-  const closeForm = () => {
-    setEditingUserId(null);
-    setEditingUser(null);
-    setError(null);
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
           <p className="text-lg font-medium text-gray-700">Loading staff data...</p>
@@ -153,42 +85,286 @@ const UserManagementComponent = () => {
     );
   }
 
+  const CardView = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {filteredUsers.length > 0 ? (
+        filteredUsers.map(user => (
+          <div key={user.id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            {/* Profile Header */}
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="flex-shrink-0">
+                {user.avatar.startsWith('http') ? (
+                  <img
+                    src={user.avatar}
+                    alt="Avatar"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">{user.name || 'N/A'}</h3>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${user.role === 'carpenter' ? 'bg-orange-100 text-orange-800' :
+                  user.role === 'designer' ? 'bg-purple-100 text-purple-800' :
+                    user.role === 'salesperson' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                  }`}>
+                  {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A'}
+                </span>
+              </div>
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center text-sm text-gray-600">
+                <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                <span className="font-medium mr-1">Email:</span>
+                <span className="truncate">{user.email || 'No email'}</span>
+              </div>
+
+              <div className="flex items-center text-sm text-gray-600">
+                <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                <span className="font-medium mr-1">Phone:</span>
+                <span>{user.phone || 'No phone'}</span>
+              </div>
+
+              <div className="flex items-center text-sm text-gray-600">
+                <User2 className="w-4 h-4 mr-2 text-gray-400" />
+                <span className="font-medium mr-1">Aadhar:</span>
+                <span>{user.aadhaarNumber || 'No Aadhar'}</span>
+              </div>
+
+              {user.address && (
+                <div className="flex items-start text-sm text-gray-600">
+                  <MapPin className="w-4 h-4 mr-2 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <span className="font-medium mr-1">Address:</span>
+                  <span className="line-clamp-2">{user.address}</span>
+                </div>
+              )}
+            </div>
+
+
+            {/* Status and Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <button
+                onClick={() => handleToggleActive(user)}
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors ${user.isactive
+                  ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                  : 'bg-red-100 text-red-800 hover:bg-red-200'
+                  }`}
+              >
+                {user.isactive ? (
+                  <>
+                    <UserCheck className="w-3 h-3 mr-1" />
+                    Active
+                  </>
+                ) : (
+                  <>
+                    <UserX className="w-3 h-3 mr-1" />
+                    Inactive
+                  </>
+                )}
+              </button>
+
+              <Link
+                href={`/admin/staffusers/${user.id}`}
+                className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                title="View Details"
+              >
+                <Eye className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+          <User className="w-12 h-12 text-gray-300 mb-4" />
+          <p className="text-gray-500 text-lg font-medium mb-2">No staff members found</p>
+          <p className="text-gray-400 text-sm">Try adjusting your search criteria</p>
+        </div>
+      )}
+    </div>
+  );
+
+  const TableView = () => (
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profile</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aadhar</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map(user => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        {user.avatar.startsWith('http') ? (
+                          <img
+                            src={user.avatar}
+                            alt="Avatar"
+                            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                            {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{user.name || 'N/A'}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                        <span className="truncate max-w-[200px]">{user.email || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                        <span>{user.phone || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <span className="truncate max-w-[200px]">{user.aadhaarNumber || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${user.role === 'carpenter' ? 'bg-orange-100 text-orange-800' :
+                      user.role === 'designer' ? 'bg-purple-100 text-purple-800' :
+                        user.role === 'salesperson' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                      }`}>
+                      {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => handleToggleActive(user)}
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors ${user.isactive
+                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                        : 'bg-red-100 text-red-800 hover:bg-red-200'
+                        }`}
+                    >
+                      {user.isactive ? (
+                        <>
+                          <UserCheck className="w-3 h-3 mr-1" />
+                          Active
+                        </>
+                      ) : (
+                        <>
+                          <UserX className="w-3 h-3 mr-1" />
+                          Inactive
+                        </>
+                      )}
+                    </button>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Link
+                      href={`/admin/staffusers/${user.id}`}
+                      className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center space-y-3">
+                    <User className="w-12 h-12 text-gray-300" />
+                    <p className="text-gray-500 text-lg font-medium">No staff members found</p>
+                    <p className="text-gray-400 text-sm">Try adjusting your search criteria</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Staff Management</h1>
-              <p className="text-gray-600">Manage your team members and their information</p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">Staff Management</h1>
+              <p className="text-gray-600">Manage your team members</p>
             </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-lg">
-              <User className="w-4 h-4" />
-              <span>{filteredUsers.length} total staff members</span>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+                <User className="w-4 h-4" />
+                <span>{filteredUsers.length} staff members</span>
+              </div>
+              {/* View Toggle */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'cards'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  <Grid3X3 className="w-4 h-4 mr-1" />
+                  Cards
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'table'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  <List className="w-4 h-4 mr-1" />
+                  Table
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search by name, email, phone, or Aadhaar..."
+                placeholder="Search by name, email, phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div className="relative">
-              <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="pl-12 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white min-w-[200px]"
+                className="pl-10 pr-8 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[150px]"
               >
                 <option value="">All Roles</option>
                 {roles.map(role => (
@@ -203,269 +379,13 @@ const UserManagementComponent = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <p className="text-red-800 text-sm">{error}</p>
           </div>
         )}
 
-        {/* Staff Table */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Profile</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Contact Info</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Address</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Verification</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-gray-100">
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map(user => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition-colors duration-150">
-                      {editingUserId === user.id ? (
-                        // Edit Mode Row
-                        <>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-3">
-                              <div className="flex-shrink-0">
-                                {user.avatar.startsWith('http') ? (
-                                  <img src={user.avatar} alt="Avatar" className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
-                                ) : (
-                                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                                  </div>
-                                )}
-                              </div>
-                              <input
-                                type="text"
-                                value={editingUser?.name || ''}
-                                onChange={(e) => handleInputChange('name', e.target.value)}
-                                className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder="Name"
-                              />
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 space-y-2">
-                            <input
-                              type="email"
-                              value={editingUser?.email || ''}
-                              onChange={(e) => handleInputChange('email', e.target.value)}
-                              className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Email"
-                            />
-                            <input
-                              type="tel"
-                              value={editingUser?.phone || ''}
-                              onChange={(e) => handleInputChange('phone', e.target.value)}
-                              className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Phone"
-                            />
-                            <input
-                              type="tel"
-                              value={editingUser?.secondaryPhone || ''}
-                              onChange={(e) => handleInputChange('secondaryPhone', e.target.value)}
-                              className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Secondary Phone"
-                            />
-                          </td>
-                          <td className="px-6 py-4">
-                            <textarea
-                              value={editingUser?.address || ''}
-                              onChange={(e) => handleInputChange('address', e.target.value)}
-                              className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
-                              rows="2"
-                              placeholder="Address"
-                            />
-                          </td>
-                          <td className="px-6 py-4">
-                            <select
-                              value={editingUser?.role || ''}
-                              onChange={(e) => handleInputChange('role', e.target.value)}
-                              className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            >
-                              <option value="">Select Role</option>
-                              {roles.map(role => (
-                                <option key={role} value={role}>
-                                  {role.charAt(0).toUpperCase() + role.slice(1)}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-6 py-4">
-                            <input
-                              type="text"
-                              value={editingUser?.aadhaarNumber || ''}
-                              onChange={(e) => handleInputChange('aadhaarNumber', e.target.value)}
-                              className="block w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                              placeholder="Aadhaar Number"
-                              maxLength="12"
-                            />
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${user.isactive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                              {user.isactive ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={handleSave}
-                                className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm font-medium"
-                              >
-                                <Save className="w-4 h-4 mr-1" />
-                                Save
-                              </button>
-                              <button
-                                onClick={closeForm}
-                                className="inline-flex items-center px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm font-medium"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        // View Mode Row
-                        <>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-3">
-                              <div className="flex-shrink-0">
-                                {user.avatar.startsWith('http') ? (
-                                  <img src={user.avatar} alt="Avatar" className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" />
-                                ) : (
-                                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{user.name || 'N/A'}</div>
-                                {/* <div className="flex items-center space-x-2 mt-1">
-                                  {user.isVerified && (
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                      <Shield className="w-3 h-3 mr-1" />
-                                      Verified
-                                    </span>
-                                  )}
-                                  {user.permission && user.permission.length > 0 && (
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                      {user.permission.length} Permissions
-                                    </span>
-                                  )}
-                                </div> */}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="space-y-1">
-                              <div className="flex items-center text-sm text-gray-900">
-                                <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                                {user.email || 'N/A'}
-                              </div>
-                              <div className="flex items-center text-sm text-gray-600">
-                                <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                                {user.phone || 'N/A'}
-                              </div>
-                              {user.secondaryPhone && (
-                                <div className="flex items-center text-sm text-gray-600">
-                                  <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                                  {user.secondaryPhone}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-start text-sm text-gray-900">
-                              <MapPin className="w-4 h-4 mr-2 text-gray-400 mt-0.5 flex-shrink-0" />
-                              <span className="line-clamp-2">{user.address || 'No address provided'}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${user.role === 'carpenter' ? 'bg-orange-100 text-orange-800' :
-                                user.role === 'designer' ? 'bg-purple-100 text-purple-800' :
-                                  user.role === 'salesperson' ? 'bg-green-100 text-green-800' :
-                                    'bg-gray-100 text-gray-800'
-                              }`}>
-                              {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="space-y-2">
-                              {user.aadhaarNumber && (
-                                <div className="text-xs text-gray-600">
-                                  <span className="font-medium">Aadhaar:</span> {user.aadhaarNumber}
-                                </div>
-                              )}
-                              {user.uploadIdProof && (
-                                <div className="text-xs text-green-600 font-medium">
-                                  ID Proof Uploaded
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <button
-                              onClick={() => handleToggleActive(user)}
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${user.isactive
-                                  ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                  : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                }`}
-                            >
-                              {user.isactive ? (
-                                <>
-                                  <UserCheck className="w-4 h-4 mr-1" />
-                                  Active
-                                </>
-                              ) : (
-                                <>
-                                  <UserX className="w-4 h-4 mr-1" />
-                                  Inactive
-                                </>
-                              )}
-                            </button>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleEdit(user)}
-                                className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
-                              >
-                                <Edit className="w-4 h-4 mr-1" />
-                                Edit
-                              </button>
-                              <Link
-                                href={`/admin/staffusers/${user.id}`}
-                                className="inline-flex items-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
-                              >
-                                View Details
-                              </Link>
-                            </div>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center space-y-3">
-                        <User className="w-12 h-12 text-gray-300" />
-                        <p className="text-gray-500 text-lg font-medium">No staff members found</p>
-                        <p className="text-gray-400 text-sm">Try adjusting your search criteria</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {/* Content */}
+        {viewMode === 'cards' ? <CardView /> : <TableView />}
       </div>
     </div>
   );
