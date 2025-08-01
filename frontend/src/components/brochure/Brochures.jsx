@@ -1,62 +1,29 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Search, FileText, Filter, Upload, Download, Trash2, Eye, X, Plus } from "lucide-react";
-
-
-// Dummy data for brochures
-const initialBrochures = [
-  {
-    id: "1",
-    title: "Modern Living Room Collection",
-    name: "Company Overview 2025.pdf",
-    url: "https://example.com/brochure1.pdf",
-    uploadedAt: "2025-07-01T10:00:00Z",
-    category: "Inplace Furniture",
-    keywords: ["modern", "living room", "furniture"],
-    views: 120,
-    downloads: 45
-  },
-  {
-    id: "2",
-    title: "Premium Kitchen Solutions", 
-    name: "Product Catalog.pdf",
-    url: "https://example.com/brochure2.pdf",
-    uploadedAt: "2025-06-15T14:30:00Z",
-    category: "Modular Kitchen",
-    keywords: ["kitchen", "modular", "premium"],
-    views: 85,
-    downloads: 32
-  },
-  {
-    id: "3",
-    title: "Custom Interior Services",
-    name: "Services Brochure.pdf", 
-    url: "https://example.com/brochure3.pdf",
-    uploadedAt: "2025-05-20T09:15:00Z",
-    category: "Inplace Furniture",
-    keywords: ["interior", "custom", "services"],
-    views: 200,
-    downloads: 78
-  },
-  {
-    id: "4",
-    title: "Annual Kitchen Trends",
-    name: "Annual Report.pdf",
-    url: "https://example.com/brochure4.pdf",
-    uploadedAt: "2025-04-10T11:45:00Z",
-    category: "Modular Kitchen", 
-    keywords: ["trends", "annual", "kitchen"],
-    views: 150,
-    downloads: 55
-  },
-];
+import { addBrochure, deleteBrochureById, getAllBrochures } from "@/services/brochure.services";
 
 const BrochureManagement = () => {
-  const [brochures, setBrochures] = useState(initialBrochures);
+  const [brochures, setBrochures] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [showUploadForm, setShowUploadForm] = useState(false);
+
+  useEffect(() => {
+    const fetchBrochures = async () => {
+      try {
+        const data = await getAllBrochures();
+        // setBrochures(data);
+        setBrochures(data?.brochures || []);
+        console.log("Fetched brochures:", data);
+      } catch (err) {
+        console.error("Failed to fetch brochures", err);
+      }
+    };
+    fetchBrochures();
+  }, []);
+
 
   // Upload form states
   const [formData, setFormData] = useState({
@@ -81,24 +48,32 @@ const BrochureManagement = () => {
   // Filter brochures
   const filteredBrochures = brochures.filter((brochure) => {
     const matchesSearch = brochure.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         brochure.keywords.some(keyword => keyword.toLowerCase().includes(searchQuery.toLowerCase()));
+      brochure.keywords.some(keyword => keyword.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = categoryFilter === "all" || brochure.category === categoryFilter;
-    const matchesDate = dateFilter === "all" || 
+    const matchesDate = dateFilter === "all" ||
       (dateFilter === "last30" && new Date(brochure.uploadedAt) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
-    
+
     return matchesSearch && matchesCategory && matchesDate;
   });
 
-  const handleDelete = (brochureId) => {
+  const handleDelete = async (brochureId) => {
     if (!confirm("Are you sure you want to delete this brochure?")) return;
-    setBrochures(brochures.filter((brochure) => brochure.id !== brochureId));
-    alert("Brochure deleted successfully");
+
+    try {
+      await deleteBrochureById(brochureId);
+      setBrochures(prev => prev.filter(b => b._id !== brochureId || b.id !== brochureId));
+      alert("Brochure deleted successfully");
+    } catch (err) {
+      console.error("Delete error", err);
+      alert("Failed to delete brochure");
+    }
   };
 
+
   const handleDownload = (url, name) => {
-    const brochureId = brochures.find(b => b.name === name)?.id;
+    const brochureId = brochures.find(b => b.name === name)?._id;
     if (brochureId) {
-      setBrochures(prev => prev.map(b => 
+      setBrochures(prev => prev.map(b =>
         b.id === brochureId ? { ...b, downloads: b.downloads + 1 } : b
       ));
     }
@@ -195,64 +170,39 @@ const BrochureManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
-    if (!formData.title.trim()) {
-      setUploadError("Please enter a brochure title");
-      return;
-    }
-    
-    if (!formData.category) {
-      setUploadError("Please select a category");
-      return;
-    }
-    
-    if (formData.keywords.length === 0) {
-      setUploadError("Please add at least one keyword");
-      return;
-    }
-    
-    if (!formData.file) {
-      setUploadError("Please select a file to upload");
-      return;
-    }
+    if (!formData.title.trim()) return setUploadError("Please enter a brochure title");
+    if (!formData.category) return setUploadError("Please select a category");
+    if (formData.keywords.length === 0) return setUploadError("Please add at least one keyword");
+    if (!formData.file) return setUploadError("Please select a file to upload");
 
     setUploading(true);
 
     try {
-      const newBrochure = {
-        id: Math.random().toString(36).substr(2, 9),
-        title: formData.title,
-        name: formData.file.name,
-        url: URL.createObjectURL(formData.file),
-        uploadedAt: new Date().toISOString(),
-        category: formData.category,
-        keywords: formData.keywords,
-        views: 0,
-        downloads: 0
-      };
+      const form = new FormData();
+      form.append("title", formData.title);
+      form.append("category", formData.category);
+      form.append("keywords", JSON.stringify(formData.keywords));
+      form.append("document", formData.file);
 
-      // Add new brochure to list
-      setBrochures([newBrochure, ...brochures]);
-      
+      const saved = await addBrochure(form);
+
+      setBrochures(prev => [saved, ...prev]);
+
       // Reset form
-      setFormData({
-        title: "",
-        category: "",
-        keywords: [],
-        file: null
-      });
+      setFormData({ title: "", category: "", keywords: [], file: null });
       setNewKeyword("");
       setShowUploadForm(false);
-      
       alert("Brochure uploaded successfully!");
-      
     } catch (err) {
-      setUploadError("Failed to upload brochure");
+      console.error("Upload error", err);
+      setUploadError(err?.message || "Failed to upload brochure");
     } finally {
       setUploading(false);
     }
   };
+
 
   const handleCancelUpload = () => {
     setFormData({
@@ -326,7 +276,7 @@ const BrochureManagement = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             <select
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={categoryFilter}
@@ -430,7 +380,7 @@ const BrochureManagement = () => {
                     Add
                   </button>
                 </div>
-                
+
                 {formData.keywords.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {formData.keywords.map((keyword, index) => (
@@ -458,14 +408,13 @@ const BrochureManagement = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Upload PDF File *
               </label>
-              
+
               {!formData.file ? (
                 <div
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                    isDragging
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${isDragging
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300 hover:border-gray-400"
+                    }`}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -589,11 +538,11 @@ const BrochureManagement = () => {
                 </tr>
               ) : (
                 filteredBrochures.map((brochure) => (
-                  <tr key={brochure.id} className="hover:bg-gray-50">
+                  <tr key={brochure._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{brochure.title}</div>
-                        <div className="text-sm text-gray-500">{brochure.name}</div>
+                        <div className="text-sm text-gray-500">{brochure.document?.split("/").pop()}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -603,40 +552,40 @@ const BrochureManagement = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
-                        {brochure.keywords.map((keyword, index) => (
+                        {(Array.isArray(brochure.keywords) ? brochure.keywords : []).map((keyword, index) => (
                           <span
                             key={index}
                             className="inline-flex px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700"
                           >
-                            {keyword}
+                            {keyword.replace(/[\[\]"]/g, '')}
                           </span>
                         ))}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(brochure.uploadedAt).toLocaleDateString()}
+                      {new Date(brochure.uploadDate || brochure.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {brochure.downloads}
+                      {brochure.downloads || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleViewPDF(brochure.url, brochure.title)}
+                          onClick={() => handleViewPDF(brochure.document, brochure.title)}
                           className="text-blue-600 hover:text-blue-900 p-1 rounded"
                           title="View PDF"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDownload(brochure.url, brochure.name)}
+                          onClick={() => handleDownload(brochure.document, brochure.title)}
                           className="text-green-600 hover:text-green-900 p-1 rounded"
                           title="Download"
                         >
                           <Download className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(brochure.id)}
+                          onClick={() => handleDelete(brochure._id)}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete"
                         >
@@ -644,6 +593,7 @@ const BrochureManagement = () => {
                         </button>
                       </div>
                     </td>
+
                   </tr>
                 ))
               )}
@@ -656,3 +606,128 @@ const BrochureManagement = () => {
 };
 
 export default BrochureManagement;
+
+
+
+
+// upload not working , filters not working 
+
+// "use client";
+
+// import React, { useState } from "react";
+// import { addBrochure } from "@/services/brochure.services";
+// import { toast } from "react-toastify";
+
+// const AddBrochureForm = () => {
+//   const [formData, setFormData] = useState({
+//     title: "",
+//     category: "",
+//     keywords: "",
+//     document: null,
+//   });
+
+//   const [loading, setLoading] = useState(false);
+
+//   const handleChange = (e) => {
+//     if (e.target.name === "document") {
+//       setFormData({ ...formData, document: e.target.files[0] });
+//     } else {
+//       setFormData({ ...formData, [e.target.name]: e.target.value });
+//     }
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     if (!formData.title || !formData.category || !formData.document) {
+//       toast.error("Title, Category and Document are required.");
+//       return;
+//     }
+
+//     const data = new FormData();
+//     data.append("title", formData.title);
+//     data.append("category", formData.category);
+//     data.append("keywords", formData.keywords);
+//     data.append("document", formData.document);
+
+//     try {
+//       setLoading(true);
+//       const res = await addBrochure(data);
+//       toast.success(res.message || "Brochure uploaded successfully!");
+//       setFormData({
+//         title: "",
+//         category: "",
+//         keywords: "",
+//         document: null,
+//       });
+//     } catch (err) {
+//       console.error(err);
+//       toast.error(err.message || "Upload failed");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
+//       <h2 className="text-2xl font-semibold mb-6">Upload Brochure</h2>
+//       <form onSubmit={handleSubmit} className="space-y-4">
+//         <div>
+//           <label className="block font-medium">Title</label>
+//           <input
+//             type="text"
+//             name="title"
+//             value={formData.title}
+//             onChange={handleChange}
+//             className="w-full p-2 border rounded"
+//             required
+//           />
+//         </div>
+
+//         <div>
+//           <label className="block font-medium">Category</label>
+//           <input
+//             type="text"
+//             name="category"
+//             value={formData.category}
+//             onChange={handleChange}
+//             className="w-full p-2 border rounded"
+//             required
+//           />
+//         </div>
+
+//         <div>
+//           <label className="block font-medium">Keywords (comma separated)</label>
+//           <input
+//             type="text"
+//             name="keywords"
+//             value={formData.keywords}
+//             onChange={handleChange}
+//             className="w-full p-2 border rounded"
+//           />
+//         </div>
+
+//         <div>
+//           <label className="block font-medium">Upload PDF Document</label>
+//           <input
+//             type="file"
+//             name="document"
+//             accept=".pdf"
+//             onChange={handleChange}
+//             className="w-full"
+//             required
+//           />
+//         </div>
+
+//         <button
+//           type="submit"
+//           disabled={loading}
+//           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+//         >
+//           {loading ? "Uploading..." : "Upload Brochure"}
+//         </button>
+//       </form>
+//     </div>
+//   );
+// };
+
+// export default AddBrochureForm;
