@@ -4,7 +4,7 @@ const BrochureSchema = new mongoose.Schema(
   {
     category: {
       type: String,
-      enum: ["modular_kitchen", "furniture", "doors_windows"],
+      enum: ["modular_kitchen", "inPlace_Furniture"],
       required: [true, "Category is required"],
     },
     title: {
@@ -12,19 +12,22 @@ const BrochureSchema = new mongoose.Schema(
       trim: true,
       required: [true, "Title is required"],
     },
-    pdfUrl: {
+    document: {
       type: String,
       trim: true,
-      required: [true, "PDF URL is required"],
+      required: [true, "Document URL is required"],
     },
-    uploadedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
-      required: [true, "Uploader is required"],
+    uploadDate: {
+      type: Date,
+      default: Date.now,
+    },
+    keywords: {
+      type: [String],
+      default: [],
     },
   },
   {
-    timestamps: true,
+    timestamps: true, 
   }
 );
 

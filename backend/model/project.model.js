@@ -41,10 +41,10 @@ const ProjectSchema = new mongoose.Schema(
       ref: "Admin",
     },
 
-    quotation: {
+    quotation:[ {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Quotation",
-    },
+    }],
     designs: [
       {
         type: mongoose.Schema.Types.ObjectId,
