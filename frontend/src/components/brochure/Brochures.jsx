@@ -1,514 +1,303 @@
-"use client";
-import React, { useState, useRef, useEffect } from "react";
-import { Search, FileText, Filter, Upload, Download, Trash2, Eye, X, Plus } from "lucide-react";
-import { addBrochure, deleteBrochureById, getAllBrochures } from "@/services/brochure.services";
+"use client"
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, Download, Trash2, FileText, Search, Plus, Eye } from 'lucide-react';
+import { addBrochure, deleteBrochureById, getAllBrochures } from '@/services/brochure.services';
 
-const BrochureManagement = () => {
+const BrochureManager = () => {
   const [brochures, setBrochures] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("all");
+
   const [showUploadForm, setShowUploadForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [formData, setFormData] = useState({
+    title: '',
+    category: '',
+    keywords: '',
+    file: null
+  });
 
   useEffect(() => {
     const fetchBrochures = async () => {
       try {
         const data = await getAllBrochures();
-        // setBrochures(data);
-        setBrochures(data?.brochures || []);
-        console.log("Fetched brochures:", data);
-      } catch (err) {
-        console.error("Failed to fetch brochures", err);
+        setBrochures(data.brochures || []);
+      } catch (error) {
+        console.error("Failed to fetch brochures:", error);
       }
     };
+
     fetchBrochures();
   }, []);
 
-
-  // Upload form states
-  const [formData, setFormData] = useState({
-    title: "",
-    category: "",
-    keywords: [],
-    file: null
-  });
-  const [newKeyword, setNewKeyword] = useState("");
-  const [uploadError, setUploadError] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
-  const categories = ["Inplace Furniture", "Modular Kitchen"];
+  const categories = ['modular_kitchen', 'inPlace_Furniture'];
 
-  // Calculate stats
-  const totalBrochures = brochures.length;
-  const uniqueCategories = [...new Set(brochures.map((b) => b.category))].length;
-  const totalDownloads = brochures.reduce((sum, b) => sum + b.downloads, 0);
-
-  // Filter brochures
-  const filteredBrochures = brochures.filter((brochure) => {
-    const matchesSearch = brochure.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      brochure.keywords.some(keyword => keyword.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = categoryFilter === "all" || brochure.category === categoryFilter;
-    const matchesDate = dateFilter === "all" ||
-      (dateFilter === "last30" && new Date(brochure.uploadedAt) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
-
-    return matchesSearch && matchesCategory && matchesDate;
-  });
-
-  const handleDelete = async (brochureId) => {
-    if (!confirm("Are you sure you want to delete this brochure?")) return;
-
-    try {
-      await deleteBrochureById(brochureId);
-      setBrochures(prev => prev.filter(b => b._id !== brochureId || b.id !== brochureId));
-      alert("Brochure deleted successfully");
-    } catch (err) {
-      console.error("Delete error", err);
-      alert("Failed to delete brochure");
-    }
-  };
-
-
-  const handleDownload = (url, name) => {
-    const brochureId = brochures.find(b => b.name === name)?._id;
-    if (brochureId) {
-      setBrochures(prev => prev.map(b =>
-        b.id === brochureId ? { ...b, downloads: b.downloads + 1 } : b
-      ));
-    }
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    link.target = "_blank";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleViewPDF = (url, title) => {
-    window.open(url, '_blank');
-  };
-
-  // Upload form functions
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [name]: value
     }));
-    setUploadError("");
   };
 
-  const handleAddKeyword = () => {
-    if (newKeyword.trim() && !formData.keywords.includes(newKeyword.trim())) {
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') {
       setFormData(prev => ({
         ...prev,
-        keywords: [...prev.keywords, newKeyword.trim()]
+        file: file
       }));
-      setNewKeyword("");
+    } else {
+      alert('Please select a PDF file');
+      e.target.value = '';
     }
   };
 
-  const handleRemoveKeyword = (keywordToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      keywords: prev.keywords.filter(keyword => keyword !== keywordToRemove)
-    }));
-  };
-
-  const handleFileChange = (file) => {
-    if (!file) return;
-
-    if (!file.type.includes("pdf")) {
-      setUploadError("Only PDF files are allowed");
+  const handleSubmit = async () => {
+    if (!formData.title || !formData.category || !formData.file) {
+      alert('Please fill in all required fields and select a PDF file');
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError("File size must be less than 10MB");
-      return;
-    }
+    setIsUploading(true);
 
-    setFormData(prev => ({
-      ...prev,
-      file: file
-    }));
-    setUploadError("");
-  };
-
-  const handleInputFileChange = (e) => {
-    handleFileChange(e.target.files[0]);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    handleFileChange(file);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleClearFile = () => {
-    setFormData(prev => ({
-      ...prev,
-      file: null
-    }));
-    setUploadError("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validation
-    if (!formData.title.trim()) return setUploadError("Please enter a brochure title");
-    if (!formData.category) return setUploadError("Please select a category");
-    if (formData.keywords.length === 0) return setUploadError("Please add at least one keyword");
-    if (!formData.file) return setUploadError("Please select a file to upload");
-
-    setUploading(true);
+    const payload = new FormData();
+    payload.append("title", formData.title);
+    payload.append("category", formData.category);
+    payload.append("keywords", formData.keywords);
+    payload.append("document", formData.document || formData.file);
 
     try {
-      const form = new FormData();
-      form.append("title", formData.title);
-      form.append("category", formData.category);
-      form.append("keywords", JSON.stringify(formData.keywords));
-      form.append("document", formData.file);
-
-      const saved = await addBrochure(form);
-
-      setBrochures(prev => [saved, ...prev]);
-
-      // Reset form
-      setFormData({ title: "", category: "", keywords: [], file: null });
-      setNewKeyword("");
-      setShowUploadForm(false);
+      const response = await addBrochure(payload);
+      setBrochures(prev => [response.brochure, ...prev]);
       alert("Brochure uploaded successfully!");
-    } catch (err) {
-      console.error("Upload error", err);
-      setUploadError(err?.message || "Failed to upload brochure");
+
+      setFormData({ title: '', category: '', keywords: '', file: null });
+      setShowUploadForm(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload brochure");
     } finally {
-      setUploading(false);
+      setIsUploading(false);
     }
   };
 
+  const handleDelete = async (id) => {
+  const confirmed = window.confirm('Are you sure you want to delete this brochure?');
+  if (!confirmed) return;
 
-  const handleCancelUpload = () => {
-    setFormData({
-      title: "",
-      category: "",
-      keywords: [],
-      file: null
-    });
-    setNewKeyword("");
-    setUploadError("");
-    setShowUploadForm(false);
+  try {
+    await deleteBrochureById(id);
+    setBrochures(prev => prev.filter(b => b._id !== id));
+  } catch (error) {
+    console.error("Delete failed:", error);
+  }
+};
+
+
+  const handleView = (brochure) => {
+    window.open(brochure.document, '_blank'); // open in new tab
   };
 
+  // Calculate statistics
+  const totalBrochures = brochures.length;
+  const modularKitchenCount = brochures.filter(b => b.category === 'modular_kitchen').length;
+  const inPlaceFurnitureCount = brochures.filter(b => b.category === 'inPlace_Furniture').length;
+
+  const filteredBrochures = brochures.filter(brochure => {
+    const matchesSearch = brochure.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      brochure.keywords.some(keyword => keyword.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory = filterCategory === 'all' || brochure.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto p-6 bg-white">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Brochure Management</h1>
-        <p className="text-gray-600">Effortlessly manage and distribute your brochures</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Brochure Management</h1>
+        <p className="text-gray-600">Upload, manage, and organize your brochures</p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        {/* Total Brochures */}
+        <div className="bg-white rounded-lg border-l-4 border-blue-700 p-6 text-white shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Brochures</p>
-              <p className="text-3xl font-bold text-gray-900">{totalBrochures}</p>
+              <p className="text-blue-700 text-sm font-medium">Total Brochures</p>
+              <p className="text-3xl font-bold text-blue-700">{totalBrochures}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <FileText className="h-6 w-6 text-blue-600" />
-            </div>
+            <FileText className="w-8 h-8 text-blue-700" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        {/* Modular Kitchen */}
+        <div className="bg-white rounded-lg border-l-4 border-green-600 p-6 text-white shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Categories</p>
-              <p className="text-3xl font-bold text-gray-900">{uniqueCategories}</p>
+              <p className="text-green-600 text-sm font-medium">Modular Kitchen</p>
+              <p className="text-3xl font-bold text-green-600">{modularKitchenCount}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <Filter className="h-6 w-6 text-green-600" />
-            </div>
+            <FileText className="w-8 h-8 text-green-600" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+        {/* InPlace Furniture */}
+        <div className="bg-white rounded-lg border-l-4 border-purple-600 p-6 text-white shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Downloads</p>
-              <p className="text-3xl font-bold text-gray-900">{totalDownloads}</p>
+              <p className="text-purple-600 text-sm font-medium">InPlace Furniture</p>
+              <p className="text-3xl font-bold text-purple-600">{inPlaceFurnitureCount}</p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-full">
-              <Download className="h-6 w-6 text-purple-600" />
-            </div>
+            <FileText className="w-8 h-8 text-purple-600" />
           </div>
         </div>
       </div>
 
-      {/* Actions Bar */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+
+
+      {/* Controls */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search brochures..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+            />
+          </div>
+
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Categories</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat === 'modular_kitchen' ? 'Modular Kitchen' : 'InPlace Furniture'}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          onClick={() => setShowUploadForm(true)}
+          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add New Brochure
+        </button>
+      </div>
+
+      {/* Upload Form */}
+      {showUploadForm && (
+        <div className="mb-8 bg-white p-6 rounded-lg border">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Upload New Brochure</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Title *
+              </label>
               <input
                 type="text"
-                placeholder="Search brochures..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter brochure title"
+                required
               />
             </div>
 
-            <select
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              <option value="all">All Categories</option>
-              <option value="Inplace Furniture">Inplace Furniture</option>
-              <option value="Modular Kitchen">Modular Kitchen</option>
-            </select>
-
-            <select
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-            >
-              <option value="all">All Time</option>
-              <option value="last30">Last 30 Days</option>
-            </select>
-          </div>
-
-          <button
-            onClick={() => setShowUploadForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            <Upload className="h-5 w-5" />
-            Upload Brochure
-          </button>
-        </div>
-      </div>
-
-      {/* Upload Form - Shows above table when button is clicked */}
-      {showUploadForm && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6 border-2 border-blue-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Upload New Brochure</h2>
-            <button
-              onClick={handleCancelUpload}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Brochure Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Brochure Title *
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  placeholder="Enter brochure title"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category *
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => handleInputChange("category", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Keywords */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Keywords *
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category *
               </label>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newKeyword}
-                    onChange={(e) => setNewKeyword(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddKeyword())}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    placeholder="Add a keyword"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddKeyword}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1 text-sm"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add
-                  </button>
-                </div>
-
-                {formData.keywords.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {formData.keywords.map((keyword, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
-                      >
-                        {keyword}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveKeyword(keyword)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select category</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>
+                    {cat === 'modular_kitchen' ? 'Modular Kitchen' : 'InPlace Furniture'}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* File Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Upload PDF File *
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Keywords (comma-separated)
               </label>
-
-              {!formData.file ? (
-                <div
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${isDragging
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-300 hover:border-gray-400"
-                    }`}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                >
-                  <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                  <p className="text-sm font-medium text-gray-900 mb-1">
-                    Drop your PDF file here, or{" "}
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-blue-600 hover:text-blue-700 underline"
-                    >
-                      browse
-                    </button>
-                  </p>
-                  <p className="text-xs text-gray-500">PDF only, max 10MB</p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleInputFileChange}
-                    className="hidden"
-                  />
-                </div>
-              ) : (
-                <div className="border border-gray-300 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-6 w-6 text-red-500" />
-                      <div>
-                        <p className="font-medium text-gray-900 text-sm">{formData.file.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {(formData.file.size / (1024 * 1024)).toFixed(2)} MB
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleClearFile}
-                      className="text-red-600 hover:text-red-700 p-1"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <input
+                type="text"
+                name="keywords"
+                value={formData.keywords}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="keyword1, keyword2, keyword3"
+              />
             </div>
 
-            {/* Error Message */}
-            {uploadError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-red-800 text-sm">{uploadError}</p>
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                PDF File *
+              </label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pdf"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                required
+              />
+            </div>
 
-            {/* Submit Buttons */}
-            <div className="flex gap-3 pt-2">
+            <div className="md:col-span-2 flex gap-3">
               <button
                 type="button"
-                onClick={handleCancelUpload}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
+                onClick={handleSubmit}
+                disabled={isUploading}
+                className={`px-6 py-2 rounded-md flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 
+    ${isUploading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'}
+  `}
+              >
+                <Upload className="w-4 h-4" />
+                {isUploading ? 'Uploading...' : 'Upload Brochure'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowUploadForm(false)}
+                className="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                disabled={uploading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
-              >
-                {uploading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    Upload Brochure
-                  </>
-                )}
-              </button>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
+
       {/* Brochures Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
+                  Brochure Details
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Category
@@ -520,7 +309,7 @@ const BrochureManagement = () => {
                   Upload Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Downloads
+                  File Size
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -530,70 +319,73 @@ const BrochureManagement = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredBrochures.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center">
-                    <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p className="text-gray-500 text-lg mb-2">No brochures found</p>
-                    <p className="text-gray-400">Try adjusting your search or filters</p>
+                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p>No brochures found</p>
                   </td>
                 </tr>
               ) : (
                 filteredBrochures.map((brochure) => (
-                  <tr key={brochure._id} className="hover:bg-gray-50">
+                  <tr key={brochure._id || brochure.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{brochure.title}</div>
-                        <div className="text-sm text-gray-500">{brochure.document?.split("/").pop()}</div>
+                      <div className="flex items-center">
+                        <FileText className="w-8 h-8 text-red-500 mr-3" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {brochure.title}
+                          </div>
+                          <div className="text-sm text-gray-500 w-48 truncate">
+                            {brochure.document}
+                          </div>
+
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {brochure.category}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${brochure.category === 'modular_kitchen'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-purple-100 text-purple-800'
+                        }`}>
+                        {brochure.category === 'modular_kitchen' ? 'Modular Kitchen' : 'InPlace Furniture'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
-                        {(Array.isArray(brochure.keywords) ? brochure.keywords : []).map((keyword, index) => (
+                        {brochure.keywords.map((keyword, index) => (
                           <span
                             key={index}
-                            className="inline-flex px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700"
+                            className="inline-flex px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-800"
                           >
-                            {keyword.replace(/[\[\]"]/g, '')}
+                            {keyword}
                           </span>
                         ))}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(brochure.uploadDate || brochure.createdAt).toLocaleDateString()}
+                      {new Date(brochure.uploadDate).toLocaleDateString()}
                     </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {brochure.downloads || 0}
+                      {(brochure.fileSize / 1024).toFixed(2)} KB
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleViewPDF(brochure.document, brochure.title)}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                          title="View PDF"
+                          onClick={() => handleView(brochure)}
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                          title="View"
                         >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDownload(brochure.document, brochure.title)}
-                          className="text-green-600 hover:text-green-900 p-1 rounded"
-                          title="Download"
-                        >
-                          <Download className="h-4 w-4" />
+                          <Download className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(brochure._id)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded"
+                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
                           title="Delete"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
-
                   </tr>
                 ))
               )}
@@ -601,133 +393,13 @@ const BrochureManagement = () => {
           </table>
         </div>
       </div>
+
+      {/* Summary */}
+      <div className="mt-6 text-sm text-gray-600">
+        Showing {filteredBrochures.length} of {brochures.length} brochures
+      </div>
     </div>
   );
 };
 
-export default BrochureManagement;
-
-
-
-
-// upload not working , filters not working 
-
-// "use client";
-
-// import React, { useState } from "react";
-// import { addBrochure } from "@/services/brochure.services";
-// import { toast } from "react-toastify";
-
-// const AddBrochureForm = () => {
-//   const [formData, setFormData] = useState({
-//     title: "",
-//     category: "",
-//     keywords: "",
-//     document: null,
-//   });
-
-//   const [loading, setLoading] = useState(false);
-
-//   const handleChange = (e) => {
-//     if (e.target.name === "document") {
-//       setFormData({ ...formData, document: e.target.files[0] });
-//     } else {
-//       setFormData({ ...formData, [e.target.name]: e.target.value });
-//     }
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     if (!formData.title || !formData.category || !formData.document) {
-//       toast.error("Title, Category and Document are required.");
-//       return;
-//     }
-
-//     const data = new FormData();
-//     data.append("title", formData.title);
-//     data.append("category", formData.category);
-//     data.append("keywords", formData.keywords);
-//     data.append("document", formData.document);
-
-//     try {
-//       setLoading(true);
-//       const res = await addBrochure(data);
-//       toast.success(res.message || "Brochure uploaded successfully!");
-//       setFormData({
-//         title: "",
-//         category: "",
-//         keywords: "",
-//         document: null,
-//       });
-//     } catch (err) {
-//       console.error(err);
-//       toast.error(err.message || "Upload failed");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
-//       <h2 className="text-2xl font-semibold mb-6">Upload Brochure</h2>
-//       <form onSubmit={handleSubmit} className="space-y-4">
-//         <div>
-//           <label className="block font-medium">Title</label>
-//           <input
-//             type="text"
-//             name="title"
-//             value={formData.title}
-//             onChange={handleChange}
-//             className="w-full p-2 border rounded"
-//             required
-//           />
-//         </div>
-
-//         <div>
-//           <label className="block font-medium">Category</label>
-//           <input
-//             type="text"
-//             name="category"
-//             value={formData.category}
-//             onChange={handleChange}
-//             className="w-full p-2 border rounded"
-//             required
-//           />
-//         </div>
-
-//         <div>
-//           <label className="block font-medium">Keywords (comma separated)</label>
-//           <input
-//             type="text"
-//             name="keywords"
-//             value={formData.keywords}
-//             onChange={handleChange}
-//             className="w-full p-2 border rounded"
-//           />
-//         </div>
-
-//         <div>
-//           <label className="block font-medium">Upload PDF Document</label>
-//           <input
-//             type="file"
-//             name="document"
-//             accept=".pdf"
-//             onChange={handleChange}
-//             className="w-full"
-//             required
-//           />
-//         </div>
-
-//         <button
-//           type="submit"
-//           disabled={loading}
-//           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-//         >
-//           {loading ? "Uploading..." : "Upload Brochure"}
-//         </button>
-//       </form>
-//     </div>
-//   );
-// };
-
-// export default AddBrochureForm;
+export default BrochureManager;
