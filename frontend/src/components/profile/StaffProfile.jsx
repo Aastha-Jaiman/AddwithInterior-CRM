@@ -21,7 +21,7 @@ const ProfileComponent = () => {
     phone: '',
     address: '',
     secondaryPhone: '',
-    profileImage: null
+    profile: null
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -42,7 +42,7 @@ const ProfileComponent = () => {
     try {
       setLoading(true);
       const response = await getProfile();
-
+      console.log("resposnse", response)
       if (response.success) {
         setProfileData(response.user);
         setEditForm({
@@ -51,7 +51,7 @@ const ProfileComponent = () => {
           phone: response.user.phone || '',
           address: response.user.address || '',
           secondaryPhone: response.user.secondaryPhone || '',
-          profileImage: null
+          profile: null
         });
       } else {
         setMessage({ type: 'error', text: response.message || 'Failed to load profile' });
@@ -80,8 +80,8 @@ const ProfileComponent = () => {
         formData.append('secondaryPhone', editForm.secondaryPhone);
       }
 
-      if (editForm.profileImage instanceof File) {
-        formData.append('profileImage', editForm.profileImage);
+      if (editForm.profile instanceof File) {
+        formData.append('profile', editForm.profile);
       }
 
 
@@ -360,7 +360,7 @@ const ProfileComponent = () => {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setEditForm({ ...editForm, profileImage: e.target.files[0] })}
+                      onChange={(e) => setEditForm({ ...editForm, profile: e.target.files[0] })}
                       className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-gray-300 file:text-sm file:font-medium file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
                     />
                   </div>

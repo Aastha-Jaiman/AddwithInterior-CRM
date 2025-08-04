@@ -177,11 +177,16 @@ export const updateStaffByAdmin = async (id, formData) => {
   return res.data;
 };
 
-// 9. Update Own Profile (Admin or Staff)
+// services/admin.services.js
 export const updateMyProfileService = async (formData) => {
-  const res = await api.put('/admin/user', formData);
+  const res = await api.put('/admin/user', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return res.data;
 };
+
 
 // 10. Send Password Reset Email
 export const resetEmailToken = async (email) => {
