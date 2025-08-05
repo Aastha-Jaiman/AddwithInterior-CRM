@@ -62,7 +62,7 @@ exports.createAdmin = async (req, res) => {
     console.error("Error creating admin:", error);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 exports.registerStaffByAdmin = async (req, res) => {
   try {
@@ -259,7 +259,7 @@ exports.profiledData = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}
+};
 
 exports.getStaffById = async (req, res) => {
   try {
@@ -347,7 +347,7 @@ exports.updateMyProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
-    const { name, address, email, phone } = req.body;
+    const { name, address, email, phone, secondaryPhone } = req.body;
     const updateData = {};
 
     if (["designer", "carpenter", "salesperson"].includes(userRole)) {
@@ -365,6 +365,7 @@ exports.updateMyProfile = async (req, res) => {
       if (address) updateData.address = address;
       if (email) updateData.email = email;
       if (phone) updateData.phone = phone;
+      if (secondaryPhone) updateData.secondaryPhone = secondaryPhone;
     }
 
     if (req.file) {
@@ -428,7 +429,7 @@ exports.logout = async (req, res) => {
   }
 
 
-}
+};
 
 exports.resetEmailToken = async (req, res) => {
   const { email } = req.body;
@@ -469,7 +470,7 @@ exports.resetEmailToken = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}
+};
 
 const userToken = {};
 
@@ -514,11 +515,12 @@ exports.changePassword = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}
+};
 
 
 exports.resetPassword = async (req, res) => {
   try {
+    console.log(req.body, "data")
     const userId = req.user._id;
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
@@ -579,4 +581,4 @@ exports.getAllStaff = async (req,res) => {
   }catch(error){
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}
+};

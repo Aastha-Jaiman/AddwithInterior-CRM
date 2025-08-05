@@ -45,10 +45,6 @@ exports.registerClientByAdmin = async (req, res) => {
       return res.status(400).json({ message: "Phone number already exists." });
     }
 
-    if (!req.files?.idProof) {
-      return res.status(400).json({ message: "ID proof image is required." });
-    }
-
     let profileData = {
       url: null,
       public_id: null,
@@ -186,7 +182,7 @@ exports.loginClient = async (req, res) => {
 exports.getProfile = async (req, res) => {
       try {
 
-            const clientId = req.user?.id;
+            const clientId = req.user?._id;
 
             if (!clientId) {
                   return res.status(400).json({ success: false, message: "Unauthorized. Please login." })

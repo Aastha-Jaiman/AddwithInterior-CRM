@@ -7,24 +7,38 @@ const DesignSchema = new mongoose.Schema(
       ref: "Project",
       required: [true, "Project reference is required"],
     },
-    version: {
-      type: Number,
-      required: [true, "Version is required"],
-      min: [1, "Version must be at least 1"],
-    },
-    uploadedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
-      required: [true, "Uploader (designer) is required"],
-    },
-    pdfUrl: {
-      type: String,
-      trim: true,
-    },
+
+    pdfs: [
+      {
+        pdfUrl: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        message: {
+          type: String,
+          trim: true,
+        },
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        uploadedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Admin",
+        },
+        version: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+
     isApproved: {
       type: Boolean,
       default: false,
     },
+
     feedback: {
       type: String,
       trim: true,

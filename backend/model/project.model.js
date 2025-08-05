@@ -16,18 +16,30 @@ const ProjectSchema = new mongoose.Schema(
       enum: ["modular_Kitchen", "inPlace_Furniture"],
       required: [true, "Category is required"],
     },
-    status: {
+    estimatedBudget: {
       type: String,
-      enum: ["Active", "In-Process" ,"Completed"],
-      default: "Active",
+      trim: true,
+    }, 
+    finalBudget: {
+      type: String,
+      trim: true,
     },
-
+    description: {
+      type: String,
+      trim: true,
+    },
+    startingDate: {
+      type: Date,
+    },
+    projectImage: {
+      url: { type: String },
+      public_id: { type: String }
+    },
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",
       required: true,
     },
-
     salesperson: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
@@ -36,15 +48,22 @@ const ProjectSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
     },
-    carpenter: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+    carpenter:
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Admin",
+      },
+    status: {
+      type: String,
+      enum: ["Pending", "In-Process", "Completed"],
+      default: "Pending",
     },
-
-    quotation:[ {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Quotation",
-    }],
+    quotation: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Quotation",
+      },
+    ],
     designs: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -59,7 +78,7 @@ const ProjectSchema = new mongoose.Schema(
     ],
   },
   {
-    timestamps: true, 
+    timestamps: true,
   }
 );
 

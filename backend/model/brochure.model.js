@@ -25,6 +25,11 @@ const BrochureSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+     fileSize: {
+      type: Number,
+      default: 0
+    }
+
   },
   {
     timestamps: true, 

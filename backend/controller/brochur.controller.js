@@ -41,6 +41,7 @@ exports.addBrochure = async (req, res) => {
                   keywords: keywords
                         ? keywords.split(",").map((k) => k.trim())
                         : [],
+                        fileSize: file.size
             });
 
             await newBrochure.save();
