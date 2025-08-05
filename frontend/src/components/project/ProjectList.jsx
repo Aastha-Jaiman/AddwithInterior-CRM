@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Search, Plus, Eye, Edit3, Calendar, ChevronDown, 
-  FileText, Download 
+import {
+  Search, Plus, Eye, Edit3, Calendar, ChevronDown,
+  FileText, Download
 } from "lucide-react";
 
 const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocument }) => {
@@ -17,32 +17,50 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
   }, [projects]);
 
   useEffect(() => {
-    let filtered = projects.filter(project => {
-      const matchesSearch = 
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+    if (Array.isArray(projects)) {
+      setFilteredProjects(projects);
+    }
+  }, [projects]);
+
+  useEffect(() => {
+    if (!Array.isArray(projects)) return;
+
+    const filtered = projects.filter(project => {
+      const matchesSearch =
+        project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.clientName?.toLowerCase().includes(searchTerm.toLowerCase());
+
       const matchesCategory = !categoryFilter || project.category === categoryFilter;
-      const matchesStatus = !statusFilter || project.designStatus === statusFilter;
-      
+      const matchesStatus = !statusFilter || project.status === statusFilter;
+
       return matchesSearch && matchesCategory && matchesStatus;
     });
-    
+
     setFilteredProjects(filtered);
   }, [searchTerm, categoryFilter, statusFilter, projects]);
 
+
+
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      uploaded: "bg-blue-100 text-blue-800 border-blue-200",
-      finalize: "bg-green-100 text-green-800 border-green-200"
+    if (!status || typeof status !== 'string') {
+      return <span className="px-2 py-1 bg-gray-300 text-gray-700 rounded">Unknown</span>;
+    }
+
+    const formatted = status.charAt(0).toUpperCase() + status.slice(1);
+
+    const statusColors = {
+      "Pending": 'bg-green-100 text-green-800',
+      "In-Process": 'bg-blue-100 text-blue-800',
+      "Completed": 'bg-red-100 text-red-800',
     };
 
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusConfig[status]}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+      <span className={`px-2 py-1 rounded ${statusColors[formatted] || 'bg-gray-100 text-gray-800'}`}>
+        {formatted}
       </span>
     );
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -94,10 +112,8 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none transition-colors"
                 >
                   <option value="">All Categories</option>
-                  <option value="Modular Kitchen">Modular Kitchen</option>
-                  <option value="Inplace Furniture">Inplace Furniture</option>
-                  <option value="Full Home Interior">Full Home Interior</option>
-                  <option value="Office Interior">Office Interior</option>
+                  <option value="modular_Kitchen">Modular Kitchen</option>
+                  <option value="inPlace_Furniture">Inplace Furniture</option>
                 </select>
                 <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
@@ -110,9 +126,9 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none transition-colors"
                 >
                   <option value="">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="uploaded">Uploaded</option>
-                  <option value="finalize">Finalize</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In-Process">Uploaded</option>
+                  <option value="Completed">Finalize</option>
                 </select>
                 <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
@@ -133,10 +149,13 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Project
+                      Project Image
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Customer
+                      Project Title
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Category
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Budget
@@ -157,7 +176,7 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredProjects.map((project) => (
-                    <tr key={project.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <tr key={project._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <img
@@ -169,20 +188,26 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                             <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
                               {project.name}
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                              {project.category}
-                            </div>
+
                           </div>
                         </div>
                       </td>
+
                       <td className="px-4 py-4">
                         <div className="text-sm text-gray-900 dark:text-white">
-                          {project.customerName}
+                          {project.title}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                           {project.customerNumber}
                         </div>
                       </td>
+
+                      <td className="px-4 py-4">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {project.category}
+                        </div>
+                      </td>
+
                       <td className="px-4 py-4">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
                           ₹{project.estimatedBudget?.toLocaleString()}
@@ -194,15 +219,20 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                         )}
                       </td>
                       <td className="px-4 py-4">
-                        {getStatusBadge(project.designStatus)}
+                        {getStatusBadge(project.status)}
                       </td>
+                      {/* <td className="px-4 py-4">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {project.category}
+                        </div>
+                      </td> */}
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-1">
                           {project.documents?.roughQuotation && (
                             <button
                               onClick={() => onDownloadDocument(
-                                project.id, 
-                                'roughQuotation', 
+                                project._id,
+                                'roughQuotation',
                                 project.documents.roughQuotation.filename
                               )}
                               className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
@@ -214,8 +244,8 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                           {project.documents?.designPdf && (
                             <button
                               onClick={() => onDownloadDocument(
-                                project.id, 
-                                'designPdf', 
+                                project._id,
+                                'designPdf',
                                 project.documents.designPdf.filename
                               )}
                               className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
@@ -227,8 +257,8 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                           {project.documents?.finalQuotation && (
                             <button
                               onClick={() => onDownloadDocument(
-                                project.id, 
-                                'finalQuotation', 
+                                project._id,
+                                'finalQuotation',
                                 project.documents.finalQuotation.filename
                               )}
                               className="p-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded transition-colors"
@@ -237,13 +267,13 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                               <FileText className="w-4 h-4" />
                             </button>
                           )}
-                          {!project.documents?.roughQuotation && 
-                           !project.documents?.designPdf && 
-                           !project.documents?.finalQuotation && (
-                            <span className="text-xs text-gray-400 dark:text-gray-500">
-                              No docs
-                            </span>
-                          )}
+                          {!project.documents?.roughQuotation &&
+                            !project.documents?.designPdf &&
+                            !project.documents?.finalQuotation && (
+                              <span className="text-xs text-gray-400 dark:text-gray-500">
+                                No docs
+                              </span>
+                            )}
                         </div>
                       </td>
                       <td className="px-4 py-4">
