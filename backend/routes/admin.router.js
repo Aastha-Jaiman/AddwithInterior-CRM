@@ -12,13 +12,13 @@ router.post('/add',adminauthMiddleware,
     { name: "profile", maxCount: 1 },
     { name: "idProof", maxCount: 1 },
   ]),
-        registerStaffByAdmin)
-router.post('/login', login)
-router.get('/profile', authMiddleware, profiledData)
-router.get('/logout', authMiddleware, logout)
+        registerStaffByAdmin);
+router.post('/login', login);
+router.get('/profile', authMiddleware, profiledData);
+router.get('/logout', authMiddleware, logout);
 router.get("/staffs", adminauthMiddleware, authMiddleware, getAllStaff);
-router.put('/update/:id',adminauthMiddleware,upload.single('profile'), updateStaffByAdmin)
-router.put('/user', authMiddleware,upload.single('profile'), updateMyProfile)
+router.put('/update/:id',adminauthMiddleware,upload.single('profile'), updateStaffByAdmin);
+router.put('/user', authMiddleware,upload.single('profile'), updateMyProfile);
 router.post('/forgot-password', resetEmailToken);
 router.post('/password', changePassword)
 router.put('/reset-password',authMiddleware, resetPassword)
