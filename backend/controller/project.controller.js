@@ -5,106 +5,6 @@ const {uploadOnCloudinary} = require("../utils/cloudinary")
 const fs = require("fs")
 
 // create project
-// exports.addProject = async (req, res) => {
-//   try {
-//     const user = req.user;
-
-//     if (!user || user.role !== "admin") {
-//       return res.status(403).json({ message: "Only admin can add projects." });
-//     }
-
-//     const {
-//       title,
-//       location,
-//       category,
-//       status,
-//       clientId,
-//       salespersonId,
-//       designerId,
-//       carpenterIds,
-//       estimatedBudget,
-//       description,
-//       startingDate,
-//     } = req.body;
-
-//     if (!title || !category || !clientId) {
-//       return res.status(400).json({ message: "Title, category, and client are required." });
-//     }
-
-//     const client = await ClientModel.findById(clientId).select("name email phone address");
-//     if (!client) {
-//       return res.status(404).json({ message: "Client not found." });
-//     }
-
-//     const salesperson = salespersonId
-//       ? await Admin.findById(salespersonId).select("name email phone")
-//       : null;
-//     if (salespersonId && !salesperson) {
-//       return res.status(404).json({ message: "Salesperson not found." });
-//     }
-
-//     const designer = designerId
-//       ? await Admin.findById(designerId).select("name email phone")
-//       : null;
-//     if (designerId && !designer) {
-//       return res.status(404).json({ message: "Designer not found." });
-//     }
-
-//     let carpenterList = [];
-//     if (carpenterIds && carpenterIds.length > 0) {
-//       if (!Array.isArray(carpenterIds)) {
-//         return res.status(400).json({ message: "Carpenter IDs must be an array." });
-//       }
-
-//       const carpenters = await Admin.find({ _id: { $in: carpenterIds } }).select("name email phone");
-//       if (carpenters.length !== carpenterIds.length) {
-//         return res.status(404).json({ message: "One or more carpenters not found." });
-//       }
-//       carpenterList = carpenterIds;
-//     }
-
-//     let projectImage = {};
-//     if (req.file) {
-//       const uploaded = await uploadOnCloudinary(req.file.path, "project");
-//       projectImage = {
-//         url: uploaded.secure_url,
-//         public_id: uploaded.public_id,
-//       };
-//       if (fs.existsSync(req.file.path)) {
-//         fs.unlinkSync(req.file.path);
-//       }
-//     }
-
-//     const newProject = await ProjectModel.create({
-//       title,
-//       location,
-//       category,
-//       status,
-//       client: clientId,
-//       salesperson: salespersonId,
-//       designer: designerId,
-//       carpenter: carpenterList,
-//       estimatedBudget,
-//       description,
-//       startingDate,
-//       projectImage,
-//     });
-
-//     res.status(201).json({
-//       success: true,
-//       message: "Project created successfully.",
-//       project: newProject,
-//       clientDetails: client,
-//       salespersonDetails: salesperson || null,
-//       designerDetails: designer || null,
-//     });
-
-//   } catch (err) {
-//     console.error("Add Project Error:", err.message);
-//     res.status(500).json({ message: "Server error", error: err.message });
-//   }
-// };
-
 exports.addProject = async (req, res) => {
   try {
     const user = req.user;
@@ -121,7 +21,7 @@ exports.addProject = async (req, res) => {
       clientId,
       salespersonId,
       designerId,
-      carpenterId, // ✅ changed from carpenterIds
+      carpenterId,
       estimatedBudget,
       description,
       startingDate,
@@ -156,18 +56,24 @@ exports.addProject = async (req, res) => {
       if (!foundCarpenter) {
         return res.status(404).json({ message: "Carpenter not found." });
       }
-      carpenter = carpenterId; // ✅ assign single ID
+      carpenter = carpenterId;
     }
 
-    let projectImage = {};
-    if (req.file) {
-      const uploaded = await uploadOnCloudinary(req.file.path, "project");
-      projectImage = {
-        url: uploaded.secure_url,
-        public_id: uploaded.public_id,
-      };
-      if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
+    // ✅ Handle multiple image uploads
+    let projectImages = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const uploaded = await uploadOnCloudinary(file.path, "project");
+        if (uploaded?.secure_url) {
+          projectImages.push({
+            url: uploaded.secure_url,
+            public_id: uploaded.public_id,
+          });
+        }
+        // Remove local temp file
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
       }
     }
 
@@ -179,11 +85,11 @@ exports.addProject = async (req, res) => {
       client: clientId,
       salesperson: salespersonId,
       designer: designerId,
-      carpenter, // ✅ single carpenter
+      carpenter,
       estimatedBudget,
       description,
       startingDate,
-      projectImage,
+      projectImages, // ✅ new field for multiple images
     });
 
     res.status(201).json({
