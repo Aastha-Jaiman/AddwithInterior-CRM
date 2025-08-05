@@ -71,10 +71,23 @@ const ProfileComponent = () => {
 
     try {
       const formData = new FormData();
+      // formData.append('name', editForm.name);
+      // formData.append('email', editForm.email);
+      // formData.append('phone', editForm.phone);
+      // formData.append('address', editForm.address);
+
       formData.append('name', editForm.name);
-      formData.append('email', editForm.email);
-      formData.append('phone', editForm.phone);
       formData.append('address', editForm.address);
+
+      // Conditionally include email & phone only if role is admin
+      if (profileData?.role === 'admin') {
+        formData.append('email', editForm.email);
+        formData.append('phone', editForm.phone);
+        if (editForm.secondaryPhone) {
+          formData.append('secondaryPhone', editForm.secondaryPhone);
+        }
+      }
+
 
       if (editForm.secondaryPhone) {
         formData.append('secondaryPhone', editForm.secondaryPhone);
@@ -87,6 +100,12 @@ const ProfileComponent = () => {
 
       const response = await updateMyProfileService(formData);
 
+      // Handle 401 (unauthorized field update)
+      if (response.status === 401) {
+        setMessage({ type: 'error', text: response.message || 'Unauthorized update attempt.' });
+        return;
+      }
+
       if (response.success) {
         setMessage({ type: 'success', text: response.message || 'Profile updated successfully!' });
         setIsEditing(false);
@@ -96,7 +115,11 @@ const ProfileComponent = () => {
       }
     } catch (error) {
       console.error('Error updating profile:', error);
+      if (error.response?.status === 401) {
+      setMessage({ type: 'error', text: error.response.data?.message || 'Unauthorized update attempt.' });
+    } else {
       setMessage({ type: 'error', text: 'Error updating profile. Please try again.' });
+    }
     } finally {
       setUpdateLoading(false);
     }
@@ -377,37 +400,44 @@ const ProfileComponent = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
+                {profileData?.role === 'admin' && (
+                  <>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                  <input
-                    type="tel"
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Phone</label>
-                  <input
-                    type="tel"
-                    value={editForm.secondaryPhone}
-                    onChange={(e) => setEditForm({ ...editForm, secondaryPhone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                      <input
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Phone</label>
+                      <input
+                        type="tel"
+                        value={editForm.secondaryPhone}
+                        onChange={(e) => setEditForm({ ...editForm, secondaryPhone: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </>
+                )}
+
+
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
