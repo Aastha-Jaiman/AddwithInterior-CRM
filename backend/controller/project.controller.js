@@ -113,7 +113,7 @@ exports.searchAllForDropdown = async (req, res) => {
             const keyword = req.query.keyword || "";
 
             const [clients, salespersons, designers, carpenters] = await Promise.all([
-                  Client.find({
+                  ClientModel.find({
                         $or: [
                               { name: { $regex: keyword, $options: "i" } },
                               { email: { $regex: keyword, $options: "i" } },
