@@ -31,10 +31,12 @@ const ProjectSchema = new mongoose.Schema(
     startingDate: {
       type: Date,
     },
-    projectImage: {
-      url: { type: String },
-      public_id: { type: String }
-    },
+     projectImages: [
+      {
+        url: { type: String },
+        public_id: { type: String },
+      }
+    ],
     client: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",
