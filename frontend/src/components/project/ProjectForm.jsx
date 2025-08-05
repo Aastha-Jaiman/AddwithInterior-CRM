@@ -1,698 +1,526 @@
 "use client";
+import React, { useEffect, useState, useCallback } from 'react';
+import { Search, Upload, X, User, Calendar, MapPin, DollarSign, UserCheck, CheckCircle } from 'lucide-react';
+import { addProject, searchAllForDropdown } from '@/services/project.services';
 
-import React, { useState, useEffect } from "react";
-import { 
-  ArrowLeft, Upload, File, User, Calendar, MapPin, 
-  DollarSign, FileText, Plus, Trash2, Camera, ChevronDown 
-} from "lucide-react";
+// DropdownSelector component - same as before
+const DropdownSelector = React.memo(({ 
+  type, 
+  label, 
+  icon: Icon, 
+  placeholder, 
+  searchQuery, 
+  onSearch, 
+  filteredData, 
+  selectedItem, 
+  onSelectItem, 
+  onClearSelection 
+}) => (
+  <div className="space-y-2">
+    <label className="block text-sm font-medium text-gray-700">{label}</label>
+    <div className="relative">
+      <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg bg-white">
+        <Icon className="w-5 h-5 text-gray-400" />
+        <input
+          type="text"
+          placeholder={placeholder || `Search ${label.toLowerCase()}...`}
+          value={searchQuery}
+          onChange={(e) => onSearch(type, e.target.value)}
+          className="flex-1 outline-none text-sm"
+        />
+        <Search className="w-4 h-4 text-gray-400" />
+      </div>
 
-const ProjectForm = ({ currentView, selectedProject, navigateToList, onSave }) => {
+      {searchQuery && (
+        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+          {filteredData.map(item => (
+            <div
+              key={item._id}
+              onClick={() => onSelectItem(type, item)}
+              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+            >
+              <div className="font-medium text-sm">{item.name}</div>
+              <div className="text-xs text-gray-500">{item.email}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+
+    {selectedItem && (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="font-medium text-sm text-blue-900">{selectedItem.name}</div>
+            <div className="text-xs text-blue-700">{selectedItem.email}</div>
+            <div className="text-xs text-blue-700">{selectedItem.phone}</div>
+            {selectedItem.address && (
+              <div className="text-xs text-blue-700">{selectedItem.address}</div>
+            )}
+            {selectedItem.department && (
+              <div className="text-xs text-blue-600 font-medium">{selectedItem.department}</div>
+            )}
+          </div>
+          <button
+            onClick={() => onClearSelection(type)}
+            className="text-blue-400 hover:text-blue-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+));
+
+DropdownSelector.displayName = 'DropdownSelector';
+
+const ProjectForm = () => {
   const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    estimatedBudget: "",
-    finalBudget: "",
-    designer: "",
-    salesperson: "",
-    carpenters: [""],
-    startingDate: "",
-    location: "",
-    description: "",
-    projectImage: null,
-    roughQuotation: null,
-    finalQuotation: null,
-    currentStatus: "pending",
-    customerName: "",
-    customerNumber: "",
-    customerEmail: "",
-    customerAddress: "",
+    title: '',
+    location: '',
+    category: '',
+    status: 'pending',
+    clientId: '',
+    salespersonId: '',
+    designerId: '',
+    carpenterId: '',
+    estimatedBudget: '',
+    description: '',
+    startingDate: '',
   });
 
-  const teamMembers = {
-    salespersons: [
-      { id: 1, name: "Mike Johnson" },
-      { id: 2, name: "Lisa Anderson" },
-      { id: 3, name: "Robert Wilson" }
-    ],
-    designers: [
-      { id: 1, name: "Sarah Wilson" },
-      { id: 2, name: "Alex Cooper" },
-      { id: 3, name: "Emma Davis" }
-    ],
-    carpenters: [
-      { id: 1, name: "David Brown" },
-      { id: 2, name: "Tom Wilson" },
-      { id: 3, name: "Robert Davis" },
-      { id: 4, name: "James Miller" }
-    ]
-  };
+  const [projectImages, setProjectImages] = useState([]);
+  const [dropdownData, setDropdownData] = useState({
+    client: [],
+    salesperson: [],
+    designer: [],
+    carpenter: [],
+  });
 
-  const clients = [
-    { id: 1, name: "John Doe", number: "+91 9876543210", email: "john@example.com", address: "123 Main St, Mumbai" },
-    { id: 2, name: "Jane Smith", number: "+91 8765432109", email: "jane@example.com", address: "456 Oak Ave, Delhi" },
-    { id: 3, name: "Alice Brown", number: "+91 7654321098", email: "alice@example.com", address: "789 Pine Rd, Bangalore" }
-  ];
+  const [searchQueries, setSearchQueries] = useState({
+    client: '',
+    salesperson: '',
+    designer: '',
+    carpenter: ''
+  });
 
-  const [errors, setErrors] = useState({});
-  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState({
+    client: null,
+    salesperson: null,
+    designer: null,
+    carpenter: null
+  });
 
-  // Check if design PDF exists for final quotation upload
-  const hasDesignPdf = selectedProject?.documents?.designPdf;
+  // Add these new states for loading and success
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
+  // Fetch dropdown data on mount
   useEffect(() => {
-    if (currentView === 'edit' && selectedProject) {
-      setFormData({
-        name: selectedProject.name || "",
-        category: selectedProject.category || "",
-        estimatedBudget: selectedProject.estimatedBudget || "",
-        finalBudget: selectedProject.finalBudget || "",
-        designer: selectedProject.designer || "",
-        salesperson: selectedProject.salesperson || "",
-        carpenters: selectedProject.carpenter || [""],
-        startingDate: selectedProject.startingDate || "",
-        location: selectedProject.location || "",
-        description: selectedProject.description || "",
-        projectImage: null,
-        roughQuotation: null,
-        finalQuotation: null,
-        currentStatus: selectedProject.designStatus || "pending",
-        customerName: selectedProject.customerName || "",
-        customerNumber: selectedProject.customerNumber || "",
-        customerEmail: selectedProject.customerEmail || "",
-        customerAddress: selectedProject.customerAddress || "",
-      });
-    }
-  }, [currentView, selectedProject]);
+    const fetchDropdownData = async () => {
+      try {
+        const res = await searchAllForDropdown();
+        const { clients = [], designers = [], salespersons = [], carpenters = [] } = res.data;
+
+        setDropdownData({
+          client: clients,
+          salesperson: salespersons,
+          designer: designers,
+          carpenter: carpenters,
+        });
+
+        console.log("Dropdown Data Set:", { clients, designers, salespersons, carpenters });
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+      }
+    };
+    fetchDropdownData();
+  }, []);
 
   const handleInputChange = (e) => {
-    const { name, value, files } = e.target;
-    if (files) {
-      setFormData({ ...formData, [name]: files[0] });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleClientSelect = (client) => {
-    setFormData({
-      ...formData,
-      customerName: client.name,
-      customerNumber: client.number,
-      customerEmail: client.email,
-      customerAddress: client.address,
-    });
-    setClientDropdownOpen(false);
-  };
-
-  const addCarpenter = () => {
-    setFormData({
-      ...formData,
-      carpenters: [...formData.carpenters, ""],
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setProjectImages(prev => [...prev, {
+          id: Date.now() + Math.random(),
+          file: file,
+          preview: reader.result
+        }]);
+      };
+      reader.readAsDataURL(file);
     });
   };
 
-  const removeCarpenter = (index) => {
-    const newCarpenters = formData.carpenters.filter((_, i) => i !== index);
-    setFormData({ ...formData, carpenters: newCarpenters });
+  const removeImage = (id) => {
+    setProjectImages(prev => prev.filter(img => img.id !== id));
   };
 
-  const updateCarpenter = (index, value) => {
-    const newCarpenters = [...formData.carpenters];
-    newCarpenters[index] = value;
-    setFormData({ ...formData, carpenters: newCarpenters });
-  };
+  const handleSearch = useCallback((type, query) => {
+    setSearchQueries(prev => ({ ...prev, [type]: query }));
+  }, []);
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name) newErrors.name = "Project name is required";
-    if (!formData.category) newErrors.category = "Category is required";
-    if (!formData.estimatedBudget) newErrors.estimatedBudget = "Estimated budget is required";
-    if (!formData.designer) newErrors.designer = "Designer is required";
-    if (!formData.salesperson) newErrors.salesperson = "Salesperson is required";
-    if (!formData.startingDate) newErrors.startingDate = "Starting date is required";
-    if (!formData.location) newErrors.location = "Location is required";
-    if (!formData.customerName) newErrors.customerName = "Customer name is required";
-    if (!formData.customerNumber) newErrors.customerNumber = "Customer number is required";
+  const selectItem = useCallback((type, item) => {
+    setSelectedItems(prev => ({ ...prev, [type]: item }));
+    setFormData(prev => ({ ...prev, [`${type}Id`]: item._id }));
+    setSearchQueries(prev => ({ ...prev, [type]: '' }));
+  }, []);
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const clearSelection = useCallback((type) => {
+    setSelectedItems(prev => ({ ...prev, [type]: null }));
+    setFormData(prev => ({ ...prev, [`${type}Id`]: '' }));
+  }, []);
 
-  const handleSubmit = (e) => {
+  const getFilteredData = useCallback((type) => {
+    const query = searchQueries[type].toLowerCase();
+    return dropdownData[type]?.filter(item =>
+      item.name?.toLowerCase().includes(query) ||
+      item.email?.toLowerCase().includes(query)
+    ) || [];
+  }, [searchQueries, dropdownData]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      onSave(formData);
+    setIsLoading(true); // Start loading
+    setSuccessMessage(''); // Clear previous success message
+
+    try {
+      const formDataToSend = new FormData();
+
+      Object.entries(formData).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((v) => formDataToSend.append(key, v));
+        } else {
+          formDataToSend.append(key, value);
+        }
+      });
+
+      projectImages.forEach((image) => {
+        formDataToSend.append("projectImage", image.file); // Use image.file instead of image
+      });
+
+      const response = await addProject(formDataToSend);
+      console.log("Project added successfully:", response.data);
+      
+      // Set success message
+      setSuccessMessage('Project added successfully!');
+      
+      // Optional: Reset form after successful submission
+      // setFormData({
+      //   title: '',
+      //   location: '',
+      //   category: '',
+      //   status: 'pending',
+      //   clientId: '',
+      //   salespersonId: '',
+      //   designerId: '',
+      //   carpenterId: '',
+      //   estimatedBudget: '',
+      //   description: '',
+      //   startingDate: '',
+      // });
+      // setProjectImages([]);
+      // setSelectedItems({
+      //   client: null,
+      //   salesperson: null,
+      //   designer: null,
+      //   carpenter: null
+      // });
+
+    } catch (error) {
+      console.error("Error submitting project:", error);
+      setSuccessMessage(''); // Clear success message on error
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-          <div className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <button
-                onClick={navigateToList}
-                className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors w-fit"
+    <div className="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Create New Project</h2>
+        <p className="text-gray-600">Fill in the project details below</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Project Information section - same as before */}
+        <div className="bg-gray-50 p-6 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <MapPin className="w-5 h-5 mr-2 text-blue-600" />
+            Project Information
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                disabled={isLoading}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+                placeholder="Enter project title"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                disabled={isLoading}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+                placeholder="Project location"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                disabled={isLoading}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+                required
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Back to Projects</span>
-              </button>
-              
-              <div className="text-center sm:text-left">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                  {currentView === 'edit' ? 'Edit Project' : 'Create New Project'}
-                </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {currentView === 'edit' ? "Update project information" : "Fill in the project details"}
-                </p>
+                <option value="">Select category</option>
+                <option value="modular_Kitchen">Modular Kitchen</option>
+                <option value="inPlace_Furniture">In Place Furniture</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                disabled={isLoading}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+              >
+                <option value="Pending">Pending</option>
+                <option value="In-Process">In Process</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Starting Date</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  name="startingDate"
+                  value={formData.startingDate}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+                />
               </div>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Budget</label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  name="estimatedBudget"
+                  value={formData.estimatedBudget}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+                  placeholder="Enter budget amount"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              disabled={isLoading}
+              rows={4}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none disabled:bg-gray-100"
+              placeholder="Project description..."
+            />
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Project Details */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="p-4 sm:p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Project Details
-              </h2>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                {/* Project Name */}
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Project Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.name 
-                        ? 'border-red-500 dark:border-red-400' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    } dark:bg-gray-700 dark:text-white`}
-                    placeholder="Enter project name"
-                  />
-                  {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-                </div>
+        {/* Client Details */}
+        <div className="bg-green-50 p-6 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <UserCheck className="w-5 h-5 mr-2 text-green-600" />
+            Client Details
+          </h3>
 
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.category 
-                        ? 'border-red-500 dark:border-red-400' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    } dark:bg-gray-700 dark:text-white`}
-                  >
-                    <option value="">Select category</option>
-                    <option value="Modular Kitchen">Modular Kitchen</option>
-                    <option value="Inplace Furniture">Inplace Furniture</option>
-                    <option value="Full Home Interior">Full Home Interior</option>
-                    <option value="Office Interior">Office Interior</option>
-                  </select>
-                  {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
-                </div>
+          <DropdownSelector
+            type="client"
+            label="Select Client"
+            icon={UserCheck}
+            placeholder="Search client by name or email..."
+            searchQuery={searchQueries.client}
+            onSearch={handleSearch}
+            filteredData={getFilteredData('client')}
+            selectedItem={selectedItems.client}
+            onSelectItem={selectItem}
+            onClearSelection={clearSelection}
+          />
+        </div>
 
-                {/* Current Status - Only show in edit mode */}
-                {currentView === 'edit' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Current Status
-                    </label>
-                    <select
-                      name="currentStatus"
-                      value={formData.currentStatus}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="uploaded">Uploaded</option>
-                      <option value="finalize">Finalize</option>
-                    </select>
-                  </div>
-                )}
+        {/* Staff Selection */}
+        <div className="bg-blue-50 p-6 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <User className="w-5 h-5 mr-2 text-blue-600" />
+            Staff Selection
+          </h3>
 
-                {/* Budgets */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <DollarSign className="w-4 h-4 inline mr-1" />
-                    Estimated Budget *
-                  </label>
-                  <input
-                    type="number"
-                    name="estimatedBudget"
-                    value={formData.estimatedBudget}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.estimatedBudget 
-                        ? 'border-red-500 dark:border-red-400' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    } dark:bg-gray-700 dark:text-white`}
-                    placeholder="Enter estimated budget"
-                  />
-                  {errors.estimatedBudget && <p className="text-red-500 text-xs mt-1">{errors.estimatedBudget}</p>}
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <DropdownSelector
+              type="salesperson"
+              label="Salesperson"
+              icon={User}
+              placeholder="Search salesperson..."
+              searchQuery={searchQueries.salesperson}
+              onSearch={handleSearch}
+              filteredData={getFilteredData('salesperson')}
+              selectedItem={selectedItems.salesperson}
+              onSelectItem={selectItem}
+              onClearSelection={clearSelection}
+            />
+            <DropdownSelector
+              type="designer"
+              label="Designer"
+              icon={User}
+              placeholder="Search designer..."
+              searchQuery={searchQueries.designer}
+              onSearch={handleSearch}
+              filteredData={getFilteredData('designer')}
+              selectedItem={selectedItems.designer}
+              onSelectItem={selectItem}
+              onClearSelection={clearSelection}
+            />
+            <DropdownSelector
+              type="carpenter"
+              label="Carpenter"
+              icon={User}
+              placeholder="Search carpenter..."
+              searchQuery={searchQueries.carpenter}
+              onSearch={handleSearch}
+              filteredData={getFilteredData('carpenter')}
+              selectedItem={selectedItems.carpenter}
+              onSelectItem={selectItem}
+              onClearSelection={clearSelection}
+            />
+          </div>
+        </div>
 
-                {/* Final Budget - Only show in edit mode */}
-                {currentView === 'edit' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <DollarSign className="w-4 h-4 inline mr-1" />
-                      Final Budget
-                    </label>
-                    <input
-                      type="number"
-                      name="finalBudget"
-                      value={formData.finalBudget}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                      placeholder="Enter final budget"
-                    />
-                  </div>
-                )}
+        {/* Project Images */}
+        <div className="bg-purple-50 p-6 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <Upload className="w-5 h-5 mr-2 text-purple-600" />
+            Project Images
+          </h3>
 
-                {/* Starting Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-1" />
-                    Starting Date *
-                  </label>
-                  <input
-                    type="date"
-                    name="startingDate"
-                    value={formData.startingDate}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.startingDate 
-                        ? 'border-red-500 dark:border-red-400' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    } dark:bg-gray-700 dark:text-white`}
-                  />
-                  {errors.startingDate && <p className="text-red-500 text-xs mt-1">{errors.startingDate}</p>}
-                </div>
-
-                {/* Location */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <MapPin className="w-4 h-4 inline mr-1" />
-                    Location *
-                  </label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.location 
-                        ? 'border-red-500 dark:border-red-400' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    } dark:bg-gray-700 dark:text-white`}
-                    placeholder="Enter location"
-                  />
-                  {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
-                </div>
-
-                {/* Description */}
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors resize-none"
-                    placeholder="Enter project description"
-                  />
-                </div>
-              </div>
-            </div>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <div className="text-sm text-gray-600 mb-2">Click to upload images or drag and drop</div>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={isLoading}
+              className="hidden"
+              id="image-upload"
+            />
+            <label
+              htmlFor="image-upload"
+              className={`inline-block px-4 py-2 ${
+                isLoading 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200'
+              } rounded-lg transition-colors`}
+            >
+              Choose Files
+            </label>
           </div>
 
-          {/* Customer Information */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="p-4 sm:p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Customer Information
-              </h2>
-
-              {/* Client Dropdown */}
-              <div className="mb-4">
-                <div className="relative">
+          {projectImages.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+              {projectImages.map(image => (
+                <div key={image.id} className="relative group">
+                  <img
+                    src={image.preview}
+                    alt="Preview"
+                    className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                  />
                   <button
                     type="button"
-                    onClick={() => setClientDropdownOpen(!clientDropdownOpen)}
-                    className="w-full sm:w-auto px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors flex items-center justify-between gap-2"
+                    onClick={() => removeImage(image.id)}
+                    disabled={isLoading}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                   >
-                    <span>Select Existing Client</span>
-                    <ChevronDown className="w-4 h-4" />
+                    <X className="w-4 h-4" />
                   </button>
-                  
-                  {clientDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 sm:right-auto sm:w-64 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10">
-                      {clients.map(client => (
-                        <button
-                          key={client.id}
-                          type="button"
-                          onClick={() => handleClientSelect(client)}
-                          className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 first:rounded-t-lg last:rounded-b-lg transition-colors"
-                        >
-                          <div className="font-medium text-gray-900 dark:text-white">{client.name}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{client.number}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Customer Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="customerName"
-                    value={formData.customerName}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.customerName 
-                        ? 'border-red-500 dark:border-red-400' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    } dark:bg-gray-700 dark:text-white`}
-                    placeholder="Enter customer name"
-                  />
-                  {errors.customerName && <p className="text-red-500 text-xs mt-1">{errors.customerName}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    name="customerNumber"
-                    value={formData.customerNumber}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.customerNumber 
-                        ? 'border-red-500 dark:border-red-400' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    } dark:bg-gray-700 dark:text-white`}
-                    placeholder="Enter phone number"
-                  />
-                  {errors.customerNumber && <p className="text-red-500 text-xs mt-1">{errors.customerNumber}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="customerEmail"
-                    value={formData.customerEmail}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                    placeholder="Enter email address"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    name="customerAddress"
-                    value={formData.customerAddress}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                    placeholder="Enter address"
-                  />
-                </div>
-              </div>
+              ))}
             </div>
+          )}
+        </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="flex items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg">
+            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+            <span className="text-green-800 font-medium">{successMessage}</span>
           </div>
+        )}
 
-          {/* Team Assignment */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="p-4 sm:p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Team Assignment
-              </h2>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {/* Designer */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Designer *
-                  </label>
-                  <select
-                    name="designer"
-                    value={formData.designer}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.designer 
-                        ? 'border-red-500 dark:border-red-400' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    } dark:bg-gray-700 dark:text-white`}
-                  >
-                    <option value="">Select designer</option>
-                    {teamMembers.designers.map(designer => (
-                      <option key={designer.id} value={designer.name}>
-                        {designer.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.designer && <p className="text-red-500 text-xs mt-1">{errors.designer}</p>}
-                </div>
-
-                {/* Salesperson */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Salesperson *
-                  </label>
-                  <select
-                    name="salesperson"
-                    value={formData.salesperson}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                      errors.salesperson 
-                        ? 'border-red-500 dark:border-red-400' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    } dark:bg-gray-700 dark:text-white`}
-                  >
-                    <option value="">Select salesperson</option>
-                    {teamMembers.salespersons.map(salesperson => (
-                      <option key={salesperson.id} value={salesperson.name}>
-                        {salesperson.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.salesperson && <p className="text-red-500 text-xs mt-1">{errors.salesperson}</p>}
-                </div>
-
-                {/* Carpenters */}
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Carpenters
-                  </label>
-                  <div className="space-y-2">
-                    {formData.carpenters.map((carpenter, index) => (
-                      <div key={index} className="flex gap-2">
-                        <select
-                          value={carpenter}
-                          onChange={(e) => updateCarpenter(index, e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                        >
-                          <option value="">Select carpenter</option>
-                          {teamMembers.carpenters.map(c => (
-                            <option key={c.id} value={c.name}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                        {formData.carpenters.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeCarpenter(index)}
-                            className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addCarpenter}
-                      className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors text-sm"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Carpenter
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Document Upload */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="p-4 sm:p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <Upload className="w-5 h-5" />
-                Document Upload
-              </h2>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                {/* Project Image */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <Camera className="w-4 h-4 inline mr-1" />
-                    Project Image
-                  </label>
-                  <input
-                    type="file"
-                    name="projectImage"
-                    onChange={handleInputChange}
-                    accept="image/*"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
-                  />
-                </div>
-
-                {/* Rough Quotation */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <File className="w-4 h-4 inline mr-1" />
-                    Rough Quotation
-                  </label>
-                  <input
-                    type="file"
-                    name="roughQuotation"
-                    onChange={handleInputChange}
-                    accept=".pdf,.doc,.docx"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
-                  />
-                </div>
-
-                {/* Final Quotation - Only show if design PDF exists */}
-                {hasDesignPdf && (
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <File className="w-4 h-4 inline mr-1" />
-                      Final Quotation
-                      <span className="text-xs text-green-600 dark:text-green-400 ml-2">
-                        (Available - Design PDF uploaded)
-                      </span>
-                    </label>
-                    <input
-                      type="file"
-                      name="finalQuotation"
-                      onChange={handleInputChange}
-                      accept=".pdf,.doc,.docx"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
-                    />
-                  </div>
-                )}
-
-                {/* Message when final quotation not available */}
-                {!hasDesignPdf && (
-                  <div className="sm:col-span-2">
-                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                      <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                        <File className="w-4 h-4 inline mr-1" />
-                        Final Quotation upload will be available after design PDF is uploaded by admin.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Show existing documents */}
-                {currentView === 'edit' && selectedProject?.documents && (
-                  <div className="sm:col-span-2">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Existing Documents</h3>
-                    <div className="space-y-2">
-                      {selectedProject.documents.roughQuotation && (
-                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <File className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {selectedProject.documents.roughQuotation.filename}
-                          </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            ({selectedProject.documents.roughQuotation.uploadDate})
-                          </span>
-                        </div>
-                      )}
-                      {selectedProject.documents.designPdf && (
-                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <File className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {selectedProject.documents.designPdf.filename}
-                          </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            ({selectedProject.documents.designPdf.uploadDate})
-                          </span>
-                        </div>
-                      )}
-                      {selectedProject.documents.finalQuotation && (
-                        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <File className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {selectedProject.documents.finalQuotation.filename}
-                          </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            ({selectedProject.documents.finalQuotation.uploadDate})
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
-            <button
-              type="button"
-              onClick={navigateToList}
-              className="w-full sm:w-auto px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              {currentView === 'edit' ? 'Update Project' : 'Create Project'}
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* Submit Buttons */}
+        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          <button
+            type="button"
+            disabled={isLoading}
+            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Creating Project...
+              </>
+            ) : (
+              'Create Project'
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
