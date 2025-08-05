@@ -51,7 +51,7 @@ exports.registerClientByAdmin = async (req, res) => {
       initials: null,
     };
 
-    if (req.files?.profile) {
+    if (req.files?.profile && req.files.profile[0]) {
       const profileUpload = await uploadOnCloudinary(req.files.profile[0].path, "client-profile");
       profileData = {
         url: profileUpload.secure_url,
@@ -70,10 +70,21 @@ exports.registerClientByAdmin = async (req, res) => {
       };
     }
 
-    const idProofUpload = await uploadOnCloudinary(req.files.idProof[0].path, "client-idproof");
+    let idProofData = {
+      url: null,
+      public_id: null,
+    };
 
-    if (fs.existsSync(req.files.idProof[0].path)) {
-      fs.unlinkSync(req.files.idProof[0].path);
+    if (req.files?.idProof && req.files.idProof[0]) {
+      const idProofUpload = await uploadOnCloudinary(req.files.idProof[0].path, "client-idproof");
+      idProofData = {
+        url: idProofUpload.secure_url,
+        public_id: idProofUpload.public_id,
+      };
+
+      if (fs.existsSync(req.files.idProof[0].path)) {
+        fs.unlinkSync(req.files.idProof[0].path);
+      }
     }
 
     let parsedAddress = address;
@@ -103,10 +114,7 @@ exports.registerClientByAdmin = async (req, res) => {
       aadharCardNumber: aadharCardNumber || null,
       address: parsedAddress,
       profile: profileData,
-      idProof: {
-        url: idProofUpload.secure_url,
-        public_id: idProofUpload.public_id,
-      },
+      idProof: idProofData,
       project: project || null,
       quotation: quotation || null,
       isActive: true,
