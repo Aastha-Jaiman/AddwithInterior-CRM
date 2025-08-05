@@ -2,6 +2,7 @@ const ProjectModel = require("../model/project.model");
 const ClientModel = require("../model/client.model");
 const Admin = require("../model/admin.model");
 const {uploadOnCloudinary} = require("../utils/cloudinary")
+const fs = require("fs")
 
 // create project
 // exports.addProject = async (req, res) => {
