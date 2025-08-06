@@ -8,7 +8,7 @@ const upload = require("../middleware/multer")
 router.post("/add", authMiddleware,upload.array("projectImage"), addProject);
 router.get("/search-dropdown", searchAllForDropdown);
 router.get("/all",authMiddleware, getAllProject)
-router.put("/update/:id",authMiddleware, updateProject)
+router.put("/update/:id",authMiddleware,upload.array("projectImage"), updateProject)
 router.get("/my-projects", authMiddleware, getMyProjects);
 router.get("/client/my-projects", clientauthMiddleware, getMyProjects);
 router.get("/:id",authMiddleware, getProjectById);

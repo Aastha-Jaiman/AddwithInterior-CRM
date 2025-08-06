@@ -1,7 +1,7 @@
 const ProjectModel = require("../model/project.model");
 const ClientModel = require("../model/client.model");
 const Admin = require("../model/admin.model");
-const {uploadOnCloudinary} = require("../utils/cloudinary")
+const { uploadOnCloudinary } = require("../utils/cloudinary")
 const fs = require("fs")
 
 // create project
@@ -59,7 +59,6 @@ exports.addProject = async (req, res) => {
       carpenter = carpenterId;
     }
 
-    // ✅ Handle multiple image uploads
     let projectImages = [];
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
@@ -70,7 +69,6 @@ exports.addProject = async (req, res) => {
             public_id: uploaded.public_id,
           });
         }
-        // Remove local temp file
         if (fs.existsSync(file.path)) {
           fs.unlinkSync(file.path);
         }
@@ -89,7 +87,7 @@ exports.addProject = async (req, res) => {
       estimatedBudget,
       description,
       startingDate,
-      projectImages, // ✅ new field for multiple images
+      projectImages,
     });
 
     res.status(201).json({
@@ -109,111 +107,119 @@ exports.addProject = async (req, res) => {
 
 // carpenter, salespersons, designers, clients search 
 exports.searchAllForDropdown = async (req, res) => {
-      try {
-            const keyword = req.query.keyword || "";
+  try {
+    const keyword = req.query.keyword || "";
 
-            const [clients, salespersons, designers, carpenters] = await Promise.all([
-                  ClientModel.find({
-                        $or: [
-                              { name: { $regex: keyword, $options: "i" } },
-                              { email: { $regex: keyword, $options: "i" } },
-                        ],
-                  }).select("name email _id"),
+    const [clients, salespersons, designers, carpenters] = await Promise.all([
+      ClientModel.find({
+        $or: [
+          { name: { $regex: keyword, $options: "i" } },
+          { email: { $regex: keyword, $options: "i" } },
+        ],
+      }).select("name email _id"),
 
-                  Admin.find({
-                        role: "salesperson",
-                        $or: [
-                              { name: { $regex: keyword, $options: "i" } },
-                              { email: { $regex: keyword, $options: "i" } },
-                        ],
-                  }).select("name email _id"),
+      Admin.find({
+        role: "salesperson",
+        $or: [
+          { name: { $regex: keyword, $options: "i" } },
+          { email: { $regex: keyword, $options: "i" } },
+        ],
+      }).select("name email _id"),
 
-                  Admin.find({
-                        role: "designer",
-                        $or: [
-                              { name: { $regex: keyword, $options: "i" } },
-                              { email: { $regex: keyword, $options: "i" } },
-                        ],
-                  }).select("name email _id"),
+      Admin.find({
+        role: "designer",
+        $or: [
+          { name: { $regex: keyword, $options: "i" } },
+          { email: { $regex: keyword, $options: "i" } },
+        ],
+      }).select("name email _id"),
 
-                  Admin.find({
-                        role: "carpenter",
-                        $or: [
-                              { name: { $regex: keyword, $options: "i" } },
-                              { email: { $regex: keyword, $options: "i" } },
-                        ],
-                  }).select("name email _id"),
-            ]);
+      Admin.find({
+        role: "carpenter",
+        $or: [
+          { name: { $regex: keyword, $options: "i" } },
+          { email: { $regex: keyword, $options: "i" } },
+        ],
+      }).select("name email _id"),
+    ]);
 
-            res.status(200).json({ clients, salespersons, designers, carpenters });
-      } catch (err) {
-            console.error("Search Dropdown Error:", err.message);
-            res.status(500).json({ message: "Server error" });
-      }
+    res.status(200).json({ clients, salespersons, designers, carpenters });
+  } catch (err) {
+    console.error("Search Dropdown Error:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 exports.getProjectById = async (req, res) => {
-      try {
+  try {
 
-            const { id } = req.params;
+    const { id } = req.params;
 
-            const project = await ProjectModel.findById(id);
+    const project = await ProjectModel.findById(id)
+     .populate("client", "name email phone address")
+      .populate("salesperson", "name email phone")
+      .populate("designer", "name email phone")
+      .populate("carpenter", "name email phone");
 
-            if (!project) {
-                  res.status(400).json({ message: "Project Not Found." });
-            }
+    if (!project) {
+      res.status(400).json({ message: "Project Not Found." });
+    }
 
-            res.status(200).json({
-                  success: true,
-                  message: "Fetch Porject Successfully.",
-                  project
-            })
+    res.status(200).json({
+      success: true,
+      message: "Fetch Porject Successfully.",
+      project
+    })
 
-      } catch (error) {
-            res.status(500).json({ message: "Server error", error: error.message });
-      }
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 }
 
 exports.getAllProject = async (req, res) => {
-      try {
-            const user = req.user;
+  try {
+    const user = req.user;
 
-            if (!user || user.role !== "admin") {
-                  return res.status(403).json({ message: "Only admin can get all projects." });
-            }
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can get all projects." });
+    }
 
-            const projects = await ProjectModel.find();
+    const projects = await ProjectModel.find()
+      .populate("client", "name email phone address")
+      .populate("salesperson", "name email phone")
+      .populate("designer", "name email phone")
+      .populate("carpenter", "name email phone");
 
-            if(!projects){
-                  return res.status(400).json({ message: "Project Not Found." });
-            };
 
-            res.status(200).json({
-                  success: true,
-                  message: "Fetch All Projects Successfully.",
-                  projects
-            })
+    if (!projects) {
+      return res.status(400).json({ message: "Project Not Found." });
+    };
 
-      }catch (error) {
-            res.status(500).json({ message: "Server error", error: error.message });
-      }
+    res.status(200).json({
+      success: true,
+      message: "Fetch All Projects Successfully.",
+      projects
+    })
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 }
 
 exports.updateProject = async (req, res) => {
   try {
     const user = req.user;
+    const { id } = req.params;
+
     if (!user || user.role !== "admin") {
       return res.status(403).json({ message: "Only admin can update projects." });
     }
 
-    const { id } = req.params;
-
     const {
       title,
-      location,
-      category,
+      finalBudget,
+      description,
       status,
-      clientId,
       salespersonId,
       designerId,
       carpenterId,
@@ -224,37 +230,53 @@ exports.updateProject = async (req, res) => {
       return res.status(404).json({ message: "Project not found." });
     }
 
-    if (clientId) {
-      const client = await ClientModel.findById(clientId).select("name email phone address");
-      if (!client) return res.status(404).json({ message: "Client not found." });
-    }
+    let salesperson = null;
+    let designer = null;
+    let carpenter = null;
 
     if (salespersonId) {
-      const salesperson = await Admin.findById(salespersonId).select("name email phone");
-      if (!salesperson)
+      salesperson = await Admin.findById(salespersonId).select("name email phone");
+      if (!salesperson) {
         return res.status(404).json({ message: "Salesperson not found." });
+      }
+      project.salesperson = salespersonId;
     }
 
     if (designerId) {
-      const designer = await Admin.findById(designerId).select("name email phone");
-      if (!designer)
+      designer = await Admin.findById(designerId).select("name email phone");
+      if (!designer) {
         return res.status(404).json({ message: "Designer not found." });
+      }
+      project.designer = designerId;
     }
 
     if (carpenterId) {
-      const carpenter = await Admin.findById(carpenterId).select("name email phone");
-      if (!carpenter)
+      carpenter = await Admin.findById(carpenterId).select("name email phone");
+      if (!carpenter) {
         return res.status(404).json({ message: "Carpenter not found." });
+      }
+      project.carpenter = carpenterId;
+    }
+
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const uploaded = await uploadOnCloudinary(file.path, "project");
+        if (uploaded?.secure_url) {
+          project.projectImages.push({
+            url: uploaded.secure_url,
+            public_id: uploaded.public_id,
+          });
+        }
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+      }
     }
 
     if (title) project.title = title;
-    if (location) project.location = location;
-    if (category) project.category = category;
+    if (finalBudget) project.finalBudget = finalBudget;
+    if (description) project.description = description;
     if (status) project.status = status;
-    if (clientId) project.client = clientId;
-    if (salespersonId) project.salesperson = salespersonId;
-    if (designerId) project.designer = designerId;
-    if (carpenterId) project.carpenter = carpenterId;
 
     const updatedProject = await project.save();
 
@@ -262,6 +284,9 @@ exports.updateProject = async (req, res) => {
       success: true,
       message: "Project updated successfully.",
       project: updatedProject,
+      salespersonDetails: salesperson || null,
+      designerDetails: designer || null,
+      carpenterDetails: carpenter || null,
     });
 
   } catch (err) {
@@ -290,10 +315,10 @@ exports.getMyProjects = async (req, res) => {
     }
 
     const projects = await ProjectModel.find(filter)
-      .populate("client", "name email")
-      .populate("salesperson", "name email")
-      .populate("designer", "name email")
-      .populate("carpenter", "name email");
+      .populate("client", "name email phone address")
+      .populate("salesperson", "name email phone")
+      .populate("designer", "name email phone")
+      .populate("carpenter", "name email phone");
 
     res.status(200).json({
       success: true,
@@ -304,3 +329,4 @@ exports.getMyProjects = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+

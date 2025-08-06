@@ -431,7 +431,7 @@ exports.resetPassword = async (req, res) => {
       }
 }
 
-exports.forgotPassword = async (req, res) => {
+exports.resetEmailToken = async (req, res) => {
   const { email } = req.body;
 
   try {
