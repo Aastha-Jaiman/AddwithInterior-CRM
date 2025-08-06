@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Search, Plus, Eye, Edit3, Calendar, ChevronDown,
-  FileText, Download
+  Search, Plus, Eye, Edit3, ChevronDown,
+  FileText
 } from "lucide-react";
 
 const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocument }) => {
@@ -17,18 +17,13 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
   }, [projects]);
 
   useEffect(() => {
-    if (Array.isArray(projects)) {
-      setFilteredProjects(projects);
-    }
-  }, [projects]);
-
-  useEffect(() => {
     if (!Array.isArray(projects)) return;
 
     const filtered = projects.filter(project => {
       const matchesSearch =
         project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.clientName?.toLowerCase().includes(searchTerm.toLowerCase());
+        project.client?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.salesperson?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCategory = !categoryFilter || project.category === categoryFilter;
       const matchesStatus = !statusFilter || project.status === statusFilter;
@@ -38,8 +33,6 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
 
     setFilteredProjects(filtered);
   }, [searchTerm, categoryFilter, statusFilter, projects]);
-
-
 
   const getStatusBadge = (status) => {
     if (!status || typeof status !== 'string') {
@@ -61,10 +54,10 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
     );
   };
 
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4 py-6">
+
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <div className="p-4 sm:p-6">
@@ -127,8 +120,8 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                 >
                   <option value="">All Status</option>
                   <option value="Pending">Pending</option>
-                  <option value="In-Process">Uploaded</option>
-                  <option value="Completed">Finalize</option>
+                  <option value="In-Process">In-Process</option>
+                  <option value="Completed">Completed</option>
                 </select>
                 <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
@@ -144,12 +137,15 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
         {/* Projects Table */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           {filteredProjects.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-[1200px] w-full ">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Project Image
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Client Name
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Project Title
@@ -180,37 +176,38 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={project.image}
-                            alt={project.name}
+                            src={
+                              Array.isArray(project.projectImages)
+                                ? project.projectImages[0]?.url
+                                : project.projectImages?.url
+                            }
+                            alt={project.title || "Project"}
                             className="w-12 h-9 object-cover rounded border border-gray-200 dark:border-gray-600"
                           />
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                              {project.name}
-                            </div>
 
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {project.client?.name || "N/A"}
                           </div>
                         </div>
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="text-sm text-gray-900 dark:text-white">
-                          {project.title}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {project.customerNumber}
-                        </div>
+                        <div className="text-sm text-gray-900 dark:text-white">{project.title}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{project.location}</div>
                       </td>
 
-                      <td className="px-4 py-4">
-                        <div className="text-sm text-gray-900 dark:text-white">
-                          {project.category}
-                        </div>
+                      <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                        {project.category}
                       </td>
 
                       <td className="px-4 py-4">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          ₹{project.estimatedBudget?.toLocaleString()}
+                          ₹{!isNaN(Number(project.estimatedBudget)) ? Number(project.estimatedBudget).toLocaleString() : "N/A"}
                         </div>
                         {project.finalBudget && (
                           <div className="text-xs text-green-600 dark:text-green-400">
@@ -218,69 +215,34 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                           </div>
                         )}
                       </td>
+
                       <td className="px-4 py-4">
-                        {getStatusBadge(project.status)}
-                      </td>
-                      {/* <td className="px-4 py-4">
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                          {project.category}
+                        <div className="w-full">
+                          {getStatusBadge(project.status)}
                         </div>
-                      </td> */}
+                      </td>
+
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-1">
                           {project.documents?.roughQuotation && (
                             <button
-                              onClick={() => onDownloadDocument(
-                                project._id,
-                                'roughQuotation',
-                                project.documents.roughQuotation.filename
-                              )}
+                              onClick={() => onDownloadDocument(project._id, 'roughQuotation', project.documents.roughQuotation.filename)}
                               className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
                               title="Download Rough Quotation"
                             >
                               <FileText className="w-4 h-4" />
                             </button>
                           )}
-                          {project.documents?.designPdf && (
-                            <button
-                              onClick={() => onDownloadDocument(
-                                project._id,
-                                'designPdf',
-                                project.documents.designPdf.filename
-                              )}
-                              className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
-                              title="Download Design PDF"
-                            >
-                              <FileText className="w-4 h-4" />
-                            </button>
+                          {!project.documents && (
+                            <span className="text-xs text-gray-400 dark:text-gray-500">No docs</span>
                           )}
-                          {project.documents?.finalQuotation && (
-                            <button
-                              onClick={() => onDownloadDocument(
-                                project._id,
-                                'finalQuotation',
-                                project.documents.finalQuotation.filename
-                              )}
-                              className="p-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded transition-colors"
-                              title="Download Final Quotation"
-                            >
-                              <FileText className="w-4 h-4" />
-                            </button>
-                          )}
-                          {!project.documents?.roughQuotation &&
-                            !project.documents?.designPdf &&
-                            !project.documents?.finalQuotation && (
-                              <span className="text-xs text-gray-400 dark:text-gray-500">
-                                No docs
-                              </span>
-                            )}
                         </div>
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="text-sm text-gray-900 dark:text-white">
-                          {new Date(project.startingDate).toLocaleDateString('en-IN')}
-                        </div>
+
+                      <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                        {project.startingDate ? new Date(project.startingDate).toLocaleDateString('en-IN') : "N/A"}
                       </td>
+
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <button

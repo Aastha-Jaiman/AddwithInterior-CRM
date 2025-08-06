@@ -9,11 +9,19 @@ import {
 } from 'lucide-react';
 
 const permissionsList = [
-  "upload_quotation", "view_quotations", "upload_design", "view_design_feedback",
-  "upload_morning_update", "upload_evening_update", "view_daily_updates",
-  "create_project", "assign_team", "manage_users", "manage_brochures",
-  "see_all_projects", "view_client_info", "view_payment", "generate_invoice",
-  "assign_service", "track_service"
+      "upload_quotation",
+      "view_quotations",
+      "upload_design",
+      "view_design_feedback",
+      "upload_morning_update",
+      "upload_evening_update",
+      "view_daily_updates",
+      "create_project",
+      "manage_users",
+      "manage_brochures",
+      "view_client_info",
+      "view_invoice",
+      "generate_invoice",
 ];
 
 const StaffDetailPage = () => {

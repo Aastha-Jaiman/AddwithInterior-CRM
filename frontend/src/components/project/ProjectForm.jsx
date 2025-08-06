@@ -1,20 +1,20 @@
 "use client";
 import React, { useEffect, useState, useCallback } from 'react';
-import { Search, Upload, X, User, Calendar, MapPin, DollarSign, UserCheck, CheckCircle } from 'lucide-react';
-import { addProject, searchAllForDropdown } from '@/services/project.services';
+import { Search, Upload, X, User, Calendar, MapPin, DollarSign, UserCheck, CheckCircle, ArrowLeft, IndianRupee } from 'lucide-react';
+import { addProject, searchAllForDropdown, updateProject } from '@/services/project.services';
 
-// DropdownSelector component - same as before
-const DropdownSelector = React.memo(({ 
-  type, 
-  label, 
-  icon: Icon, 
-  placeholder, 
-  searchQuery, 
-  onSearch, 
-  filteredData, 
-  selectedItem, 
-  onSelectItem, 
-  onClearSelection 
+const DropdownSelector = React.memo(({
+  type,
+  label,
+  icon: Icon,
+  placeholder,
+  searchQuery,
+  onSearch,
+  filteredData,
+  selectedItem,
+  onSelectItem,
+  onClearSelection,
+  disabled = false
 }) => (
   <div className="space-y-2">
     <label className="block text-sm font-medium text-gray-700">{label}</label>
@@ -27,11 +27,12 @@ const DropdownSelector = React.memo(({
           value={searchQuery}
           onChange={(e) => onSearch(type, e.target.value)}
           className="flex-1 outline-none text-sm"
+          disabled={disabled}
         />
         <Search className="w-4 h-4 text-gray-400" />
       </div>
 
-      {searchQuery && (
+      {!disabled && searchQuery && (
         <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
           {filteredData.map(item => (
             <div
@@ -54,19 +55,24 @@ const DropdownSelector = React.memo(({
             <div className="font-medium text-sm text-blue-900">{selectedItem.name}</div>
             <div className="text-xs text-blue-700">{selectedItem.email}</div>
             <div className="text-xs text-blue-700">{selectedItem.phone}</div>
-            {selectedItem.address && (
+            {/* {selectedItem.address && (
+              <div className="text-xs text-blue-700">{selectedItem.address}</div>
+            )} */}
+            {selectedItem.address && typeof selectedItem.address === 'object' ? (
+              <div className="text-xs text-blue-700">{selectedItem.address.addressinfo}</div>
+            ) : (
               <div className="text-xs text-blue-700">{selectedItem.address}</div>
             )}
+
             {selectedItem.department && (
               <div className="text-xs text-blue-600 font-medium">{selectedItem.department}</div>
             )}
           </div>
-          <button
-            onClick={() => onClearSelection(type)}
-            className="text-blue-400 hover:text-blue-600"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          {!disabled && (
+            <button onClick={() => onClearSelection(type)} className="text-blue-400 hover:text-blue-600">
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     )}
@@ -75,61 +81,39 @@ const DropdownSelector = React.memo(({
 
 DropdownSelector.displayName = 'DropdownSelector';
 
-const ProjectForm = () => {
+const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
+  const isEditMode = !!projectToEdit;
+
+
   const [formData, setFormData] = useState({
     title: '',
     location: '',
     category: '',
-    status: 'pending',
+    status: 'Pending',
     clientId: '',
     salespersonId: '',
     designerId: '',
     carpenterId: '',
     estimatedBudget: '',
+    finalBudget: '', // add this
     description: '',
     startingDate: '',
   });
 
+
   const [projectImages, setProjectImages] = useState([]);
-  const [dropdownData, setDropdownData] = useState({
-    client: [],
-    salesperson: [],
-    designer: [],
-    carpenter: [],
-  });
-
-  const [searchQueries, setSearchQueries] = useState({
-    client: '',
-    salesperson: '',
-    designer: '',
-    carpenter: ''
-  });
-
-  const [selectedItems, setSelectedItems] = useState({
-    client: null,
-    salesperson: null,
-    designer: null,
-    carpenter: null
-  });
-
-  // Add these new states for loading and success
+  const [dropdownData, setDropdownData] = useState({ client: [], salesperson: [], designer: [], carpenter: [] });
+  const [searchQueries, setSearchQueries] = useState({ client: '', salesperson: '', designer: '', carpenter: '' });
+  const [selectedItems, setSelectedItems] = useState({ client: null, salesperson: null, designer: null, carpenter: null });
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Fetch dropdown data on mount
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
         const res = await searchAllForDropdown();
         const { clients = [], designers = [], salespersons = [], carpenters = [] } = res.data;
-
-        setDropdownData({
-          client: clients,
-          salesperson: salespersons,
-          designer: designers,
-          carpenter: carpenters,
-        });
-
+        setDropdownData({ client: clients, salesperson: salespersons, designer: designers, carpenter: carpenters });
         console.log("Dropdown Data Set:", { clients, designers, salespersons, carpenters });
       } catch (error) {
         console.error("Error fetching dropdown data:", error);
@@ -137,6 +121,40 @@ const ProjectForm = () => {
     };
     fetchDropdownData();
   }, []);
+
+  useEffect(() => {
+    if (isEditMode) {
+      setFormData({
+        title: projectToEdit.title || '',
+        location: projectToEdit.location || '',
+        category: projectToEdit.category || '',
+        status: projectToEdit.status || 'Pending',
+        estimatedBudget: projectToEdit.estimatedBudget || '',
+        finalBudget: projectToEdit.finalBudget || '',         
+        description: projectToEdit.description || '',
+        startingDate: projectToEdit.startingDate ? projectToEdit.startingDate.split('T')[0] : '',
+        clientId: projectToEdit.client?._id || '',
+        salespersonId: projectToEdit.salesperson?._id || '',
+        designerId: projectToEdit.designer?._id || '',
+        carpenterId: projectToEdit.carpenter?._id || '',
+      });
+
+
+      setSelectedItems({
+        client: projectToEdit.client || null,
+        salesperson: projectToEdit.salesperson || null,
+        designer: projectToEdit.designer || null,
+        carpenter: projectToEdit.carpenter || null,
+      });
+
+      setProjectImages((projectToEdit.projectImages || []).map(img => ({
+        id: img.public_id || Date.now() + Math.random(),
+        preview: img.url,
+        file: null,
+        isExisting: true
+      })));
+    }
+  }, [isEditMode, projectToEdit]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -151,7 +169,8 @@ const ProjectForm = () => {
         setProjectImages(prev => [...prev, {
           id: Date.now() + Math.random(),
           file: file,
-          preview: reader.result
+          preview: reader.result,
+          isExisting: false
         }]);
       };
       reader.readAsDataURL(file);
@@ -180,76 +199,76 @@ const ProjectForm = () => {
   const getFilteredData = useCallback((type) => {
     const query = searchQueries[type].toLowerCase();
     return dropdownData[type]?.filter(item =>
-      item.name?.toLowerCase().includes(query) ||
-      item.email?.toLowerCase().includes(query)
+      item.name?.toLowerCase().includes(query) || item.email?.toLowerCase().includes(query)
     ) || [];
   }, [searchQueries, dropdownData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true); // Start loading
-    setSuccessMessage(''); // Clear previous success message
+    setIsLoading(true);
+    setSuccessMessage('');
 
     try {
       const formDataToSend = new FormData();
 
-      Object.entries(formData).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          value.forEach((v) => formDataToSend.append(key, v));
-        } else {
-          formDataToSend.append(key, value);
-        }
-      });
+      if (isEditMode) {
+        formDataToSend.append("title", formData.title);
+        formDataToSend.append("description", formData.description);
+        formDataToSend.append("status", formData.status);
+        // formDataToSend.append("finalBudget", formData.estimatedBudget);
+        formDataToSend.append("finalBudget", formData.finalBudget || formData.estimatedBudget);
+        formDataToSend.append("salespersonId", formData.salespersonId);
+        formDataToSend.append("designerId", formData.designerId);
+        formDataToSend.append("carpenterId", formData.carpenterId);
 
-      projectImages.forEach((image) => {
-        formDataToSend.append("projectImage", image.file); // Use image.file instead of image
-      });
+        projectImages.forEach((img) => {
+          if (!img.isExisting && img.file) {
+            formDataToSend.append("projectImage", img.file);
+          }
+        });
 
-      const response = await addProject(formDataToSend);
-      console.log("Project added successfully:", response.data);
-      
-      // Set success message
-      setSuccessMessage('Project added successfully!');
-      
-      // Optional: Reset form after successful submission
-      // setFormData({
-      //   title: '',
-      //   location: '',
-      //   category: '',
-      //   status: 'pending',
-      //   clientId: '',
-      //   salespersonId: '',
-      //   designerId: '',
-      //   carpenterId: '',
-      //   estimatedBudget: '',
-      //   description: '',
-      //   startingDate: '',
-      // });
-      // setProjectImages([]);
-      // setSelectedItems({
-      //   client: null,
-      //   salesperson: null,
-      //   designer: null,
-      //   carpenter: null
-      // });
+        const res = await updateProject(projectToEdit._id, formDataToSend);
+        setSuccessMessage("Project updated successfully!");
 
-    } catch (error) {
-      console.error("Error submitting project:", error);
-      setSuccessMessage(''); // Clear success message on error
+        console.log("res", res)
+      } else {
+        Object.entries(formData).forEach(([key, value]) => formDataToSend.append(key, value));
+        projectImages.forEach((image) => {
+          formDataToSend.append("projectImage", image.file);
+        });
+        const res = await addProject(formDataToSend);
+        setSuccessMessage("Project added successfully!");
+      }
+
+    } catch (err) {
+      console.error("Submit error:", err);
     } finally {
-      setIsLoading(false); // Stop loading
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Create New Project</h2>
-        <p className="text-gray-600">Fill in the project details below</p>
+        <button
+          onClick={navigateToList}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors w-fit"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Back to Projects</span>
+        </button>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+          {isEditMode ? 'Edit Project' : 'Create New Project'}
+        </h2>
+        <p className="text-gray-600">
+          {isEditMode
+            ? 'Update the project details below'
+            : 'Fill in the project details below'}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Project Information section - same as before */}
+        {/* Project Info */}
         <div className="bg-gray-50 p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <MapPin className="w-5 h-5 mr-2 text-blue-600" />
@@ -278,7 +297,7 @@ const ProjectForm = () => {
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
-                disabled={isLoading}
+                disabled={isLoading || isEditMode}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
                 placeholder="Project location"
                 required
@@ -293,7 +312,7 @@ const ProjectForm = () => {
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
-                disabled={isLoading}
+                disabled={isLoading || isEditMode}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
                 required
               >
@@ -327,31 +346,67 @@ const ProjectForm = () => {
                   name="startingDate"
                   value={formData.startingDate}
                   onChange={handleInputChange}
-                  disabled={isLoading}
+                  disabled={isLoading || isEditMode}
                   className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
                 />
               </div>
             </div>
           </div>
 
+          {/* Estimated Budget */}
+          {/* <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Budget</label>
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+              <input
+                type="number"
+                name="estimatedBudget"
+                value={formData.estimatedBudget}
+                onChange={handleInputChange}
+                disabled={isLoading}
+                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+                placeholder="Enter budget amount"
+              />
+            </div>
+          </div> */}
+
+          {/* Estimated Budget (disabled in edit mode) */}
           <div className="mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Budget</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Budget</label>
+            <div className="relative">
+              <IndianRupee className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+              <input
+                type="number"
+                name="estimatedBudget"
+                value={formData.estimatedBudget}
+                onChange={handleInputChange}
+                disabled={isLoading || isEditMode}
+                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+                placeholder="Enter budget amount"
+              />
+            </div>
+          </div>
+          {/* Final Budget - Only in Edit Mode */}
+          {isEditMode && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Final Budget</label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                <IndianRupee className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
                 <input
-                  type="number"
-                  name="estimatedBudget"
-                  value={formData.estimatedBudget}
-                  onChange={handleInputChange}
+                  // type="number"
+                  name="finalBudget"
+                  value={formData.finalBudget || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, finalBudget: e.target.value }))}
                   disabled={isLoading}
-                  className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
-                  placeholder="Enter budget amount"
+                  className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  placeholder="Enter final budget"
                 />
               </div>
             </div>
-          </div>
+          )}
 
+
+          {/* Description */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
             <textarea
@@ -366,7 +421,7 @@ const ProjectForm = () => {
           </div>
         </div>
 
-        {/* Client Details */}
+        {/* Client */}
         <div className="bg-green-50 p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <UserCheck className="w-5 h-5 mr-2 text-green-600" />
@@ -384,10 +439,11 @@ const ProjectForm = () => {
             selectedItem={selectedItems.client}
             onSelectItem={selectItem}
             onClearSelection={clearSelection}
+            disabled={isLoading || isEditMode}
           />
         </div>
 
-        {/* Staff Selection */}
+        {/* Staff */}
         <div className="bg-blue-50 p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <User className="w-5 h-5 mr-2 text-blue-600" />
@@ -395,46 +451,26 @@ const ProjectForm = () => {
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <DropdownSelector
-              type="salesperson"
-              label="Salesperson"
-              icon={User}
-              placeholder="Search salesperson..."
-              searchQuery={searchQueries.salesperson}
-              onSearch={handleSearch}
-              filteredData={getFilteredData('salesperson')}
-              selectedItem={selectedItems.salesperson}
-              onSelectItem={selectItem}
-              onClearSelection={clearSelection}
-            />
-            <DropdownSelector
-              type="designer"
-              label="Designer"
-              icon={User}
-              placeholder="Search designer..."
-              searchQuery={searchQueries.designer}
-              onSearch={handleSearch}
-              filteredData={getFilteredData('designer')}
-              selectedItem={selectedItems.designer}
-              onSelectItem={selectItem}
-              onClearSelection={clearSelection}
-            />
-            <DropdownSelector
-              type="carpenter"
-              label="Carpenter"
-              icon={User}
-              placeholder="Search carpenter..."
-              searchQuery={searchQueries.carpenter}
-              onSearch={handleSearch}
-              filteredData={getFilteredData('carpenter')}
-              selectedItem={selectedItems.carpenter}
-              onSelectItem={selectItem}
-              onClearSelection={clearSelection}
-            />
+            {['salesperson', 'designer', 'carpenter'].map((type) => (
+              <DropdownSelector
+                key={type}
+                type={type}
+                label={type.charAt(0).toUpperCase() + type.slice(1)}
+                icon={User}
+                placeholder={`Search ${type}...`}
+                searchQuery={searchQueries[type]}
+                onSearch={handleSearch}
+                filteredData={getFilteredData(type)}
+                selectedItem={selectedItems[type]}
+                onSelectItem={selectItem}
+                onClearSelection={clearSelection}
+                disabled={isLoading}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Project Images */}
+        {/* Images */}
         <div className="bg-purple-50 p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <Upload className="w-5 h-5 mr-2 text-purple-600" />
@@ -455,11 +491,10 @@ const ProjectForm = () => {
             />
             <label
               htmlFor="image-upload"
-              className={`inline-block px-4 py-2 ${
-                isLoading 
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                  : 'bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200'
-              } rounded-lg transition-colors`}
+              className={`inline-block px-4 py-2 ${isLoading
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-purple-100 text-purple-700 cursor-pointer hover:bg-purple-200'
+                } rounded-lg transition-colors`}
             >
               Choose Files
             </label>
@@ -496,11 +531,12 @@ const ProjectForm = () => {
           </div>
         )}
 
-        {/* Submit Buttons */}
+        {/* Buttons */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"
             disabled={isLoading}
+            onClick={navigateToList}
             className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
@@ -513,10 +549,10 @@ const ProjectForm = () => {
             {isLoading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Creating Project...
+                {isEditMode ? 'Updating Project...' : 'Creating Project...'}
               </>
             ) : (
-              'Create Project'
+              isEditMode ? 'Update Project' : 'Create Project'
             )}
           </button>
         </div>

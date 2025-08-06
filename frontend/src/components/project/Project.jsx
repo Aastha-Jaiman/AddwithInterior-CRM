@@ -5,12 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import ProjectsList from "./ProjectList";
 import ProjectDetails from "./ProjectDetails";
 import ProjectForm from "./ProjectForm";
-import { getAllProjects } from "@/services/project.services";
+import { getAllProjects, getProjectById } from "@/services/project.services";
 
 const ProjectsPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const currentView = searchParams.get('view') || 'list';
   const currentId = searchParams.get('id');
 
@@ -19,55 +19,51 @@ const ProjectsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // // ✅ Fetch projects from API
-  // useEffect(() => {
-  //   const fetchProjects = async () => {
-  //     try {
-  //       setLoading(true);
-  //       const response = await getAllProjects();
-  //       setProjects(response.data || []);
-  //     } catch (err) {
-  //       console.error("Error fetching projects:", err);
-  //       setError("Failed to load projects.");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchProjects();
-  // }, []);
 
   useEffect(() => {
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const response = await getAllProjects();
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllProjects();
 
-      console.log("res", response)
-
-
-      // ✅ Extract the correct array
-      const projectList = response.data.projects || [];
-      setProjects(projectList);
-    } catch (err) {
-      console.error("Error fetching projects:", err);
-      setError("Failed to load projects.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchProjects();
-}, []);
+        console.log("res", response)
 
 
+        // Extract the correct array
+        const projectList = response.data.projects || [];
+        setProjects(projectList);
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+        setError("Failed to load projects.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   useEffect(() => {
-    if ((currentView === 'details' || currentView === 'edit') && currentId) {
-      const project = projects.find(p => p._id?.toString() === currentId);
-      setSelectedProject(project);
-    }
-  }, [currentView, currentId, projects]);
+    const fetchProjectById = async () => {
+      if ((currentView === 'details' || currentView === 'edit') && currentId) {
+        try {
+          setLoading(true);
+          const res = await getProjectById(currentId);
+          setSelectedProject(res.data.project); // Adjust key as per your API response
+        } catch (err) {
+          console.error("Error fetching project by ID:", err);
+          setError("Failed to load project details.");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setSelectedProject(null);
+      }
+    };
+
+    fetchProjectById();
+  }, [currentView, currentId]);
+
 
   const navigateToView = (view, id = null) => {
     const params = new URLSearchParams();
@@ -110,10 +106,11 @@ const ProjectsPage = () => {
     return (
       <ProjectForm
         currentView={currentView}
-        selectedProject={selectedProject}
+        projectToEdit={selectedProject}
         navigateToList={navigateToList}
         onSave={handleProjectSave}
       />
+
     );
   }
 
