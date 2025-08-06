@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { type } = require('os');
 
 const ProjectSchema = new mongoose.Schema(
   {
@@ -72,6 +73,10 @@ const ProjectSchema = new mongoose.Schema(
         ref: "Design",
       },
     ],
+    designsUploaded:{
+      type: Boolean,
+      default: false
+    },
     updates: [
       {
         type: mongoose.Schema.Types.ObjectId,
