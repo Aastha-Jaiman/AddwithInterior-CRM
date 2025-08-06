@@ -1,7 +1,7 @@
 "use client"
 import SidebarLayout from '@/components/sidebar/Sidebar'
 
-import ProjectDetails from '@/components/projects/ClientProject';
+import ProjectDetails from '@/components/projects/StaffProjects';
 
 
 

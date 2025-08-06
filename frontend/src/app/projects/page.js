@@ -1,4 +1,4 @@
-import ProjectDetails from '@/components/projects/ClientProject'
+import ClientProject from '@/components/projects/StaffProjects'
 import SidebarLayout from '@/components/sidebar/Sidebar'
 import React from 'react'
 
@@ -6,8 +6,7 @@ export default function page() {
     return (
         <div>
             <SidebarLayout>
-
-                <ProjectDetails />
+                <ClientProject />
             </SidebarLayout>
         </div>
     )
