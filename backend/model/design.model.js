@@ -34,15 +34,26 @@ const DesignSchema = new mongoose.Schema(
       },
     ],
 
-    isApproved: {
-      type: Boolean,
-      default: false,
+ approvalHistory: [
+    {
+      isApproved: {
+        type: Boolean,
+        required: true,
+      },
+      versionSelect:{
+        type: Number,
+        required: true,
+      },
+      feedbackMessage: {
+        type: String,
+        required: true,
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now,
+      },
     },
-
-    feedback: {
-      type: String,
-      trim: true,
-    },
+  ],
   },
   {
     timestamps: true,

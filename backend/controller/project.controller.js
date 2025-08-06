@@ -1,6 +1,6 @@
 const ProjectModel = require("../model/project.model");
 const ClientModel = require("../model/client.model");
-const Admin = require("../model/admin.model");
+const Admin = require("../model/admin.model")
 const { uploadOnCloudinary } = require("../utils/cloudinary")
 const fs = require("fs")
 
@@ -105,7 +105,7 @@ exports.addProject = async (req, res) => {
   }
 };
 
-// carpenter, salespersons, designers, clients search 
+// carpenter, salespersons, bdesigners, clients search 
 exports.searchAllForDropdown = async (req, res) => {
   try {
     const keyword = req.query.keyword || "";
