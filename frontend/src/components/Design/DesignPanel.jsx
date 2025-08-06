@@ -187,9 +187,6 @@ const DesignerPanel = () => {
                       Design Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Team
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Due Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -255,14 +252,6 @@ const DesignerPanel = () => {
                         >
                           {getDesignStatusText(project.designStatus)}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {project.designer}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {project.salesperson}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {project.startingDate}

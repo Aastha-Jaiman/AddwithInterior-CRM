@@ -1,142 +1,3 @@
-// "use client";
-
-// import { useRouter } from "next/navigation";
-// import { useState } from "react";
-// import { useDispatch } from "react-redux";
-// import { loginAdmin } from "@/services/admin.services";
-// import { loginSuccess } from "@/store/authSlice";
-// import PublicRoute from "./PublicRoutes";
-// import { loginClient } from "@/services/client.services";
-
-// export default function LoginPage() {
-//   const router = useRouter();
-//   const dispatch = useDispatch();
-
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [error, setError] = useState("");
-//   const [loading, setLoading] = useState(false);
-//   const [userType, setUserType] = useState("admin"); // 'admin' or 'client'
-
-//   const handleLogin = async (e) => {
-//     e.preventDefault();
-//     setError("");
-//     setLoading(true);
-
-//     try {
-//       let result;
-
-//       if (
-//         userType === "admin" ||
-//         userType === "salesperson" ||
-//         userType === "designer" ||
-//         userType === "carpenter"
-//       ) {
-//         result = await loginAdmin({ email, password });
-//       } else {
-//         result = await loginClient({ email, identifier: email, password });
-//       }
-
-//       const userPayload = {
-//         name: result.user.name,
-//         email: result.user.email,
-//         role: result.user.role || userType,
-//         permission: result.user.permission || [],
-//       };
-
-//       const isStaff =
-//         userType === "admin" ||
-//         userType === "salesperson" ||
-//         userType === "designer" ||
-//         userType === "carpenter";
-
-//       localStorage.setItem("crm_user", JSON.stringify(userPayload));
-//       localStorage.setItem(
-//         isStaff ? "adminToken" : "clientToken",
-//         result.token
-//       );
-
-//       console.log(" Storing user:", userPayload);
-//       dispatch(loginSuccess(userPayload));
-
-//       router.replace("/dashboard");
-//     } catch (err) {
-//       const msg = err?.response?.data?.message || "Login failed";
-//       setError(msg);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <PublicRoute>
-//       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-//         <form
-//           onSubmit={handleLogin}
-//           className="bg-white shadow-md rounded px-8 py-6 w-full max-w-sm"
-//         >
-//           <h2 className="text-2xl font-bold mb-4 text-center text-indigo-600">
-//             Login
-//           </h2>
-
-//           {/* Toggle login type */}
-//           <div className="flex justify-center gap-4 mb-5">
-//             <button
-//               type="button"
-//               onClick={() => setUserType("admin")}
-//               className={`px-4 py-1 rounded-full border ${userType === "admin"
-//                   ? "bg-indigo-600 text-white border-indigo-600"
-//                   : "bg-white text-indigo-600 border-indigo-300"
-//                 }`}
-//             >
-//               Login as Admin
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => setUserType("client")}
-//               className={`px-4 py-1 rounded-full border ${userType === "client"
-//                   ? "bg-indigo-600 text-white border-indigo-600"
-//                   : "bg-white text-indigo-600 border-indigo-300"
-//                 }`}
-//             >
-//               Login as Client
-//             </button>
-//           </div>
-
-//           {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-
-//           <input
-//             type="email"
-//             placeholder="Email"
-//             className="w-full border px-3 py-2 rounded mb-3"
-//             value={email}
-//             onChange={(e) => setEmail(e.target.value)}
-//             required
-//           />
-//           <input
-//             type="password"
-//             placeholder="Password"
-//             className="w-full border px-3 py-2 rounded mb-4"
-//             value={password}
-//             onChange={(e) => setPassword(e.target.value)}
-//             required
-//           />
-//           <button
-//             type="submit"
-//             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 rounded"
-//             disabled={loading}
-//           >
-//             {loading ? `Logging in as ${userType}...` : `Login as ${userType}`}
-//           </button>
-//         </form>
-//       </div>
-//     </PublicRoute>
-//   );
-// }
-
-
-
-
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -155,7 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userType, setUserType] = useState("admin"); // 'admin' or 'client'
+  const [userType, setUserType] = useState("admin");
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -212,12 +73,7 @@ export default function LoginPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8">
         <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl">
           {/* Logo/Brand Section */}
-          <div className="text-center mb-6 sm:mb-8 lg:mb-10">
-            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-lg mb-3 sm:mb-4">
-              <svg className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
+          <div className="text-center mb-6 sm:mb-8 lg:mb-8">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
               Welcome Back
             </h1>

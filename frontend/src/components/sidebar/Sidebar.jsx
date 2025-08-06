@@ -1,257 +1,3 @@
-// 'use client';
-
-// import { usePathname, useRouter } from 'next/navigation';
-// import { useEffect, useState } from 'react';
-// import {
-//   Menu,
-//   X,
-//   LayoutDashboard,
-//   ShoppingBag,
-//   ClipboardList,
-//   MessageSquareQuote,
-//   FileText,
-//   ChevronRight,
-//   ChevronLeft,
-//   User2,
-//   Users,
-//   ReceiptIndianRupee,
-//   NotebookPen,
-//   MessageSquareText,
-//   Wrench,
-//   LogOut,
-// } from 'lucide-react';
-
-// import { routePermissionMap } from '../ProtectedRoute/routePermissions';
-// import { logout } from '@/store/authSlice';
-// import { useDispatch } from 'react-redux';
-// import { logoutService } from '@/services/admin.services';
-
-// export default function SidebarLayout({ children }) {
-//   const pathname = usePathname();
-//   const router = useRouter();
-
-//   const dispatch = useDispatch();
-
-//   const [sidebarOpen, setSidebarOpen] = useState(false);
-//   const [collapsed, setCollapsed] = useState(false);
-//   const [userRole, setUserRole] = useState(null);
-//   const [userName, setUserName] = useState('');
-//   const [user, setUser] = useState(null);
-
-//   useEffect(() => {
-//     const storedUser = localStorage.getItem('crm_user');
-//     if (storedUser) {
-//       const parsed = JSON.parse(storedUser);
-//       console.log("Loaded User from localStorage:", parsed);
-//       setUser(parsed);
-//       setUserRole(parsed.role);
-//       setUserName(parsed.name || parsed.email || 'User');
-//     }
-//   }, []);
-
-//   const checkPermission = (routePath) => {
-//     const required = routePermissionMap[routePath];
-//     console.log(required)
-//     // Admin bypass
-//     if (user?.role === 'admin') return true;
-
-//     // No requirement at all (brochure)
-//     if (!required) return true;
-
-//     // If single permission (string)
-//     if (typeof required === 'string') {
-//       return user?.permission?.includes(required);
-//     }
-
-//     if (Array.isArray(required)) {
-//       return required.some((perm) => user?.permission?.includes(perm));
-//     }
-
-//     return false;
-//   };
-
-//   const handleNavigation = (href) => {
-//     router.push(href);
-//     if (window.innerWidth < 768) {
-//       setSidebarOpen(false);
-//     }
-//   };
-
-//   const handleLogout = async () => {
-//     try {
-//       await logoutService();
-//     } catch (err) {
-//       console.error('Logout API failed, proceeding with local logout', err);
-//     }
-
-//     dispatch(logout());
-//     router.push('/signup');
-//   };
-
-//   const dashboardRouteByRole = {
-//     admin: '/admin-dashboard',
-//     salesperson: '/salesperson-dashboard',
-//     client: '/client-dashboard',
-//     designer: '/designer-dashboard',
-//     carpenter: '/carpenter-dashboard',
-//   };
-
-//   const navigationItems = [
-//     // { name: 'Upload Quotation', href: '/upload-quotation', icon: FileText },
-//     // { name: 'View Quotations', href: '/quotations', icon: ClipboardList },
-
-//     {
-//       name: 'Dashboard',
-//       href: dashboardRouteByRole[userRole] || '/dashboard',
-//       icon: LayoutDashboard,
-//       alwaysVisible: true, // dashboard is always shown
-//     },
-
-//     { name: 'Quotations', href: '/quotations', icon: ClipboardList },
-
-//     { name: 'Upload Design', href: '/upload-design', icon: NotebookPen },
-//     { name: 'Design Feedback', href: '/design-feedback', icon: MessageSquareQuote },
-//     { name: 'Morning Update', href: '/morning-update', icon: MessageSquareText },
-//     { name: 'Evening Update', href: '/evening-update', icon: MessageSquareText },
-//     { name: 'Daily Updates', href: '/daily-updates', icon: ClipboardList },
-//     { name: 'Create Project', href: '/projects/create', icon: LayoutDashboard },
-//     { name: 'Assign Team', href: '/projects/assign-team', icon: Users },
-//     { name: 'Manage Users', href: '/users', icon: User2 },
-//     { name: 'Manage Brochures', href: '/brochure', icon: FileText },
-//     { name: 'All Projects', href: '/projects/all', icon: LayoutDashboard },
-//     { name: 'Clients', href: '/clients', icon: Users },
-//     { name: 'Payments', href: '/payments', icon: ReceiptIndianRupee },
-//     { name: 'Generate Invoice', href: '/generate-invoice', icon: FileText },
-//     { name: 'Assign Service', href: '/services/assign', icon: Wrench },
-//     { name: 'Track Service', href: '/services/track', icon: Wrench },
-
-//   ];
-
-//   return (
-//     <div className="flex h-screen overflow-hidden bg-slate-50">
-//       {/* Mobile overlay */}
-//       {sidebarOpen && (
-//         <div
-//           className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-40 md:hidden"
-//           onClick={() => setSidebarOpen(false)}
-//         />
-//       )}
-
-//       {/* Sidebar */}
-//       <aside
-//         className={`fixed md:sticky top-0 bottom-0 left-0 z-50 flex flex-col h-full ${collapsed ? 'w-20' : 'w-72'
-//           } ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} transition-all duration-300 ease-in-out bg-white shadow-lg`}
-//       >
-//         {/* Header */}
-//         <div className="flex items-center justify-between h-16 px-4 border-b border-slate-100">
-//           {!collapsed ? (
-//             <div className="flex items-center space-x-3">AddWith Interior</div>
-//           ) : (
-//             <div className="flex items-center justify-center w-full">
-//               <div className="flex items-center justify-center p-2 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-500 shadow-md">
-//                 <LayoutDashboard size={20} className="text-white" />
-//               </div>
-//             </div>
-//           )}
-
-//           <div className="flex items-center">
-//             <button
-//               onClick={() => setCollapsed(!collapsed)}
-//               className="hidden md:flex items-center justify-center p-1 rounded-md text-slate-500 hover:bg-slate-100"
-//             >
-//               {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-//             </button>
-
-//             <button
-//               className="flex md:hidden items-center justify-center p-1 text-slate-500 hover:text-slate-700"
-//               onClick={() => setSidebarOpen(false)}
-//             >
-//               <X size={24} />
-//             </button>
-//           </div>
-//         </div>
-
-//         {/* Navigation */}
-//         <nav className="flex-grow px-3 py-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
-//           <div className="space-y-1.5">
-//             {navigationItems
-//               .filter((item) => item.alwaysVisible || checkPermission(item.href))
-//               .map((item) => {
-//                 const isActive = pathname === item.href;
-//                 const Icon = item.icon;
-
-//                 // if (!checkPermission(item.href)) return null;
-
-//                 return (
-//                   <button
-//                     key={item.name}
-//                     onClick={() => handleNavigation(item.href)}
-//                     className={`w-full text-left flex items-center ${collapsed ? 'justify-center' : ''
-//                       } px-3 py-2.5 rounded-xl group transition-all duration-200 ${isActive
-//                         ? 'bg-gradient-to-r from-indigo-50 to-blue-50 shadow-sm'
-//                         : 'text-slate-600 hover:bg-slate-100'
-//                       }`}
-//                   >
-//                     <div
-//                       className={`flex items-center justify-center min-w-10 h-10 rounded-lg ${isActive
-//                         ? 'bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-md'
-//                         : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
-//                         } transition-all duration-200`}
-//                     >
-//                       <Icon size={18} />
-//                     </div>
-//                     {!collapsed && (
-//                       <div className="ml-3 flex-grow">
-//                         <span
-//                           className={`font-medium text-sm ${isActive ? 'text-indigo-800' : 'text-slate-700'
-//                             }`}
-//                         >
-//                           {item.name}
-//                         </span>
-//                       </div>
-//                     )}
-//                     {!collapsed && isActive && (
-//                       <ChevronRight size={16} className="text-indigo-500" />
-//                     )}
-//                   </button>
-//                 );
-//               })}
-//           </div>
-//         </nav>
-
-//         {/* Footer */}
-//         <div className="px-3 py-4 border-t border-slate-100 mt-auto">
-//           <div
-//             className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'
-//               } text-slate-600`}
-//           >
-//             {!collapsed && (
-//               <div className="flex flex-col text-left">
-//                 <span className="text-sm font-medium capitalize">{userRole || ''}</span>
-//                 <span className="text-xs text-slate-500 truncate max-w-[160px]">
-//                   {userName}
-//                 </span>
-//               </div>
-//             )}
-//             <button
-//               onClick={handleLogout}
-//               className="p-2 rounded-md hover:bg-red-100 text-red-600 transition-colors duration-200"
-//               title="Logout"
-//             >
-//               <LogOut size={collapsed ? 20 : 18} />
-//             </button>
-//           </div>
-//         </div>
-//       </aside>
-
-//       {/* Main Content */}
-//       <div className="flex flex-col flex-1 w-full overflow-x-hidden">
-//         <main className="flex-1 overflow-y-auto">{children}</main>
-//       </div>
-//     </div>
-//   );
-// }
-
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -415,12 +161,11 @@ export default function SidebarLayout({ children }) {
       icon: MessageSquareText,
     },
     { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
-    { name: "Create Project", href: "/projects/create", icon: LayoutDashboard },
+    { name: "Project", href: "/projects", icon: LayoutDashboard },
     { name: "Assign Team", href: "/projects/assign-team", icon: Users },
     { name: "Manage Users", href: "/users", icon: User2 },
     { name: "Manage Brochures", href: "/brochure", icon: FileText },
     { name: "All Projects", href: "/projects/all", icon: LayoutDashboard },
-    { name: "Clients", href: "/clients", icon: Users },
     { name: "Payments", href: "/payments", icon: ReceiptIndianRupee },
     { name: "Generate Invoice", href: "/generate-invoice", icon: FileText },
     { name: "Assign Service", href: "/services/assign", icon: Wrench },
@@ -451,17 +196,17 @@ export default function SidebarLayout({ children }) {
       href: "/admin/daily-updates",
       icon: MessageSquareText,
     },
-    { name: "Reports", href: "/admin/reports", icon: Users },
-    { name: "Services", href: "/admin/services", icon: MessageSquareQuote },
+    // { name: "Reports", href: "/admin/reports", icon: Users },
+    // { name: "Services", href: "/admin/services", icon: MessageSquareQuote },
   ];
 
   const clientNavigationItems = [
-    { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
+    // { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
     { name: 'My Projects', href: '/client/projects', icon: ClipboardList },
     { name: 'Payments', href: '/client/payments', icon: ReceiptIndianRupee },
     { name: 'Quotations', href: '/client/quotation', icon: FileText },
     { name: 'Daily Updates', href: '/client/daily-updates', icon: MessageSquareText },
-    { name: "Profile", href: "/profile", icon: NotebookPen },
+    { name: "Profile", href: "/client/profile", icon: NotebookPen },
   ];
 
 

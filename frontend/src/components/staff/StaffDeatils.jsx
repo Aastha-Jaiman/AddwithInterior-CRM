@@ -1,36 +1,32 @@
 'use client';
-
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getStaffByIdService, updateStaffByAdmin } from "@/services/admin.services";
 import {
-  User, Mail, Phone, MapPin, Shield, Camera, Edit3, Save, X, Check, UserCheck, UserX, Calendar, Award, Settings, ArrowLeft, Upload, Eye, EyeOff
+  User, Mail, Phone, MapPin, Shield, Camera, Edit3, Save, X, Check,
+  UserCheck, UserX, Calendar, Award, Settings, ArrowLeft, Upload,
+  Eye, EyeOff, CreditCard, FileText, Briefcase
 } from 'lucide-react';
 
 const permissionsList = [
-  "upload_quotation",
-  "view_quotations",
-  "upload_design",
-  "view_design_feedback",
-  "upload_morning_update",
-  "upload_evening_update",
-  "view_daily_updates",
-  "create_project",
-  "assign_team",
-  "manage_users",
-  "manage_brochures",
-  "see_all_projects",
-  "view_client_info",
-  "view_payment",
-  "generate_invoice",
-  "assign_service",
-  "track_service",
+      "upload_quotation",
+      "view_quotations",
+      "upload_design",
+      "view_design_feedback",
+      "upload_morning_update",
+      "upload_evening_update",
+      "view_daily_updates",
+      "create_project",
+      "manage_users",
+      "manage_brochures",
+      "view_client_info",
+      "view_invoice",
+      "generate_invoice",
 ];
 
 const StaffDetailPage = () => {
   const { id } = useParams();
   const router = useRouter();
-
   const [staff, setStaff] = useState(null);
   const [editData, setEditData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -45,7 +41,7 @@ const StaffDetailPage = () => {
       const token = localStorage.getItem("adminToken");
       const data = await getStaffByIdService(id, token);
       setStaff(data.staff);
-      console.log("hg", data)
+      console.log("staff data", data);
     } catch (err) {
       setError("Failed to load staff details");
       console.error(err);
@@ -63,13 +59,21 @@ const StaffDetailPage = () => {
     setEditData({
       name: staff.name,
       email: staff.email,
+      phone: staff.phone || '',
+      secondaryPhone: staff.secondaryPhone || '',
+      address: staff.address || '',
+      role: staff.role || '',
+      aadhaarNumber: staff.aadhaarNumber || '',
       permission: staff.permission || []
     });
     setImagePreview(staff.profile?.url || null);
   };
 
   const handleInputChange = (field, value) => {
-    setEditData(prev => ({ ...prev, [field]: value }));
+    setEditData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const handlePermissionChange = (permission) => {
@@ -109,30 +113,28 @@ const StaffDetailPage = () => {
   const handleSave = async () => {
     setIsSaving(true);
     setError(null);
-
     try {
       const formData = new FormData();
       formData.append("name", editData.name.trim());
       formData.append("email", editData.email.trim());
-      formData.append("phone", staff.phone || "");
-      formData.append("address", staff.address || "");
-      formData.append("role", staff.role || "");
+      formData.append("phone", editData.phone.trim());
+      formData.append("secondaryPhone", editData.secondaryPhone.trim());
+      formData.append("address", editData.address.trim());
+      formData.append("role", editData.role.trim());
+      formData.append("aadhaarNumber", editData.aadhaarNumber.trim());
       formData.append("isactive", staff.isactive);
 
-      // Append permissions
       if (editData.permission && editData.permission.length > 0) {
         editData.permission.forEach(permission => {
           formData.append('permission', permission);
         });
       }
 
-      // Append profile image if changed
       if (profileImage) {
         formData.append('profile', profileImage);
       }
 
       const res = await updateStaffByAdmin(id, formData);
-
       if (res && res.success) {
         setIsEditing(false);
         setEditData(null);
@@ -142,7 +144,6 @@ const StaffDetailPage = () => {
       } else {
         throw new Error("Update failed");
       }
-
     } catch (err) {
       const msg = err.response?.data?.message || err.message || "Update failed";
       setError(`Failed to update staff: ${msg}`);
@@ -164,50 +165,53 @@ const StaffDetailPage = () => {
     try {
       const formData = new FormData();
       formData.append("isactive", (!user.isactive).toString());
-
-      const updatedUser = await updateStaffByAdmin(user._id, formData); // Fix: use _id
+      const updatedUser = await updateStaffByAdmin(user._id, formData);
 
       if (!updatedUser || !updatedUser.success) {
         throw new Error("Update failed");
       }
-
-      // Option 1: Fetch fresh data
       await fetchStaff();
-
-      // Option 2 (if API returns updated user directly):
-      // setStaff(prev => ({ ...prev, isactive: updatedUser.isactive }));
-
     } catch (err) {
       console.error("Toggle active error:", err);
       setError("Failed to toggle activation");
     }
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8 flex items-center space-x-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="text-lg font-semibold text-gray-700">Loading staff details...</span>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading staff details...</p>
         </div>
       </div>
     );
   }
 
-  if (error && !isEditing) {
+  if (error && !staff) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="bg-red-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <X className="h-8 w-8 text-red-600" />
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <UserX className="h-8 w-8 text-red-600" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Error</h3>
-          <p className="text-red-600 mb-4">{error}</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Staff Not Found</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => router.back()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-colors duration-200 flex items-center justify-center w-full"
           >
+            <ArrowLeft className="h-5 w-5 mr-2" />
             Go Back
           </button>
         </div>
@@ -215,385 +219,442 @@ const StaffDetailPage = () => {
     );
   }
 
-  if (!staff) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="bg-gray-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <User className="h-8 w-8 text-gray-500" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">No Staff Found</h3>
-          <p className="text-gray-600 mb-4">The requested staff member could not be found.</p>
+  if (!staff) return null;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Header */}
+        <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+            className="flex items-center text-gray-600 hover:text-gray-800 mb-4 transition-colors duration-200"
           >
-            Go Back
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Back to Staff List
           </button>
-        </div>
-      </div>
-    );
-  }
 
-  const displayData = isEditing ? editData : staff;
-
-  // Edit Form
-  if (isEditing) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-white/20 p-3 rounded-full">
-                    <Edit3 className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-white">Edit Staff</h1>
-                    <p className="text-blue-100 mt-1">Update staff information and permissions</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleCancel}
-                  className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Staff Details</h1>
+              <p className="text-gray-600">Manage staff information and permissions</p>
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="mx-8 mt-6 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center space-x-3">
-                <X className="h-5 w-5 text-red-600" />
-                <span className="text-red-800 font-medium">{error}</span>
+            {!isEditing && (
+              <div className="flex items-center space-x-3 mt-4 md:mt-0">
+                <button
+                  onClick={() => handleToggleActive(staff)}
+                  className={`flex items-center px-4 py-2 rounded-xl font-medium transition-all duration-200 ${staff.isactive
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                    : 'bg-red-100 text-red-700 hover:bg-red-200'
+                    }`}
+                >
+                  {staff.isactive ? (
+                    <>
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Active
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="h-4 w-4 mr-2" />
+                      Inactive
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleEdit}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-medium transition-colors duration-200 flex items-center"
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit Staff
+                </button>
               </div>
             )}
+          </div>
+        </div>
 
-            <div className="p-8 space-y-8">
-              {/* Profile Image Upload */}
-              <div className="text-center">
-                <label className="block text-lg font-semibold text-gray-800 mb-4">Profile Image</label>
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="relative">
-                    <img
-                      src={imagePreview || '/api/placeholder/150/150'}
-                      alt="Profile Preview"
-                      className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg ring-4 ring-blue-100"
-                    />
-                    {profileImage && (
+        {/* Error Alert */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-6 flex items-center">
+            <X className="h-5 w-5 mr-3 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {/* Profile Section */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm  p-6">
+              <div className="flex items-start gap-6">
+                {/* Profile Image */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-24 h-24">
+                    {imagePreview || staff.profile?.url ? (
+                      <img
+                        src={imagePreview || staff.profile?.url}
+                        alt={staff.name}
+                        className="w-full h-full rounded-lg object-cover border-2 border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-lg bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                        <User className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
+
+                    {isEditing && (
+                      <div className="absolute -bottom-2 -right-2">
+                        <label htmlFor="profile-image" className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full cursor-pointer">
+                          <Camera className="h-3 w-3" />
+                        </label>
+                        <input
+                          id="profile-image"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </div>
+                    )}
+
+                    {isEditing && profileImage && (
                       <button
-                        type="button"
                         onClick={removeImage}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg"
+                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full"
                       >
-                        <X size={16} />
+                        <X className="h-3 w-3" />
                       </button>
                     )}
                   </div>
+                </div>
 
-                  <label className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center space-x-2 shadow-lg transform hover:scale-105">
-                    <Upload size={20} />
-                    <span className="font-medium">Change Photo</span>
+                {/* Staff Information */}
+                <div className="flex-1">
+                  {/* Name */}
+                  {isEditing ? (
                     <input
-                      type="file"
-                      id="profile-image"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
+                      type="text"
+                      value={editData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      className="text-xl font-semibold w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:outline-none mb-3"
+                      placeholder="Staff Name"
                     />
-                  </label>
-                </div>
-              </div>
-
-              {/* Form Fields */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Name Field */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <User className="inline h-4 w-4 mr-1" />
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={editData.name || ""}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    className="w-full border-2 border-gray-200 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300"
-                    placeholder="Enter full name"
-                  />
-                </div>
-
-                {/* Email Field */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Mail className="inline h-4 w-4 mr-1" />
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    value={editData.email || ""}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="w-full border-2 border-gray-200 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-gray-300"
-                    placeholder="Enter email address"
-                  />
-                </div>
-              </div>
-
-              {/* Permissions Field */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  <Shield className="inline h-4 w-4 mr-1" />
-                  Permissions (Optional)
-                </label>
-                <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto">
-                    {permissionsList.map(permission => (
-                      <label key={permission} className="flex items-center space-x-3 cursor-pointer bg-white hover:bg-blue-50 p-3 rounded-lg border border-gray-200 transition-all duration-300 hover:border-blue-300">
-                        <input
-                          type="checkbox"
-                          checked={editData.permission.includes(permission)}
-                          onChange={() => handlePermissionChange(permission)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                        />
-                        <span className="text-sm text-gray-700 font-medium">{permission.replace(/_/g, ' ')}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <div className="mt-4 text-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                      {editData.permission.length} permission(s) selected
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 px-6 rounded-lg transition-all duration-300 font-semibold text-lg shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                >
-                  {isSaving ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Saving Changes...
-                    </span>
                   ) : (
-                    <span className="flex items-center justify-center">
-                      <Save className="mr-2 h-5 w-5" />
-                      Save Changes
-                    </span>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">{staff.name}</h2>
                   )}
-                </button>
 
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="flex-1 sm:flex-none bg-gray-100 hover:bg-gray-200 text-gray-800 py-4 px-6 rounded-lg transition-all duration-300 font-semibold border-2 border-gray-200 hover:border-gray-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Detail View
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => router.back()}
-                  className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
-                >
-                  <ArrowLeft className="h-6 w-6" />
-                </button>
-                <div>
-                  <h1 className="text-3xl font-bold text-white">Staff Profile</h1>
-                  <p className="text-blue-100 mt-1">Detailed information and permissions</p>
-                </div>
-              </div>
-              <button
-                onClick={handleEdit}
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-6 py-3 rounded-xl transition-all duration-300 flex items-center space-x-2 font-semibold shadow-lg transform hover:scale-105"
-              >
-                <Edit3 className="h-5 w-5" />
-                <span>Edit Profile</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Profile Section */}
-          <div className="p-8">
-            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
-              {/* Profile Image */}
-              <div className="relative">
-                <div className="w-40 h-40 rounded-2xl overflow-hidden shadow-xl ring-4 ring-blue-100">
-                  <img
-                    src={staff.profile?.url || '/api/placeholder/160/160'}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className={`absolute -bottom-2 -right-2 p-3 rounded-full shadow-lg ${staff.isactive ? 'bg-green-500' : 'bg-gray-400'}`}>
-                  {staff.isactive ? (
-                    <UserCheck className="h-6 w-6 text-white" />
-                  ) : (
-                    <UserX className="h-6 w-6 text-white" />
-                  )}
-                </div>
-              </div>
-
-              {/* Basic Info */}
-              <div className="flex-1 text-center lg:text-left">
-                <h2 className="text-4xl font-bold text-gray-800 mb-2">{staff.name}</h2>
-                <div className="flex flex-wrap justify-center lg:justify-start gap-3 mb-6">
-                  <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    <Shield className="h-4 w-4 mr-2" />
-                    {staff.role?.charAt(0).toUpperCase() + staff.role?.slice(1) || 'No Role'}
-                  </span>
-                  <span
-                    onClick={() => handleToggleActive(staff)}
-                    className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${staff.isactive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                    {staff.isactive ? (
-                      <>
-                        <Check className="h-4 w-4 mr-2" />
-                        Active
-                      </>
+                  {/* Role and Status Badges */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editData.role}
+                        onChange={(e) => handleInputChange('role', e.target.value)}
+                        className="border border-gray-300 rounded-md px-3 py-1 focus:border-blue-500 focus:outline-none"
+                        placeholder="Role"
+                      />
                     ) : (
-                      <>
-                        <X className="h-4 w-4 mr-2" />
-                        Inactive
-                      </>
-                    )}
-                  </span>
-                </div>
-
-                {/* Contact Info Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-blue-100 p-2 rounded-lg">
-                        <Mail className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Email</p>
-                        <p className="text-gray-800 font-semibold">{staff.email}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-green-100 p-2 rounded-lg">
-                        <Phone className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Phone</p>
-                        <p className="text-gray-800 font-semibold">{staff.phone || 'N/A'}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Details Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Contact & Location */}
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-blue-600 px-6 py-4">
-              <h3 className="text-xl font-bold text-white flex items-center">
-                <MapPin className="h-6 w-6 mr-2" />
-                Contact & Location
-              </h3>
-            </div>
-            <div className="p-6 space-y-6">
-              <div className="bg-gray-50 rounded-xl p-4">
-                <div className="flex items-start space-x-3">
-                  <div className="bg-orange-100 p-2 rounded-lg mt-1">
-                    <MapPin className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-500 mb-1">Address</p>
-                    <p className="text-gray-800 leading-relaxed">{staff.address || 'No address provided'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Permissions */}
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className=" bg-blue-600 px-6 py-4">
-              <h3 className="text-xl font-bold text-white flex items-center">
-                <Shield className="h-6 w-6 mr-2" />
-                Permissions
-                <span className="ml-auto bg-white/20 px-3 py-1 rounded-full text-sm">
-                  {Array.isArray(staff.permission) ? staff.permission.length : 0}
-                </span>
-              </h3>
-            </div>
-            <div className="p-6">
-              {Array.isArray(staff.permission) && staff.permission.length > 0 ? (
-                <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto">
-                  {staff.permission.map((permission, index) => (
-                    <div key={index} className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
-                      <div className="bg-purple-100 p-1.5 rounded">
-                        <Award className="h-4 w-4 text-purple-600" />
-                      </div>
-                      <span className="text-gray-800 font-medium">
-                        {typeof permission === "string" ? permission.replace(/_/g, " ") : permission}
+                      <span className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm">
+                        <Briefcase className="h-3 w-3 mr-1" />
+                        {staff.role || 'No Role'}
                       </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="bg-gray-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <Shield className="h-8 w-8 text-gray-400" />
+                    )}
+
+                    {/* Status Badge */}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${staff.isactive
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                      }`}>
+                      {staff.isactive ? (
+                        <>
+                          <Check className="h-3 w-3 mr-1" />
+                          Active
+                        </>
+                      ) : (
+                        <>
+                          <X className="h-3 w-3 mr-1" />
+                          Inactive
+                        </>
+                      )}
+                    </span>
+
+                    {/* Verification Badge */}
+                    {staff.isVerified && (
+                      <span className="inline-flex items-center bg-green-100 text-green-800 px-2 py-1 rounded-md text-sm">
+                        <Shield className="h-3 w-3 mr-1" />
+                        Verified
+                      </span>
+                    )}
                   </div>
-                  <p className="text-gray-500 font-medium">No permissions assigned</p>
-                  <p className="text-sm text-gray-400 mt-1">This staff member has no specific permissions</p>
+
+                  {/* Timestamps */}
+                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div>
+                      <div className="flex items-center mb-1">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Joined
+                      </div>
+                      <div className="font-medium">{formatDate(staff.createdAt)}</div>
+                    </div>
+                    <div>
+                      <div className="flex items-center mb-1">
+                        <Settings className="h-3 w-3 mr-1" />
+                        Updated
+                      </div>
+                      <div className="font-medium">{formatDate(staff.updatedAt)}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          {/* Details Section */}
+          <div className="space-y-6">
+            {/* Contact Information */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                <User className="h-6 w-6 mr-3 text-blue-600" />
+                Contact Information
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Email */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                    Email Address
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="email"
+                      value={editData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:outline-none"
+                    />
+                  ) : (
+                    <p className="text-gray-800 bg-gray-50 p-3 rounded-xl">{staff.email}</p>
+                  )}
+                </div>
+
+                {/* Primary Phone */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                    Primary Phone
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="tel"
+                      value={editData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:outline-none"
+                    />
+                  ) : (
+                    <p className="text-gray-800 bg-gray-50 p-3 rounded-xl">{staff.phone || 'N/A'}</p>
+                  )}
+                </div>
+
+                {/* Secondary Phone */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                    Secondary Phone
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="tel"
+                      value={editData.secondaryPhone}
+                      onChange={(e) => handleInputChange('secondaryPhone', e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:outline-none"
+                    />
+                  ) : (
+                    <p className="text-gray-800 bg-gray-50 p-3 rounded-xl">{staff.secondaryPhone || 'N/A'}</p>
+                  )}
+                </div>
+
+                {/* Aadhaar Number */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <CreditCard className="h-4 w-4 mr-2 text-gray-400" />
+                    Aadhaar Number
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.aadhaarNumber}
+                      onChange={(e) => handleInputChange('aadhaarNumber', e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:outline-none"
+                      maxLength="12"
+                    />
+                  ) : (
+                    <p className="text-gray-800 bg-gray-50 p-3 rounded-xl font-mono">
+                      {/* {staff.aadhaarNumber ? `****-****-${staff.aadhaarNumber.slice(-4)}` : 'N/A'} */}
+                      {staff.aadhaarNumber ? staff.aadhaarNumber : 'N/A'}
+
+                    </p>
+                  )}
+                </div>
+
+                {/* Address */}
+                <div className="md:col-span-2 space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                    Address
+                  </label>
+                  {isEditing ? (
+                    <textarea
+                      value={editData.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:outline-none"
+                      rows="3"
+                    />
+                  ) : (
+                    <p className="text-gray-800 bg-gray-50 p-3 rounded-xl">{staff.address || 'No address provided'}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* ID Proof */}
+              {staff.uploadIdProof && (
+                <div className="bg-white rounded-2xl shadow-lg p-6 w-full lg:w-1/2">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <FileText className="h-6 w-6 mr-3 text-blue-600" />
+                    ID Proof Document
+                  </h3>
+                  <div className="flex flex-col items-start bg-gray-50 p-4 rounded-xl">
+                    <div className="flex items-center mb-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                        <FileText className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">ID Proof Document</p>
+                        <p className="text-sm text-gray-600">Below is the uploaded document</p>
+                      </div>
+                    </div>
+                    <img
+                      src={staff.uploadIdProof.url}
+                      alt="ID Proof"
+                      className="w-full max-w-md rounded-lg border border-gray-300"
+                    />
+                  </div>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
 
-        {/* Actions Card */}
-        <div className="mt-8 bg-white rounded-2xl shadow-xl p-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
-              <p className="text-gray-600">Manage this staff member's profile and settings</p>
+              {/* Permissions */}
+              <div className="bg-white rounded-2xl shadow-lg p-6 w-full lg:w-1/2">
+                <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                  <Shield className="h-6 w-6 mr-3 text-blue-600" />
+                  Permissions & Access
+                </h3>
+
+                {/* View Mode */}
+                {!isEditing && (
+                  <div
+                    className="permissions-view-box"
+                    style={{
+                      border: '1px solid #ccc',
+                      padding: '10px',
+                      borderRadius: '10px',
+                      minHeight: '50px',
+                      backgroundColor: '#f9f9f9',
+                      display: 'flex',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    {staff.permission && staff.permission.length > 0 ? (
+                      staff.permission.map((perm) => (
+                        <span
+                          key={perm}
+                          style={{
+                            marginRight: '8px',
+                            marginBottom: '6px',
+                            padding: '5px 12px',
+                            backgroundColor: '#e0f7fa',
+                            borderRadius: '20px',
+                            fontSize: '0.9rem',
+                            color: '#00796b',
+                            userSelect: 'none'
+                          }}
+                        >
+                          {perm.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </span>
+                      ))
+                    ) : (
+                      <em className="text-gray-500">This staff member has no specific permissions assigned.</em>
+                    )}
+                  </div>
+                )}
+
+                {/* Edit Mode */}
+                {isEditing && (
+                  <div
+                    className="permissions-edit-list"
+                    style={{
+                      maxHeight: 220,
+                      overflowY: 'auto',
+                      border: '1px solid #ddd',
+                      padding: 12,
+                      borderRadius: 10,
+                      backgroundColor: '#fff',
+                    }}
+                  >
+                    {permissionsList.map((permission) => {
+                      const checked = editData.permission.includes(permission);
+                      return (
+                        <label
+                          key={permission}
+                          className="flex items-center mb-3 cursor-pointer select-none"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => handlePermissionChange(permission)}
+                            className="mr-3 h-4 w-4 cursor-pointer"
+                          />
+                          <span className={checked ? "text-blue-600 font-medium" : "text-gray-700"}>
+                            {permission.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleEdit}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg transition-all duration-300 flex items-center space-x-2 font-semibold shadow-lg transform hover:scale-105"
-              >
-                <Edit3 className="h-5 w-5" />
-                <span>Edit Profile</span>
-              </button>
-            </div>
+
+            {/* Action Buttons */}
+            {isEditing && (
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={handleCancel}
+                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors duration-200 flex items-center"
+                >
+                  <X className="h-5 w-5 mr-2" />
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-medium transition-colors duration-200 flex items-center"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-5 w-5 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,72 +1,150 @@
+// import api from './api';
+
+// // 1. Register Client by Admin
+// export const registerClientByAdmin = async (formData) => {
+//   const response = await api.post('/client/add', formData, {
+//     headers: { 'Content-Type': 'multipart/form-data' },
+//   });
+//   return response.data;
+// };
+
+// // 2. Client Login
+// export const loginClient = async ({ email, identifier, password }) => {
+//   const response = await api.post('/client/login', {
+//     identifier: identifier || email, //  fallback logic
+//     password,
+//   });
+//   return response.data;
+// };
+
+
+// // 3. Get Client Profile
+// export const getClientProfile = async () => {
+//   const response = await api.get('/client/profile');
+//   return response.data;
+// };
+
+// // 4. Logout Client
+// export const logoutClient = async () => {
+//   const response = await api.get('/client/logout');
+//   return response.data;
+// };
+
+// // 5. Get All Clients (Admin)
+// export const getAllClientsByAdmin = async () => {
+//   const response = await api.get('/client/all');
+//   return response.data;
+// };
+
+// export const getClientByIdService = async (id) => {
+//   try {
+//     const response = await api.get(`/client/${id}`);
+//     return response.data;
+//   } catch (error) {
+//     throw error.response?.data || { success: false, message: "Unknown error" };
+//   }
+// };
+
+// // 6. Update Client by Admin
+// export const updateClientByAdmin = async (id, formData) => {
+//   const response = await api.put(`/client/update/${id}`, formData, {
+//     headers: { 'Content-Type': 'multipart/form-data' },
+//   });
+//   return response.data;
+// };
+
+// // 7. Forgot Password
+// export const forgotClientPassword = async (data) => {
+//   const response = await api.post('/client/forgot-password', data);
+//   return response.data;
+// };
+
+// // 8. Change Password (Non-authenticated route for admin/user)
+// export const changeClientPassword = async (data) => {
+//   const response = await api.post('/client/password', data);
+//   return response.data;
+// };
+
+// export const resetClientPassword = async (data) => {
+//   try {
+//     const response = await api.put('/client/reset-password', data);
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+
+
 import api from './api';
 
 // 1. Register Client by Admin
 export const registerClientByAdmin = async (formData) => {
-  const response = await api.post('/client/add', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  const res = await api.post('/client/add', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
   });
-  return response.data;
+  return res.data;
 };
 
 // 2. Client Login
 export const loginClient = async ({ email, identifier, password }) => {
-  const response = await api.post('/client/login', {
-        identifier: identifier || email, //  fallback logic
+  const res = await api.post('/client/login', {
+    identifier: identifier || email,
     password,
   });
-  return response.data;
+  return res.data;
 };
 
-
-// 3. Get Client Profile
+// 3. Get Client Profile (Client-authenticated route)
 export const getClientProfile = async () => {
-  const response = await api.get('/client/profile');
-  return response.data;
+  const res = await api.get('/client/profile');
+  return res.data;
 };
 
-// 4. Logout Client
+// 4. Logout Client (Client-authenticated route)
 export const logoutClient = async () => {
-  const response = await api.get('/client/logout');
-  return response.data;
+  const res = await api.get('/client/logout');
+  return res.data;
 };
 
-// 5. Get All Clients (Admin)
+// 5. Get All Clients (Admin + Auth middleware required)
 export const getAllClientsByAdmin = async () => {
-  const response = await api.get('/client/all');
-  return response.data;
+  const res = await api.get('/client/all');
+  return res.data;
 };
 
+// 6. Get Client By ID (Admin only)
 export const getClientByIdService = async (id) => {
-  try {
-    const response = await api.get(`/client/${id}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { success: false, message: "Unknown error" };
-  }
+  const res = await api.get(`/client/${id}`);
+  return res.data;
 };
 
-// 6. Update Client by Admin
+// 7. Update Client by Admin
 export const updateClientByAdmin = async (id, formData) => {
-  const response = await api.put(`/client/update/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  const res = await api.put(`/client/update/${id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
   });
-  return response.data;
+  return res.data;
 };
 
-// 7. Forgot Password
+// 8. Forgot Password (Email token sender)
 export const forgotClientPassword = async (data) => {
-  const response = await api.post('/client/forgot-password', data);
-  return response.data;
+  const res = await api.post('/client/forgot-password', data);
+  return res.data;
 };
 
-// 8. Change Password (Non-authenticated route for admin/user)
+// 9. Change Password (Old + New - Non-authenticated)
 export const changeClientPassword = async (data) => {
-  const response = await api.post('/client/password', data);
-  return response.data;
+  const res = await api.post('/client/password', data);
+  return res.data;
 };
 
-// 9. Reset Password (Requires login)
+// 10. Reset Password (Token-based - Client-authenticated)
 export const resetClientPassword = async (data) => {
-  const response = await api.put('/client/reset-password', data);
-  return response.data;
+  const res = await api.put('/client/reset-password', data);
+  return res.data;
 };

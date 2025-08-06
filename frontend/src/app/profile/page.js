@@ -1,5 +1,5 @@
 import SidebarLayout from '@/components/sidebar/Sidebar'
-import StaffProfilePage from '@/components/staffprofile/Profile'
+import StaffProfilePage from '@/components/profile/StaffProfile'
 import React from 'react'
 
 export default function page() {

@@ -1,23 +1,21 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { getAllClientsByAdmin, updateClientByAdmin } from "@/services/client.services";
-import { User, Pencil, Eye, X, Check, MapPin, Mail, Phone, Calendar, Shield, Activity } from "lucide-react";
+import {
+  User, Eye, X, MapPin, Mail, Phone,
+  Calendar, Shield, Activity, Users, Search, Filter, Grid3X3, List
+} from "lucide-react";
 import { useRouter } from 'next/navigation';
 
 const ClientManagementComponent = () => {
   const router = useRouter();
+
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editClientId, setEditClientId] = useState(null);
-  const [editFormData, setEditFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    avatar: null,
-    isActive: ''
-  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
 
   useEffect(() => {
     fetchClients();
@@ -34,138 +32,48 @@ const ClientManagementComponent = () => {
         name: client.name || '',
         email: client.email || '',
         phone: client.phone || '',
-        address: client.address?.[0]?.addressinfo
-          ? `${client.address[0].addressinfo.street || ''}, ${client.address[0].addressinfo.city || ''}, ${client.address[0].addressinfo.state || ''}, ${client.address[0].addressinfo.country || ''} - ${client.address[0].addressinfo.pincode || ''}`
-          : client.address || 'N/A',
+        address: client.address,
+        fullAddress: client.address?.[0]?.addressinfo
+          ? `${client.address[0].addressinfo.street}, ${client.address[0].addressinfo.city}, ${client.address[0].addressinfo.state}, ${client.address[0].addressinfo.country} - ${client.address[0].addressinfo.pincode}`
+          : 'N/A',
         role: client.role || 'client',
         avatar: client.profile?.url || '',
-        isActive: client.isActive || client.isActive || false,
+        isActive: !!client.isActive,
+        aadharCardNumber: client.aadharCardNumber || 'N/A',
         createdAt: client.createdAt
       }));
 
       setClients(mappedClients);
+      setError(null);
     } catch (err) {
       console.error("Error fetching clients:", err);
-      setError("Failed to load clients: " + err.message);
+      setError("Failed to load clients: " + (err.message || "Unknown error"));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Fixed function - changed from user to client and setUsers to setClients
-  const handleToggleActive = async (client) => {
-    try {
-      const newActiveStatus = !client.isActive;
-      const formData = new FormData();
-      formData.append("isActive", newActiveStatus.toString());
+  const filteredClients = clients.filter(client => {
+    const search = searchTerm.toLowerCase();
+    const matchesSearch =
+      client.name.toLowerCase().includes(search) ||
+      client.email.toLowerCase().includes(search) ||
+      client.phone.includes(search);
+    const matchesStatus =
+      filterStatus === "all" ||
+      (filterStatus === "active" && client.isActive) ||
+      (filterStatus === "inactive" && !client.isActive);
+    return matchesSearch && matchesStatus;
+  });
 
-      const updatedClient = await updateClientByAdmin(client.id, formData);
-
-      if (!updatedClient) throw new Error("No response from updateClientByAdmin");
-
-      // Update the client in the state with the new status
-      setClients(prev =>
-        prev.map(c =>
-          c.id === client.id ? { ...c, isActive: newActiveStatus } : c
-        )
-      );
-
-      // Success message
-      console.log(`Client ${client.name} is now ${newActiveStatus ? 'active' : 'inactive'}`);
-
-    } catch (err) {
-      console.error("Toggle active error:", err);
-      setError("Failed to toggle activation: " + err.message);
-    }
-  };
-
-  const handleEditClick = (client) => {
-    setEditClientId(client.id);
-    setEditFormData({
-      name: client.name,
-      email: client.email,
-      phone: client.phone,
-      avatar: null,
-      isActive: client.isActive
-    });
-  };
-
-  const handleEditSubmit = async () => {
-    try {
-      console.log('Updating client with ID:', editClientId);
-      console.log('Form data:', editFormData);
-
-      const formData = new FormData();
-      formData.append("name", editFormData.name);
-      formData.append("phone", editFormData.phone);
-
-      // Only append email if it's different from original
-      if (editFormData.email) {
-        formData.append("email", editFormData.email);
-      }
-
-      // Handle boolean values properly
-
-      formData.append("isaAtive", editFormData.isActive.toString());
-
-      // Only append profile if a new file is selected
-      if (editFormData.avatar) {
-        formData.append("profile", editFormData.avatar);
-      }
-
-      console.log('Sending FormData entries:');
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
-
-      const response = await updateClientByAdmin(editClientId, formData);
-      console.log('Update response:', response);
-
-      // Update the client in the state with the new data
-      setClients(prev =>
-        prev.map(c =>
-          c.id === editClientId ? {
-            ...c,
-            name: editFormData.name,
-            email: editFormData.email,
-            phone: editFormData.phone,
-            isActive: editFormData.isActive
-          } : c
-        )
-      );
-
-      setEditClientId(null);
-      alert('Client updated successfully!');
-    } catch (err) {
-      console.error("Update failed - Full error:", err);
-      console.error("Error message:", err.message);
-      console.error("Error response:", err.response?.data);
-
-      // Show more detailed error message
-      let errorMessage = "Failed to update client";
-      if (err.response?.data?.message) {
-        errorMessage += ": " + err.response.data.message;
-      } else if (err.message) {
-        errorMessage += ": " + err.message;
-      }
-
-      alert(errorMessage);
-    }
-  };
-
-  const handleInputChange = (field, value) => {
-    setEditFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const activeClientsCount = clients.filter(c => c.isActive).length;
 
   if (isLoading) {
     return (
-      <div className="p-6 text-center">
-        <div className="flex items-center justify-center space-x-2 text-gray-500">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <span>Loading clients...</span>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-lg font-medium text-gray-700">Loading clients...</p>
         </div>
       </div>
     );
@@ -173,258 +81,328 @@ const ClientManagementComponent = () => {
 
   if (error) {
     return (
-      <div className="p-6 text-center">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {error}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-lg shadow-sm p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <X className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Something went wrong</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={fetchClients}
+            className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Client Management</h2>
-          <p className="text-gray-600">Manage and view all your clients in one place</p>
+  const CardView = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {filteredClients.length > 0 ? (
+        filteredClients.map(client => (
+          <div key={client.id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+            {/* Profile Header */}
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="flex-shrink-0 relative">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center">
+                  {client.avatar ? (
+                    <img
+                      src={client.avatar}
+                      alt="avatar"
+                      className="w-12 h-12 object-cover"
+                    />
+                  ) : (
+                    <User className="text-blue-600 w-6 h-6" />
+                  )}
+                </div>
+                <div
+                  className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                    client.isActive ? 'bg-green-400' : 'bg-gray-400'
+                  }`}
+                ></div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">{client.name}</h3>
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {client.role}
+                </span>
+              </div>
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center text-sm text-gray-600">
+                <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                <span className="truncate">{client.email}</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                <span>{client.phone}</span>
+              </div>
+              {client.fullAddress !== 'N/A' && (
+                <div className="flex items-start text-sm text-gray-600">
+                  <MapPin className="w-4 h-4 mr-2 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <span className="line-clamp-2">{client.fullAddress}</span>
+                </div>
+              )}
+              {client.aadharCardNumber !== 'N/A' && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <Shield className="w-4 h-4 mr-2 text-gray-400" />
+                  <span>{client.aadharCardNumber}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Date and Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div className="text-xs text-gray-500">
+                {client.createdAt ? new Date(client.createdAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                }) : 'N/A'}
+              </div>
+              
+              <button
+                onClick={() => router.push(`/admin/clients/${client.id}`)}
+                className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                title="View Details"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+          <Users className="w-12 h-12 text-gray-300 mb-4" />
+          <p className="text-gray-500 text-lg font-medium mb-2">No clients found</p>
+          <p className="text-gray-400 text-sm">Try adjusting your search criteria</p>
+          {(searchTerm || filterStatus !== "all") && (
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setFilterStatus("all");
+              }}
+              className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
+      )}
+    </div>
+  );
 
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4" />
-                      <span>Client</span>
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                    <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4" />
-                      <span>Email</span>
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4" />
-                      <span>Phone</span>
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                    <div className="flex items-center space-x-2">
-                      <Activity className="w-4 h-4" />
-                      <span>Status</span>
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4" />
-                      <span>Joined</span>
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {clients.map(client => (
-                  <React.Fragment key={client.id}>
-                    <tr className="hover:bg-gray-50 transition-all duration-200">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center shadow-sm">
-                            {client.avatar ? (
-                              <img
-                                src={client.avatar}
-                                alt="avatar"
-                                className="w-12 h-12 object-cover"
-                              />
-                            ) : (
-                              <User className="text-blue-600 w-6 h-6" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-gray-900">{client.name}</div>
-                            <div className="text-sm text-gray-500 flex items-center space-x-1">
-                              <span>{client.role}</span>
-                            </div>
-                          </div>
+  const TableView = () => (
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aadhar</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {filteredClients.length > 0 ? (
+              filteredClients.map(client => (
+                <tr key={client.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0 relative">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center">
+                          {client.avatar ? (
+                            <img
+                              src={client.avatar}
+                              alt="avatar"
+                              className="w-10 h-10 object-cover"
+                            />
+                          ) : (
+                            <User className="text-blue-600 w-5 h-5" />
+                          )}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">{client.email}</td>
-                      <td className="px-6 py-4 text-gray-600">{client.phone}</td>
-                      {/* Fixed status column - changed from user to client */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => handleToggleActive(client)}
-                          className={`inline-block text-xs px-2 py-1 rounded-full font-semibold cursor-pointer transition-colors duration-200 ${client.isActive
-                            ? "bg-green-100 text-green-700 hover:bg-green-200"
-                            : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                            }`}
-                          title={client.isActive ? "Deactivate Client" : "Activate Client"}
-                        >
-                          {client.isActive ? "Active" : "Inactive"}
-                        </button>
-                      </td>
-                      <td className="px-6 py-4 text-gray-500">
-                        {new Date(client.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3">
-                          <button
-                            onClick={() => router.push(`/admin/clients/${client.id}`)}
-                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                            title="View Details"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleEditClick(client)}
-                            className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-all duration-200"
-                            title="Edit Client"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {editClientId === client.id && (
-                      <tr className="bg-gradient-to-r from-blue-50 to-indigo-50">
-                        <td colSpan={6} className="px-6 py-6">
-                          <div className="space-y-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-lg font-semibold text-gray-900">Edit Client Information</h3>
-                              <button
-                                type="button"
-                                onClick={() => setEditClientId(null)}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
-                              >
-                                <X size={20} />
-                              </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="space-y-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <User className="w-4 h-4 inline mr-2" />
-                                    Full Name
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={editFormData.name}
-                                    onChange={(e) => handleInputChange('name', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                    placeholder="Enter full name"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <Mail className="w-4 h-4 inline mr-2" />
-                                    Email Address
-                                  </label>
-                                  <input
-                                    type="email"
-                                    value={editFormData.email}
-                                    onChange={(e) => handleInputChange('email', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                    placeholder="Enter email address"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <Phone className="w-4 h-4 inline mr-2" />
-                                    Phone Number
-                                  </label>
-                                  <input
-                                    type="tel"
-                                    value={editFormData.phone}
-                                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                    placeholder="Enter phone number"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="space-y-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Profile Picture
-                                  </label>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => handleInputChange('avatar', e.target.files[0])}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                  />
-                                </div>
-
-                                <div className="flex space-x-4">
-                                  <label className="flex items-center">
-                                    <input
-                                      type="checkbox"
-                                      checked={editFormData.isActive}
-                                      onChange={(e) => handleInputChange('isActive', e.target.checked)}
-                                      className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                                    />
-                                    <span className="ml-2 text-sm text-gray-700">
-                                      <Activity className="w-4 h-4 inline mr-1" />
-                                      Active
-                                    </span>
-                                  </label>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                              <button
-                                type="button"
-                                onClick={() => setEditClientId(null)}
-                                className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-all duration-200"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleEditSubmit}
-                                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2"
-                              >
-                                <Check className="w-4 h-4" />
-                                <span>Save Changes</span>
-                              </button>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-
-                {clients.length === 0 && (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center">
-                      <div className="text-gray-500">
-                        <User className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                        <p className="text-lg font-medium">No clients found</p>
-                        <p className="text-sm">Start by adding your first client</p>
+                        <div
+                          className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+                            client.isActive ? 'bg-green-400' : 'bg-gray-400'
+                          }`}
+                        ></div>
                       </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{client.name}</div>
+                        <div className="text-xs text-gray-500">{client.role}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                        <span className="truncate max-w-[200px]">{client.email}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                        <span>{client.phone}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {client.createdAt ? new Date(client.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    }) : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {client.aadharCardNumber}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => router.push(`/admin/clients/${client.id}`)}
+                      className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center space-y-3">
+                    <Users className="w-12 h-12 text-gray-300" />
+                    <p className="text-gray-500 text-lg font-medium">No clients found</p>
+                    <p className="text-gray-400 text-sm">Try adjusting your search criteria</p>
+                    {(searchTerm || filterStatus !== "all") && (
+                      <button
+                        onClick={() => {
+                          setSearchTerm("");
+                          setFilterStatus("all");
+                        }}
+                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">Client Management</h1>
+              <p className="text-gray-600">Manage your clients</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+                <Users className="w-4 h-4" />
+                <span>{filteredClients.length} clients</span>
+              </div>
+              {/* View Toggle */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'cards'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <Grid3X3 className="w-4 h-4 mr-1" />
+                  Cards
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'table'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <List className="w-4 h-4 mr-1" />
+                  Table
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-green-600">{activeClientsCount}</p>
+                <p className="text-gray-600 text-sm">Active Clients</p>
+              </div>
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <Activity className="w-5 h-5 text-green-600" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-gray-600">{clients.length - activeClientsCount}</p>
+                <p className="text-gray-600 text-sm">Inactive Clients</p>
+              </div>
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-gray-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search by name, email, or phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="pl-10 pr-8 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[150px]"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        {viewMode === 'cards' ? <CardView /> : <TableView />}
       </div>
     </div>
   );
