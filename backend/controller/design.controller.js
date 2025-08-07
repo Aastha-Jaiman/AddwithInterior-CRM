@@ -146,7 +146,6 @@ exports.addFeedbackToDesign = async (req, res) => {
       return res.status(404).json({ error: "Design not found" });
     }
 
-    // Push new feedback into approvalHistory
     design.approvalHistory.push({
       isApproved,
       feedbackMessage,
