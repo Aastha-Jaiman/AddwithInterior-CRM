@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Eye, Search } from "lucide-react";
 import { getMyProjects } from "@/services/project.services";
+import { useRouter } from "next/navigation";
 
 const ProjectsList = () => {
   const [allProjects, setAllProjects] = useState([]);
@@ -10,6 +11,7 @@ const ProjectsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -18,6 +20,7 @@ const ProjectsList = () => {
         const projects = response?.data?.projects || [];
         setAllProjects(projects);
         setFilteredProjects(projects);
+        console.log("fg", response)
       } catch (error) {
         console.error("Failed to fetch projects", error);
       }
@@ -197,11 +200,10 @@ const ProjectsList = () => {
 
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                          project.status === "In-Process"
-                            ? "bg-blue-50 text-blue-700"
-                            : "bg-green-50 text-green-700"
-                        }`}
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded ${project.status === "In-Process"
+                          ? "bg-blue-50 text-blue-700"
+                          : "bg-green-50 text-green-700"
+                          }`}
                       >
                         {project.status}
                       </span>
@@ -216,12 +218,15 @@ const ProjectsList = () => {
                         {project.startingDate ? new Date(project.startingDate).toLocaleDateString('en-IN') : "N/A"}
                       </span>
                     </td>
-
                     <td className="px-4 py-3">
-                      <button className="text-gray-500 hover:text-blue-600 p-1 rounded">
+                      <button
+                        className="text-gray-500 hover:text-blue-600 p-1 rounded"
+                        onClick={() => router.push(`/projects/${project._id}`)}
+                      >
                         <Eye size={16} />
                       </button>
                     </td>
+
                   </tr>
                 ))}
               </tbody>

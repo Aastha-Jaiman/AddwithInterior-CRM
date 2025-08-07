@@ -171,11 +171,10 @@ const ProjectsList = () => {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                          project.status === "In-Process"
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded ${project.status === "In-Process"
                             ? "bg-blue-50 text-blue-700"
                             : "bg-green-50 text-green-700"
-                        }`}
+                          }`}
                       >
                         {project.status}
                       </span>
@@ -189,7 +188,10 @@ const ProjectsList = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <button className="text-gray-500 hover:text-blue-600 p-1 rounded">
+                      <button
+                        className="text-gray-500 hover:text-blue-600 p-1 rounded"
+                        onClick={() => router.push(`/projects/${project._id}`)}
+                      >
                         <Eye size={16} />
                       </button>
                     </td>
