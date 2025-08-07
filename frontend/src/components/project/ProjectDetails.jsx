@@ -3,7 +3,9 @@
 import React from "react";
 import {
   ArrowLeft, Edit3, Calendar, MapPin, DollarSign,
-  User, Phone, Mail, FileText, Users, Download, Camera
+  User, Phone, Mail, FileText, Users, Download, Camera,
+  Calendar1,
+  Eye
 } from "lucide-react";
 
 const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handleDownloadDocument }) => {
@@ -43,6 +45,8 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
       </span>
     );
   };
+
+  const [expandedRows, setExpandedRows] = React.useState({});
 
   const InfoCard = ({ icon, title, children, className = "" }) => (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 ${className}`}>
@@ -351,7 +355,79 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
               </div>
             </InfoCard>
           </div>
+
         </div>
+
+        {/* Daily Updates */}
+        {selectedProject.dailyUpdates?.length > 0 && (
+          <div className="mt-12">
+            <InfoCard icon={<Calendar1 className="w-5 h-5" />} title="Daily Updates">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-gray-700 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <th className="px-4 py-2">Date</th>
+                      <th className="px-4 py-2">Time of Day</th>
+                      <th className="px-4 py-2">Uploaded By</th>
+                      <th className="px-4 py-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                    {selectedProject.dailyUpdates.flatMap((updateGroup) =>
+                      updateGroup.dailyUpdates.map((update, index) => (
+                        <React.Fragment key={update._id}>
+                          <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <td className="px-4 py-2">
+                              {new Date(update.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-2 capitalize">{update.type}</td>
+                            <td className="px-4 py-2">{update.uploadedBy?.name}</td>
+                            <td className="px-4 py-2">
+                              <button
+                                onClick={() =>
+                                  setExpandedRows((prev) => ({
+                                    ...prev,
+                                    [update._id]: !prev[update._id],
+                                  }))
+                                }
+                                className="text-blue-600 hover:text-blue-800 transition"
+                              >
+                                <Eye className="w-5 h-5" />
+                              </button>
+                            </td>
+                          </tr>
+
+                          {expandedRows[update._id] && (
+                            <tr className="bg-gray-50 dark:bg-gray-700">
+                              <td colSpan={4} className="px-4 py-4">
+                                <div className="text-sm text-gray-800 dark:text-gray-200 mb-2">
+                                  <strong>Message:</strong> {update.message}
+                                </div>
+                                {update.images?.length > 0 && (
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2">
+                                    {update.images.map((img, i) => (
+                                      <img
+                                        key={img._id || i}
+                                        src={img.url}
+                                        alt={`Update Image ${i + 1}`}
+                                        className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </InfoCard>
+          </div>
+        )}
+
       </div>
     </div>
   );
