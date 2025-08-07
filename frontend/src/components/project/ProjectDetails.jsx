@@ -231,7 +231,7 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
             </InfoCard>
           </div>
 
-          {/* Holding... */}
+          {/* Documents done but quotation Holding... */}
           {/* Documents */}
           <div className="lg:col-span-1">
             <InfoCard icon={<FileText className="w-5 h-5" />} title="Documents">
@@ -266,34 +266,49 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                   </div>
                 )}
 
-                {selectedProject.documents?.designPdf && (
+                {selectedProject.designs?.length > 0 && (
                   <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="mb-2">
                       <div className="flex items-center gap-2">
                         <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                         <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          Design PDF
+                          Design PDFs
                         </span>
                       </div>
-                      <button
-                        onClick={() => handleDownloadDocument(
-                          selectedProject._id,
-                          'designPdf',
-                          selectedProject.documents.designPdf.filename
-                        )}
-                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {selectedProject.documents.designPdf.filename}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Uploaded: {selectedProject.documents.designPdf.uploadDate}
-                    </div>
+
+                    {selectedProject.designs.map((design, index) => (
+                      <div key={design._id || index} className="mb-2 space-y-2">
+                        {design.pdfs?.map((pdf, idx) => (
+                          <div
+                            key={pdf._id || idx}
+                            className="flex flex-col gap-1 border border-gray-100 dark:border-gray-700 rounded p-3 text-sm text-gray-700 dark:text-gray-300"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="font-medium text-gray-900 dark:text-white">
+                                {pdf.message || "Untitled Design PDF"}
+                              </div>
+                              <button
+                                onClick={() => window.open(pdf.pdfUrl, "_blank")}
+                                className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="text-xs">
+                              <strong>Uploaded:</strong>{" "}
+                              {new Date(pdf.uploadedAt).toLocaleString()}
+                            </div>
+                            <div className="text-xs">
+                              <strong>By:</strong> {pdf.uploadedBy?.name} ({pdf.uploadedBy?.email})
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 )}
+
 
                 {selectedProject.documents?.finalQuotation && (
                   <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">

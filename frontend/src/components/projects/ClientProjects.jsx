@@ -1,37 +1,42 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-import { Eye, Search } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Eye, FileSignature, FileText, PenTool, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { getMyProjectsForClient } from "@/services/project.services";
 
 const ProjectsList = () => {
+  const router = useRouter();
+
   const [allProjects, setAllProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
 
+  // Fetch Projects
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // ✅ Updated to new API
         const response = await getMyProjectsForClient();
         const projects = response?.data?.projects || [];
         setAllProjects(projects);
         setFilteredProjects(projects);
       } catch (error) {
-        console.error("Failed to fetch projects", error);
+        console.error("Failed to fetch projects:", error);
       }
     };
 
     fetchProjects();
   }, []);
 
+  // Filters
   useEffect(() => {
     const filtered = allProjects.filter((project) => {
+      const search = searchTerm.toLowerCase();
       const matchesSearch =
-        project.projectTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.client?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+        project.projectTitle?.toLowerCase().includes(search) ||
+        project.client?.name?.toLowerCase().includes(search);
 
       const matchesCategory =
         selectedCategory === "All" || project.category === selectedCategory;
@@ -45,11 +50,13 @@ const ProjectsList = () => {
     setFilteredProjects(filtered);
   }, [searchTerm, selectedCategory, selectedStatus, allProjects]);
 
+  // Get Unique Categories
   const uniqueCategories = useMemo(() => {
     const categories = allProjects.map((p) => p.category).filter(Boolean);
     return ["All", ...new Set(categories)];
   }, [allProjects]);
 
+  // Get Unique Statuses
   const uniqueStatuses = useMemo(() => {
     const statuses = allProjects.map((p) => p.status).filter(Boolean);
     return ["All", ...new Set(statuses)];
@@ -111,9 +118,9 @@ const ProjectsList = () => {
               </select>
             </div>
 
-            {/* Results count */}
+            {/* Count */}
             <div className="text-sm text-gray-500 ml-auto">
-              {filteredProjects.length} projects
+              {filteredProjects.length} project{filteredProjects.length !== 1 && "s"}
             </div>
           </div>
         </div>
@@ -155,19 +162,14 @@ const ProjectsList = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900">{project.projectTitle}</div>
-                      <div className="text-xs text-gray-500">{project.location}</div>
+                      <div className="text-xs text-gray-500">{project.title}</div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-gray-700">{project.category}</span>
-                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{project.category}</td>
                     <td className="px-4 py-3">
                       <div className="text-sm font-medium text-gray-900">
                         ₹{!isNaN(Number(project.estimatedBudget)) ? Number(project.estimatedBudget).toLocaleString() : "N/A"}
                       </div>
-                      <div className="text-xs text-green-600">
-                        Final: ₹{project.finalBudget || "0"}
-                      </div>
+                      <div className="text-xs text-green-600">Final: ₹{project.finalBudget || "0"}</div>
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -179,18 +181,72 @@ const ProjectsList = () => {
                         {project.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-gray-500">No docs</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-gray-700">
-                        {project.startingDate ? new Date(project.startingDate).toLocaleDateString("en-IN") : "N/A"}
-                      </span>
+
+                      <td className="px-4 py-4">
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {/* Rough Quotation */}
+                          {project.documents?.roughQuotation?.url && (
+                            <a
+                              href={project.documents.roughQuotation.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                              title="Rough Quotation"
+                              className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </a>
+                          )}
+
+                          {/* Design PDF */}
+                          {project.designs?.some((d) => d.pdfs?.length > 0) && (() => {
+                            const firstPdf = project.designs.find((d) => d.pdfs?.length > 0)?.pdfs[0];
+                            return firstPdf?.pdfUrl ? (
+                              <a
+                                href={firstPdf.pdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download
+                                title="Design"
+                                className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+                              >
+                                <PenTool className="w-4 h-4" />
+                              </a>
+                            ) : null;
+                          })()}
+
+                          {/* Final Quotation */}
+                          {project.documents?.finalQuotation?.url && (
+                            <a
+                              href={project.documents.finalQuotation.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                              title="Final Quotation"
+                              className="p-1 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded transition-colors"
+                            >
+                              <FileSignature className="w-4 h-4" />
+                            </a>
+                          )}
+
+                          {/* No Docs Fallback */}
+                          {!project.documents?.roughQuotation &&
+                            !project.documents?.finalQuotation &&
+                            !project.designs?.some((d) => d.pdfs?.length > 0) && (
+                              <span className="text-xs text-gray-400 dark:text-gray-500">No docs</span>
+                            )}
+                        </div>
+                      </td>
+
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {project.startingDate
+                        ? new Date(project.startingDate).toLocaleDateString("en-IN")
+                        : "N/A"}
                     </td>
                     <td className="px-4 py-3">
                       <button
                         className="text-gray-500 hover:text-blue-600 p-1 rounded"
-                        onClick={() => router.push(`/projects/${project._id}`)}
+                        onClick={() => router.push(`/client/projects/${project._id}`)}
                       >
                         <Eye size={16} />
                       </button>

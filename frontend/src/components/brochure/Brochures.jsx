@@ -33,8 +33,6 @@ const BrochureManager = () => {
 
   const user = useSelector((state) => state.auth.user);
 
-  console.log("user role in brochures", user.role);
-
   useEffect(() => {
     const fetchBrochures = async () => {
       try {

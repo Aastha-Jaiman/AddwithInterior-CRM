@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Eye, Search } from "lucide-react";
+import { Eye, FileText, Search } from "lucide-react";
 import { getMyProjects } from "@/services/project.services";
 import { useRouter } from "next/navigation";
 
@@ -177,10 +177,7 @@ const ProjectsList = () => {
                     </td>
 
                     <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900">
-                        {project.projectTitle}
-                      </div>
-                      <div className="text-xs text-gray-500">{project.location}</div>
+                      <div className="text-xs text-gray-500">{project.title}</div>
                     </td>
 
                     <td className="px-4 py-3">
@@ -209,9 +206,31 @@ const ProjectsList = () => {
                       </span>
                     </td>
 
+
                     <td className="px-4 py-3">
-                      <span className="text-sm text-gray-500">No docs</span>
+                      {project.designs?.length > 0 &&
+                        project.designs.some((d) => d.pdfs?.length > 0) ? (
+                        (() => {
+                          const firstPdf = project.designs.find((d) => d.pdfs?.length > 0)?.pdfs[0];
+                          return firstPdf?.pdfUrl ? (
+                            <a
+                              href={firstPdf.pdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Download"
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <FileText className="w-5 h-5" />
+                            </a>
+                          ) : (
+                            <span className="text-sm text-gray-500">No docs</span>
+                          );
+                        })()
+                      ) : (
+                        <span className="text-sm text-gray-500">No docs</span>
+                      )}
                     </td>
+
 
                     <td className="px-4 py-3">
                       <span className="text-sm text-gray-700">
