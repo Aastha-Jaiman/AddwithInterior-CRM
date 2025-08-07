@@ -1,6 +1,7 @@
 const ProjectModel = require("../model/project.model");
 const DesignModel = require("../model/design.model");
 const ClientModel = require("../model/client.model");
+const UpdateModel = require("../model/dailyupdate.model")
 const Admin = require("../model/admin.model")
 const { uploadOnCloudinary } = require("../utils/cloudinary")
 const fs = require("fs")
@@ -165,8 +166,15 @@ exports.getProjectById = async (req, res) => {
       return res.status(400).json({ message: "Project Not Found." });
     }
 
-    const designs = await DesignModel.find({ project: id })
-      .populate("pdfs.uploadedBy", "name email phone");
+    const designs = await DesignModel.find({ project: id }).populate(
+      "pdfs.uploadedBy",
+      "name email phone"
+    );
+
+    const dailyUpdates = await UpdateModel.find({ project: id }).populate(
+      "dailyUpdates.uploadedBy",
+      "name email phone"
+    );
 
     res.status(200).json({
       success: true,
@@ -174,6 +182,7 @@ exports.getProjectById = async (req, res) => {
       project: {
         ...project._doc,
         designs,
+        dailyUpdates,
       },
     });
 
@@ -181,6 +190,7 @@ exports.getProjectById = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 exports.getAllProject = async (req, res) => {
   try {
@@ -205,9 +215,14 @@ exports.getAllProject = async (req, res) => {
         const designs = await DesignModel.find({ project: project._id })
           .populate("pdfs.uploadedBy", "name email phone");
 
+
+        const updates = await UpdateModel.find({ project: project._id })
+          .populate("dailyUpdates.uploadedBy", "name email phone");
+
         return {
           ...project._doc,
           designs,
+          updates
         };
       })
     );
@@ -337,24 +352,34 @@ exports.getMyProjects = async (req, res) => {
       .populate("designer", "name email phone")
       .populate("carpenter", "name email phone");
 
-    const projectsWithDesigns = await Promise.all(
+    const projectsWithDetails = await Promise.all(
       projects.map(async (project) => {
-        const designs = await DesignModel.find({ project: project._id })
-          .populate("pdfs.uploadedBy", "name email phone");
+        const [designs, dailyUpdates] = await Promise.all([
+          DesignModel.find({ project: project._id }).populate(
+            "pdfs.uploadedBy",
+            "name email phone"
+          ),
+          UpdateModel.find({ project: project._id }).populate(
+            "dailyUpdates.uploadedBy",
+            "name email phone"
+          ),
+        ]);
 
         return {
           ...project._doc,
           designs,
+          dailyUpdates,
         };
       })
     );
 
     res.status(200).json({
       success: true,
-      count: projectsWithDesigns.length,
-      projects: projectsWithDesigns,
+      count: projectsWithDetails.length,
+      projects: projectsWithDetails,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
