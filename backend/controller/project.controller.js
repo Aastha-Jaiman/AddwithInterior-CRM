@@ -1,6 +1,7 @@
 const ProjectModel = require("../model/project.model");
 const DesignModel = require("../model/design.model");
 const ClientModel = require("../model/client.model");
+const UpdateModel = require("../model/dailyupdate.model")
 const Admin = require("../model/admin.model")
 const { uploadOnCloudinary } = require("../utils/cloudinary")
 const fs = require("fs")
@@ -205,9 +206,14 @@ exports.getAllProject = async (req, res) => {
         const designs = await DesignModel.find({ project: project._id })
           .populate("pdfs.uploadedBy", "name email phone");
 
+
+        const updates = await UpdateModel.find({ project: project._id })
+          .populate("dailyUpdates.uploadedBy", "name email phone");
+
         return {
           ...project._doc,
           designs,
+          updates
         };
       })
     );
