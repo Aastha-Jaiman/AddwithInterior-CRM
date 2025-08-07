@@ -27,12 +27,14 @@ const contactRoute = require('./routes/contact.router');
 const projectRoute = require('./routes/project.router');
 const brochurRoute = require('./routes/brochur.router');
 const designRoute = require('./routes/design.router');
+const dailyupdateRoute = require('./routes/dailyupdate.router');
 
 app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/client", clientRoute);
 app.use("/api/v1/contact", contactRoute);
 app.use("/api/v1/project", projectRoute);
 app.use("/api/v1/brochure", brochurRoute);
-app.use("/api/v1/design", designRoute)
+app.use("/api/v1/design", designRoute);
+app.use("/api/v1/update", dailyupdateRoute);
 
 module.exports = app;

@@ -1,9 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { addUpdate } = require("../controllers/updateController");
+const { addUpdate, getAllUpdates, getUpdateById, deleteDailyUpdate } = require("../controller/dailyupdate.controller");
 const upload = require("../middleware/multer");
-const auth = require("../middleware/auth");
+const authMiddleware = require("../middleware/allAuthmiddleware");
 
-router.post("/add", auth(["admin"]), upload.array("images", 5), addUpdate);
+router.post("/upload/:projectId", authMiddleware, upload.array("images"), addUpdate);
+router.get("/all", authMiddleware, getAllUpdates);
+router.get("/:id", getUpdateById);
+router.delete("/:updateId/daily/:dailyUpdateId", authMiddleware, deleteDailyUpdate);
+
 
 module.exports = router;

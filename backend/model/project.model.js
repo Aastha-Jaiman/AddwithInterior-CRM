@@ -20,7 +20,7 @@ const ProjectSchema = new mongoose.Schema(
     estimatedBudget: {
       type: String,
       trim: true,
-    }, 
+    },
     finalBudget: {
       type: String,
       trim: true,
@@ -32,7 +32,7 @@ const ProjectSchema = new mongoose.Schema(
     startingDate: {
       type: Date,
     },
-     projectImages: [
+    projectImages: [
       {
         url: { type: String },
         public_id: { type: String },
@@ -52,10 +52,10 @@ const ProjectSchema = new mongoose.Schema(
       ref: "Admin",
     },
     carpenter:
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Admin",
-      },
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+    },
     status: {
       type: String,
       enum: ["Pending", "In-Process", "Completed"],
@@ -67,22 +67,25 @@ const ProjectSchema = new mongoose.Schema(
         ref: "Quotation",
       },
     ],
+    roughQuotationUploaded: {
+      type: Boolean,
+      default: false,
+    },
     designs: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Design",
       },
     ],
-    designsUploaded:{
+    designsUploaded: {
       type: Boolean,
       default: false
     },
-    updates: [
+    updates: 
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Update",
       },
-    ],
   },
   {
     timestamps: true,
