@@ -22,6 +22,7 @@ const ProjectsList = () => {
         const projects = response?.data?.projects || [];
         setAllProjects(projects);
         setFilteredProjects(projects);
+        console.log("res", response)
       } catch (error) {
         console.error("Failed to fetch projects:", error);
       }
