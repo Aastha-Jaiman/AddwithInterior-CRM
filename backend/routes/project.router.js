@@ -11,8 +11,8 @@ router.get("/all",authMiddleware, getAllProject)
 router.put("/update/:id",authMiddleware,upload.array("projectImage"), updateProject)
 router.get("/my-projects", authMiddleware, getMyProjects);
 router.get("/client/my-projects", clientauthMiddleware, getMyProjects);
-router.get("/:id",authMiddleware, getProjectById);
+router.get("/:id", getProjectById);
 
 
-
+    
 module.exports = router;
