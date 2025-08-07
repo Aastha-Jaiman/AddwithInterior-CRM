@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { uploadDesign, getDesignsByProjectId, getAllDesigns , updateDesignApproval, addFeedbackToDesign } = require("../controller/design.controller");
+const { uploadDesign, getDesignsByProjectId, getAllDesigns , addFeedbackToDesign } = require("../controller/design.controller");
 const upload = require("../middleware/multer");
 const authMiddleware = require('../middleware/allAuthmiddleware')
 

@@ -16,6 +16,18 @@ exports.uploadDesign = async (req, res) => {
       });
     }
 
+    const project = await ProjectModel.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found." });
+    }
+
+    if (!project.roughQuotationUploaded) {
+      return res.status(400).json({
+        message: "Design cannot be uploaded until rough quotation is uploaded.",
+      });
+    }
+
     let pdfData;
     try {
       pdfData = await uploadOnCloudinary(file.path, {
@@ -82,7 +94,6 @@ exports.uploadDesign = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 exports.getDesignsByProjectId = async (req, res) => {
   try {
