@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from "react";
 import {
   Search, Plus, Eye, Edit3, ChevronDown,
-  FileText
+  FileText,
+  PenTool,
+  FileSignature
 } from "lucide-react";
 
 const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocument }) => {
@@ -223,21 +225,62 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {project.documents?.roughQuotation && (
-                            <button
-                              onClick={() => onDownloadDocument(project._id, 'roughQuotation', project.documents.roughQuotation.filename)}
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {/* Rough Quotation */}
+                          {project.documents?.roughQuotation?.url && (
+                            <a
+                              href={project.documents.roughQuotation.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                              title="Rough Quotation"
                               className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
-                              title="Download Rough Quotation"
                             >
                               <FileText className="w-4 h-4" />
-                            </button>
+                            </a>
                           )}
-                          {!project.documents && (
-                            <span className="text-xs text-gray-400 dark:text-gray-500">No docs</span>
+
+                          {/* Design PDF */}
+                          {project.designs?.some((d) => d.pdfs?.length > 0) && (() => {
+                            const firstPdf = project.designs.find((d) => d.pdfs?.length > 0)?.pdfs[0];
+                            return firstPdf?.pdfUrl ? (
+                              <a
+                                href={firstPdf.pdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download
+                                title="Design"
+                                className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+                              >
+                                <PenTool className="w-4 h-4" />
+                              </a>
+                            ) : null;
+                          })()}
+
+                          {/* Final Quotation */}
+                          {project.documents?.finalQuotation?.url && (
+                            <a
+                              href={project.documents.finalQuotation.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                              title="Final Quotation"
+                              className="p-1 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded transition-colors"
+                            >
+                              <FileSignature className="w-4 h-4" />
+                            </a>
                           )}
+
+                          {/* No Docs Fallback */}
+                          {!project.documents?.roughQuotation &&
+                            !project.documents?.finalQuotation &&
+                            !project.designs?.some((d) => d.pdfs?.length > 0) && (
+                              <span className="text-xs text-gray-400 dark:text-gray-500">No docs</span>
+                            )}
                         </div>
                       </td>
+
+
 
                       <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
                         {project.startingDate ? new Date(project.startingDate).toLocaleDateString('en-IN') : "N/A"}
