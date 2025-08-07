@@ -1,12 +1,11 @@
 const AdminModel = require("../model/admin.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const fs = require("fs");
-const Jwt = require('jsonwebtoken')
-const sendEmail = require('../utils/sendMail');
+const Jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/sendMail");
 
 exports.createAdmin = async (req, res) => {
   try {
-
     const { name, email, password, phone, address, role } = req.body;
 
     if (!name || !email || !password || !phone || !address || !role) {
@@ -34,8 +33,8 @@ exports.createAdmin = async (req, res) => {
     const uploaded = await uploadOnCloudinary(req.file.path, "profile");
     let profiledata = {
       url: uploaded.secure_url,
-      public_id: uploaded.public_id
-    }
+      public_id: uploaded.public_id,
+    };
 
     if (fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
@@ -50,14 +49,14 @@ exports.createAdmin = async (req, res) => {
       role,
       isVerified: true,
       isactive: true,
-      profile: profiledata
+      profile: profiledata,
     });
 
     await newAdmin.save();
 
-    res.status(201).json({ message: "Admin created successfully", admin: newAdmin });
-
-
+    res
+      .status(201)
+      .json({ message: "Admin created successfully", admin: newAdmin });
   } catch (error) {
     console.error("Error creating admin:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -84,16 +83,30 @@ exports.registerStaffByAdmin = async (req, res) => {
       return res.status(403).json({ message: "Only admin can create staff." });
     }
 
-    if (!name || !email || !password || !phone || !address || !role || !aadhaarNumber) {
-      return res.status(400).json({ message: "All required fields must be filled." });
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !phone ||
+      !address ||
+      !role ||
+      !aadhaarNumber
+    ) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be filled." });
     }
 
-     if (!/^\d{12}$/.test(aadhaarNumber)) {
-      return res.status(400).json({ message: "Aadhaar number must be exactly 12 digits." });
+    if (!/^\d{12}$/.test(aadhaarNumber)) {
+      return res
+        .status(400)
+        .json({ message: "Aadhaar number must be exactly 12 digits." });
     }
 
     if (role === "admin") {
-      return res.status(400).json({ message: "You cannot create another admin." });
+      return res
+        .status(400)
+        .json({ message: "You cannot create another admin." });
     }
 
     const emailExists = await AdminModel.findOne({ email });
@@ -116,7 +129,10 @@ exports.registerStaffByAdmin = async (req, res) => {
     };
 
     if (req.files?.profile) {
-      const profileUpload = await uploadOnCloudinary(req.files.profile[0].path, "profile");
+      const profileUpload = await uploadOnCloudinary(
+        req.files.profile[0].path,
+        "profile"
+      );
       profileData = {
         url: profileUpload.secure_url,
         public_id: profileUpload.public_id,
@@ -132,7 +148,10 @@ exports.registerStaffByAdmin = async (req, res) => {
       };
     }
 
-    const idProofUpload = await uploadOnCloudinary(req.files.idProof[0].path, "idProof");
+    const idProofUpload = await uploadOnCloudinary(
+      req.files.idProof[0].path,
+      "idProof"
+    );
 
     if (fs.existsSync(req.files.idProof[0].path)) {
       fs.unlinkSync(req.files.idProof[0].path);
@@ -188,7 +207,7 @@ exports.login = async (req, res) => {
     const user = await AdminModel.findOne({
       $or: [{ email: identifier }, { phone: identifier }],
       isactive: true,
-      isVerified: true
+      isVerified: true,
     }).select("+password");
 
     if (!user) {
@@ -200,13 +219,9 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = Jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
+    const token = Jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.cookie("token", token, {
       secure: false,
@@ -223,7 +238,7 @@ exports.login = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
-        permission: user.permission
+        permission: user.permission,
       },
     });
   } catch (error) {
@@ -233,7 +248,6 @@ exports.login = async (req, res) => {
 
 exports.profiledData = async (req, res) => {
   try {
-
     const userId = req.user?.id;
 
     if (!userId) {
@@ -243,19 +257,18 @@ exports.profiledData = async (req, res) => {
       });
     }
 
-    const user = await AdminModel.findById(userId).select("-password -__v")
+    const user = await AdminModel.findById(userId).select("-password -__v");
 
     if (!user) {
       return res.status(400).json({
-        message: "user not found"
-      })
+        message: "user not found",
+      });
     }
 
     res.status(200).json({
       success: true,
-      user
-    })
-
+      user,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -267,18 +280,24 @@ exports.getStaffById = async (req, res) => {
     const { id } = req.params;
 
     if (!["admin"].includes(userRole)) {
-                  return res.status(403).json({ success: false, message: "Only admin can get profile" });
-            }
+      return res
+        .status(403)
+        .json({ success: false, message: "Only admin can get profile" });
+    }
 
     const staff = await AdminModel.findById(id).select("-password");
 
     if (!staff) {
-      return res.status(404).json({ success: false, message: "Client not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Client not found" });
     }
 
     res.status(200).json({ success: true, staff });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
   }
 };
 
@@ -320,7 +339,9 @@ exports.updateStaffByAdmin = async (req, res) => {
     };
 
     if (permission !== undefined) {
-      updateData.permission = Array.isArray(permission) ? permission : [permission];
+      updateData.permission = Array.isArray(permission)
+        ? permission
+        : [permission];
     }
 
     const updatedUser = await AdminModel.findByIdAndUpdate(id, updateData, {
@@ -353,7 +374,8 @@ exports.updateMyProfile = async (req, res) => {
     if (["designer", "carpenter", "salesperson"].includes(userRole)) {
       if (email || phone) {
         return res.status(401).json({
-          message: "You can only update your name, address, and profile picture.",
+          message:
+            "You can only update your name, address, and profile picture.",
         });
       }
       if (name) updateData.name = name;
@@ -390,7 +412,6 @@ exports.updateMyProfile = async (req, res) => {
       message: "Profile updated successfully",
       user: updatedUser,
     });
-
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error" });
   }
@@ -398,54 +419,44 @@ exports.updateMyProfile = async (req, res) => {
 
 exports.logout = async (req, res) => {
   try {
-
     const token = req.cookies.token;
 
     if (!token) {
       return res.status(400).json({
-        message: "Not Logged In"
-      })
-    };
+        message: "Not Logged In",
+      });
+    }
 
-    res.cookie("token", "",
-      {
-        httpOnly: true,
-        sameSite: "None",
-        secure: true,
-        expires: new Date(0)
-
-      }
-    )
+    res.cookie("token", "", {
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+      expires: new Date(0),
+    });
 
     return res.status(200).json({
       success: true,
-      message: "sucessfully logout."
-    })
-
-
-
+      message: "sucessfully logout.",
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-
-
 };
 
 exports.resetEmailToken = async (req, res) => {
   const { email } = req.body;
   try {
-
     const user = await AdminModel.findOne({ email });
 
     if (!user) {
       return res.status(400).json({
-        message: "email not found."
-      })
-    };
+        message: "email not found.",
+      });
+    }
 
-    const token = Jwt.sign({ id: user._id }, process.env.JWT_SECRET,
-      { expiresIn: "10m" }
-    )
+    const token = Jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "10m",
+    });
 
     user.resetToken = token;
     await user.save();
@@ -462,11 +473,15 @@ exports.resetEmailToken = async (req, res) => {
     const sent = await sendEmail(user.email, subject, message);
 
     if (!sent) {
-      return res.status(401).json({ message: "Faild to sent reset email" })
+      return res.status(401).json({ message: "Faild to sent reset email" });
     }
 
-    res.status(200).json({ message: "sucessfully sent reset toke on your email", token: token })
-
+    res
+      .status(200)
+      .json({
+        message: "sucessfully sent reset toke on your email",
+        token: token,
+      });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -476,15 +491,14 @@ const userToken = {};
 
 exports.changePassword = async (req, res) => {
   try {
-
     const { token, newPassword, confirmPassword } = req.body;
 
     if (!token || !newPassword || !confirmPassword) {
-      return res.status(400).json({ message: "All feilds are required." })
-    };
+      return res.status(400).json({ message: "All feilds are required." });
+    }
 
     if (newPassword !== confirmPassword) {
-      return res.status(401).json({ message: "password doesn't match." })
+      return res.status(401).json({ message: "password doesn't match." });
     }
 
     if (userToken[token]) {
@@ -496,7 +510,6 @@ exports.changePassword = async (req, res) => {
     let decoded;
 
     try {
-
       decoded = Jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
       return res.status(401).json({ message: "Invalid or expired token" });
@@ -511,16 +524,14 @@ exports.changePassword = async (req, res) => {
     userToken[token] = true;
 
     return res.status(200).json({ message: "Password changed successfully" });
-
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-
 exports.resetPassword = async (req, res) => {
   try {
-    console.log(req.body, "data")
+    console.log(req.body, "data");
     const userId = req.user._id;
     const { oldPassword, newPassword, confirmPassword } = req.body;
 
@@ -544,29 +555,29 @@ exports.resetPassword = async (req, res) => {
 
     const isSame = await user.comparePassword(newPassword);
     if (isSame) {
-      return res.status(400).json({ message: "New password cannot be same as old password." });
+      return res
+        .status(400)
+        .json({ message: "New password cannot be same as old password." });
     }
 
     user.password = newPassword;
     await user.save();
 
     res.status(200).json({ message: "Password changed successfully." });
-
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-exports.getAllStaff = async (req,res) => {
-  try{
-
-    const {role} = req.query;
+exports.getAllStaff = async (req, res) => {
+  try {
+    const { role } = req.query;
 
     const filter = {
-      role : {$ne: "admin"}
+      role: { $ne: "admin" },
     };
 
-    if(role && ["salesperson", "designer", "carpenter"].includes(role)){
+    if (role && ["salesperson", "designer", "carpenter"].includes(role)) {
       filter.role = role;
     }
 
@@ -575,10 +586,9 @@ exports.getAllStaff = async (req,res) => {
     res.status(200).json({
       success: true,
       staff: staff.length,
-      staff
-    })
-
-  }catch(error){
+      staff,
+    });
+  } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

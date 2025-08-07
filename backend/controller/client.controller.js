@@ -1,9 +1,8 @@
-const ClientModel = require('../model/client.model');
+const ClientModel = require("../model/client.model");
 const Jwt = require("jsonwebtoken");
 const fs = require("fs");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
-const sendEmail = require('../utils/sendMail')
-
+const sendEmail = require("../utils/sendMail");
 
 exports.registerClientByAdmin = async (req, res) => {
   try {
@@ -21,15 +20,21 @@ exports.registerClientByAdmin = async (req, res) => {
     const userRole = req.user?.role;
 
     if (userRole !== "admin") {
-      return res.status(403).json({ message: "Only admin can create clients." });
+      return res
+        .status(403)
+        .json({ message: "Only admin can create clients." });
     }
 
     if (!name || !email || !password || !phone || !address) {
-      return res.status(400).json({ message: "All required fields must be filled." });
+      return res
+        .status(400)
+        .json({ message: "All required fields must be filled." });
     }
 
     if (aadharCardNumber && !/^\d{12}$/.test(aadharCardNumber)) {
-      return res.status(400).json({ message: "Aadhar number must be exactly 12 digits." });
+      return res
+        .status(400)
+        .json({ message: "Aadhar number must be exactly 12 digits." });
     }
 
     const [emailExists, phoneExists] = await Promise.all([
@@ -52,7 +57,10 @@ exports.registerClientByAdmin = async (req, res) => {
     };
 
     if (req.files?.profile && req.files.profile[0]) {
-      const profileUpload = await uploadOnCloudinary(req.files.profile[0].path, "client-profile");
+      const profileUpload = await uploadOnCloudinary(
+        req.files.profile[0].path,
+        "client-profile"
+      );
       profileData = {
         url: profileUpload.secure_url,
         public_id: profileUpload.public_id,
@@ -64,7 +72,9 @@ exports.registerClientByAdmin = async (req, res) => {
       }
     } else {
       profileData = {
-        url: `https://ui-avatars.com/api/?name=${name.trim()[0].toUpperCase()}&background=random&color=fff`,
+        url: `https://ui-avatars.com/api/?name=${name
+          .trim()[0]
+          .toUpperCase()}&background=random&color=fff`,
         public_id: null,
         initials: name.trim()[0].toUpperCase(),
       };
@@ -76,7 +86,10 @@ exports.registerClientByAdmin = async (req, res) => {
     };
 
     if (req.files?.idProof && req.files.idProof[0]) {
-      const idProofUpload = await uploadOnCloudinary(req.files.idProof[0].path, "client-idproof");
+      const idProofUpload = await uploadOnCloudinary(
+        req.files.idProof[0].path,
+        "client-idproof"
+      );
       idProofData = {
         url: idProofUpload.secure_url,
         public_id: idProofUpload.public_id,
@@ -99,8 +112,14 @@ exports.registerClientByAdmin = async (req, res) => {
     for (const addr of parsedAddress) {
       const info = addr.addressinfo;
       if (
-        !addr.addresstype || !["home", "work", "other"].includes(addr.addresstype) ||
-        !info || !info.street || !info.city || !info.state || !info.country || !info.pincode
+        !addr.addresstype ||
+        !["home", "work", "other"].includes(addr.addresstype) ||
+        !info ||
+        !info.street ||
+        !info.city ||
+        !info.state ||
+        !info.country ||
+        !info.pincode
       ) {
         return res.status(400).json({ message: "Invalid address format." });
       }
@@ -159,7 +178,7 @@ exports.loginClient = async (req, res) => {
     }
 
     const token = Jwt.sign(
-      { id: user._id,  role: "client" },
+      { id: user._id, role: "client" },
       process.env.JWT_SECRET,
       {
         expiresIn: "7d",
@@ -188,54 +207,55 @@ exports.loginClient = async (req, res) => {
 };
 
 exports.getProfile = async (req, res) => {
-      try {
+  try {
+    const clientId = req.user?._id;
 
-            const clientId = req.user?._id;
+    if (!clientId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Unauthorized. Please login." });
+    }
 
-            if (!clientId) {
-                  return res.status(400).json({ success: false, message: "Unauthorized. Please login." })
-            }
+    const client = await ClientModel.findById(clientId).select(
+      "-password -__v"
+    );
 
-            const client = await ClientModel.findById(clientId).select("-password -__v");
+    if (!client) {
+      return res.status(401).json({ message: "User Not Found." });
+    }
 
-            if (!client) {
-                  return res.status(401).json({ message: "User Not Found." })
-            };
-
-            res.status(200).json({
-                  success: true,
-                  message: "fetch successfully.",
-                  client
-            })
-
-      } catch (error) {
-            res.status(500).json({ message: "Server error", error: error.message });
-      }
-}
+    res.status(200).json({
+      success: true,
+      message: "fetch successfully.",
+      client,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 exports.logoutClient = async (req, res) => {
-      try {
-            const token = req.cookies.token;
+  try {
+    const token = req.cookies.token;
 
-            if (!token) {
-                  return res.status(400).json({ message: "Not Logged in." })
-            }
+    if (!token) {
+      return res.status(400).json({ message: "Not Logged in." });
+    }
 
-            res.cookie("token", "", {
-                  httpOnly: true,
-                  sameSite: "None",
-                  expire: new Date(0),
-                  secure: true
-            });
+    res.cookie("token", "", {
+      httpOnly: true,
+      sameSite: "None",
+      expire: new Date(0),
+      secure: true,
+    });
 
-            res.status(200).json({
-                  message: "Successfully LoggedIn."
-            })
-
-      } catch (error) {
-            res.status(500).json({ message: "Server error", error: error.message });
-      }
-}
+    res.status(200).json({
+      message: "Successfully LoggedIn.",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 exports.updateClientByAdmin = async (req, res) => {
   try {
@@ -243,7 +263,9 @@ exports.updateClientByAdmin = async (req, res) => {
     const userRole = req.user?.role;
 
     if (userRole !== "admin") {
-      return res.status(403).json({ message: "Only admin can update clients." });
+      return res
+        .status(403)
+        .json({ message: "Only admin can update clients." });
     }
 
     const {
@@ -258,11 +280,15 @@ exports.updateClientByAdmin = async (req, res) => {
     } = req.body;
 
     if (!name || !email || !phone || !address) {
-      return res.status(400).json({ message: "All required fields must be filled." });
+      return res
+        .status(400)
+        .json({ message: "All required fields must be filled." });
     }
 
     if (aadharCardNumber && !/^\d{12}$/.test(aadharCardNumber)) {
-      return res.status(400).json({ message: "Aadhar number must be exactly 12 digits." });
+      return res
+        .status(400)
+        .json({ message: "Aadhar number must be exactly 12 digits." });
     }
 
     const [emailExists, phoneExists] = await Promise.all([
@@ -284,7 +310,9 @@ exports.updateClientByAdmin = async (req, res) => {
       try {
         parsedAddress = JSON.parse(address);
       } catch (err) {
-        return res.status(400).json({ message: "Invalid address JSON format." });
+        return res
+          .status(400)
+          .json({ message: "Invalid address JSON format." });
       }
     }
 
@@ -322,7 +350,10 @@ exports.updateClientByAdmin = async (req, res) => {
 
     // Profile image handling (single file expected as req.file)
     if (req.file) {
-      const uploaded = await uploadOnCloudinary(req.file.path, "client-profile");
+      const uploaded = await uploadOnCloudinary(
+        req.file.path,
+        "client-profile"
+      );
 
       if (!uploaded) {
         return res.status(500).json({ message: "Image upload failed." });
@@ -355,81 +386,85 @@ exports.updateClientByAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating client:", error);
-    res.status(500).json({ message: "Internal server error.", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error.", error: error.message });
   }
 };
 
 exports.getAllClientByAdmin = async (req, res) => {
-      try {
+  try {
+    const userRole = req.user.role;
 
-            const userRole = req.user.role;
+    if (!["admin"].includes(userRole)) {
+      return res.status(401).json({ message: "Only Admin can Get ." });
+    }
 
-            if (!["admin"].includes(userRole)) {
-                  return res.status(401).json({ message: "Only Admin can Get ." })
-            }
+    const search = req.query.search || "";
 
-            const search = req.query.search || "";
+    const query = {
+      name: { $regex: search, $options: "i" },
+    };
 
-            const query = {
-                  name: { $regex: search, $options: "i" },
-            };
+    const client = await ClientModel.find(query).select("-password -__v");
 
-            const client = await ClientModel.find(query).select("-password -__v");
-
-            res.status(200).json({
-                  success: true,
-                  message: "Succefully Fetch",
-                  total: client.length,
-                  client
-            })
-
-      } catch (error) {
-            return res.status(500).json({ message: "Server Error", error: error.message })
-      }
-}
+    res.status(200).json({
+      success: true,
+      message: "Succefully Fetch",
+      total: client.length,
+      client,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server Error", error: error.message });
+  }
+};
 
 exports.resetPassword = async (req, res) => {
-      try {
+  try {
+    const userId = req.user._id;
 
-            const userId = req.user._id;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
 
-            const { oldPassword, newPassword, confirmPassword } = req.body;
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "All feilds are required." });
+    }
 
-            if (!oldPassword || !newPassword || !confirmPassword) {
-                  return res.status(400).json({ message: "All feilds are required." })
-            };
+    const client = await ClientModel.findById(userId).select("+password");
+    if (!client) {
+      return res.status(404).json({ message: "User not found." });
+    }
 
-            const client = await ClientModel.findById(userId).select("+password");
-            if (!client) {
-                  return res.status(404).json({ message: "User not found." });
-            }
+    const isMatch = await client.comparePassword(oldPassword);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect." });
+    }
 
-            const isMatch = await client.comparePassword(oldPassword);
-            if (!isMatch) {
-                  return res.status(400).json({ message: "Old password is incorrect." });
-            }
+    if (newPassword !== confirmPassword) {
+      return res
+        .status(400)
+        .json({ message: "newPassword and confirmPassword are not same." });
+    }
 
-            if (newPassword !== confirmPassword) {
-                  return res.status(400).json({ message: "newPassword and confirmPassword are not same." })
-            }
+    const isSame = await client.comparePassword(newPassword);
 
-            const isSame = await client.comparePassword(newPassword);
+    if (isSame) {
+      return res
+        .status(400)
+        .json({ message: "New password cannot be same as old password." });
+    }
 
-            if (isSame) {
-                  return res.status(400).json({ message: "New password cannot be same as old password." });
-            };
+    client.password = newPassword;
+    await client.save();
 
-            client.password = newPassword;
-            await client.save();
-
-            res.status(200).json({ message: "Password changed successfully." });
-
-
-
-      } catch (error) {
-            return res.status(500).json({ message: "Server Error.", error: error.message })
-      }
-}
+    res.status(200).json({ message: "Password changed successfully." });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server Error.", error: error.message });
+  }
+};
 
 exports.resetEmailToken = async (req, res) => {
   const { email } = req.body;
@@ -475,15 +510,14 @@ const userToken = {};
 
 exports.changePassword = async (req, res) => {
   try {
-
     const { token, newPassword, confirmPassword } = req.body;
 
     if (!token || !newPassword || !confirmPassword) {
-      return res.status(400).json({ message: "All feilds are required." })
-    };
+      return res.status(400).json({ message: "All feilds are required." });
+    }
 
     if (newPassword !== confirmPassword) {
-      return res.status(401).json({ message: "password doesn't match." })
+      return res.status(401).json({ message: "password doesn't match." });
     }
 
     if (userToken[token]) {
@@ -495,7 +529,6 @@ exports.changePassword = async (req, res) => {
     let decoded;
 
     try {
-
       decoded = Jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
       return res.status(401).json({ message: "Invalid or expired token" });
@@ -510,11 +543,10 @@ exports.changePassword = async (req, res) => {
     userToken[token] = true;
 
     return res.status(200).json({ message: "Password changed successfully" });
-
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}
+};
 
 exports.getClientById = async (req, res) => {
   try {
@@ -522,18 +554,23 @@ exports.getClientById = async (req, res) => {
     const { id } = req.params;
 
     if (!["admin"].includes(userRole)) {
-                  return res.status(403).json({ success: false, message: "Only admin can get profile" });
-            }
+      return res
+        .status(403)
+        .json({ success: false, message: "Only admin can get profile" });
+    }
 
     const client = await ClientModel.findById(id).select("-password");
 
     if (!client) {
-      return res.status(404).json({ success: false, message: "Client not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Client not found" });
     }
 
     res.status(200).json({ success: true, client });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
   }
 };
-
