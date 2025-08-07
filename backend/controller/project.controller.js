@@ -1,4 +1,5 @@
 const ProjectModel = require("../model/project.model");
+const DesignModel = require("../model/design.model");
 const ClientModel = require("../model/client.model");
 const Admin = require("../model/admin.model")
 const { uploadOnCloudinary } = require("../utils/cloudinary")
@@ -152,29 +153,34 @@ exports.searchAllForDropdown = async (req, res) => {
 
 exports.getProjectById = async (req, res) => {
   try {
-
     const { id } = req.params;
 
     const project = await ProjectModel.findById(id)
-     .populate("client", "name email phone address")
+      .populate("client", "name email phone address")
       .populate("salesperson", "name email phone")
       .populate("designer", "name email phone")
       .populate("carpenter", "name email phone");
 
     if (!project) {
-      res.status(400).json({ message: "Project Not Found." });
+      return res.status(400).json({ message: "Project Not Found." });
     }
+
+    const designs = await DesignModel.find({ project: id })
+      .populate("pdfs.uploadedBy", "name email phone");
 
     res.status(200).json({
       success: true,
-      message: "Fetch Porject Successfully.",
-      project
-    })
+      message: "Fetch Project Successfully.",
+      project: {
+        ...project._doc,
+        designs,
+      },
+    });
 
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}
+};
 
 exports.getAllProject = async (req, res) => {
   try {
@@ -190,21 +196,32 @@ exports.getAllProject = async (req, res) => {
       .populate("designer", "name email phone")
       .populate("carpenter", "name email phone");
 
+    if (!projects || projects.length === 0) {
+      return res.status(400).json({ message: "Projects Not Found." });
+    }
 
-    if (!projects) {
-      return res.status(400).json({ message: "Project Not Found." });
-    };
+    const projectsWithDesigns = await Promise.all(
+      projects.map(async (project) => {
+        const designs = await DesignModel.find({ project: project._id })
+          .populate("pdfs.uploadedBy", "name email phone");
+
+        return {
+          ...project._doc,
+          designs,
+        };
+      })
+    );
 
     res.status(200).json({
       success: true,
-      message: "Fetch All Projects Successfully.",
-      projects
-    })
+      message: "Fetched all projects with design details.",
+      projects: projectsWithDesigns,
+    });
 
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}
+};
 
 exports.updateProject = async (req, res) => {
   try {
@@ -320,13 +337,24 @@ exports.getMyProjects = async (req, res) => {
       .populate("designer", "name email phone")
       .populate("carpenter", "name email phone");
 
+    const projectsWithDesigns = await Promise.all(
+      projects.map(async (project) => {
+        const designs = await DesignModel.find({ project: project._id })
+          .populate("pdfs.uploadedBy", "name email phone");
+
+        return {
+          ...project._doc,
+          designs,
+        };
+      })
+    );
+
     res.status(200).json({
       success: true,
-      count: projects.length,
-      projects,
+      count: projectsWithDesigns.length,
+      projects: projectsWithDesigns,
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
