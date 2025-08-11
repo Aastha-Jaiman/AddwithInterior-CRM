@@ -22,11 +22,11 @@ exports.uploadDesign = async (req, res) => {
       return res.status(404).json({ message: "Project not found." });
     }
 
-    if (!project.roughQuotationUploaded) {
-      return res.status(400).json({
-        message: "Design cannot be uploaded until rough quotation is uploaded.",
-      });
-    }
+    // if (!project.roughQuotationUploaded) {
+    //   return res.status(400).json({
+    //     message: "Design cannot be uploaded until rough quotation is uploaded.",
+    //   });
+    // }
 
     let pdfData;
     try {

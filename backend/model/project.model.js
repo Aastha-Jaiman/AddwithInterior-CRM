@@ -67,10 +67,6 @@ const ProjectSchema = new mongoose.Schema(
         ref: "Quotation",
       },
     ],
-    roughQuotationUploaded: {
-      type: Boolean,
-      default: false,
-    },
     designs: [
       {
         type: mongoose.Schema.Types.ObjectId,
