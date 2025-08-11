@@ -57,36 +57,44 @@
 
 //   return <>{children}</>;
 // }
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { loginSuccess } from "@/store/authSlice";
 import { getProfile } from "@/services/admin.services";
 import { getClientProfile } from "@/services/client.services";
 
+const publicPaths = ["/login", "/signup", "/reset-password"]; // Add all public routes here
+
 export default function ProtectedRoute({ children }) {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
+    const verifyUser = async () => {
       try {
-        const storedUser = JSON.parse(localStorage.getItem("crm_user"));
+        const storedUserJSON = localStorage.getItem("crm_user");
+        const storedUser = storedUserJSON ? JSON.parse(storedUserJSON) : null;
 
-        console.log(
-          " Checking stored user:",
-          storedUser === null
-            ? "null"
-            : ["admin", "salesperson", "designer", "carpenter"].includes(
-                storedUser.role
-              )
-            ? storedUser.role
-            : "client"
-        );
+        // Agar current route public hai
+        if (publicPaths.some((path) => pathname.startsWith(path))) {
+          // Agar user logged in hai aur public page (login/signup/reset-password) pe hai to redirect dashboard
+          if (storedUser && pathname !== "/reset-password") {
+            router.replace("/dashboard");
+          } else {
+            // Public page aur ya to user logged out ya reset-password page - allow access
+            setLoading(false);
+          }
+          return;
+        }
 
+        // Protected page hain? Toh user hona chahiye.
         if (!storedUser) {
           router.replace("/login");
           return;
@@ -104,25 +112,24 @@ export default function ProtectedRoute({ children }) {
           res = await getClientProfile();
         }
 
-        if (res.success) {
+        if (res && res.success) {
           dispatch(loginSuccess(res.user));
+          setLoading(false);
         } else {
           router.replace("/login");
         }
       } catch (err) {
         console.error("Failed to load profile:", err);
         router.replace("/login");
-      } finally {
-        setLoading(false);
       }
     };
 
-    loadUser();
-  }, []);
+    verifyUser();
+  }, [dispatch, pathname, router]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin h-10 w-10 rounded-full border-t-2 border-blue-500" />
       </div>
     );

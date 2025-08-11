@@ -17,7 +17,6 @@
 //   return response.data;
 // };
 
-
 // // 3. Get Client Profile
 // export const getClientProfile = async () => {
 //   const response = await api.get('/client/profile');
@@ -74,15 +73,13 @@
 //   }
 // };
 
-
-
-import api from './api';
+import api from "./api";
 
 // 1. Register Client by Admin
 export const registerClientByAdmin = async (formData) => {
-  const res = await api.post('/client/add', formData, {
+  const res = await api.post("/client/add", formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
   return res.data;
@@ -90,7 +87,7 @@ export const registerClientByAdmin = async (formData) => {
 
 // 2. Client Login
 export const loginClient = async ({ email, identifier, password }) => {
-  const res = await api.post('/client/login', {
+  const res = await api.post("/client/login", {
     identifier: identifier || email,
     password,
   });
@@ -99,19 +96,19 @@ export const loginClient = async ({ email, identifier, password }) => {
 
 // 3. Get Client Profile (Client-authenticated route)
 export const getClientProfile = async () => {
-  const res = await api.get('/client/profile');
+  const res = await api.get("/client/profile");
   return res.data;
 };
 
 // 4. Logout Client (Client-authenticated route)
 export const logoutClient = async () => {
-  const res = await api.get('/client/logout');
+  const res = await api.get("/client/logout");
   return res.data;
 };
 
 // 5. Get All Clients (Admin + Auth middleware required)
 export const getAllClientsByAdmin = async () => {
-  const res = await api.get('/client/all');
+  const res = await api.get("/client/all");
   return res.data;
 };
 
@@ -125,26 +122,26 @@ export const getClientByIdService = async (id) => {
 export const updateClientByAdmin = async (id, formData) => {
   const res = await api.put(`/client/update/${id}`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
   return res.data;
 };
 
 // 8. Forgot Password (Email token sender)
-export const forgotClientPassword = async (data) => {
-  const res = await api.post('/client/forgot-password', data);
+export const resetClientEmailToken = async (data) => {
+  const res = await api.post("/client/forgot-password", data);
   return res.data;
 };
 
 // 9. Change Password (Old + New - Non-authenticated)
 export const changeClientPassword = async (data) => {
-  const res = await api.post('/client/password', data);
+  const res = await api.post("/client/password", data);
   return res.data;
 };
 
 // 10. Reset Password (Token-based - Client-authenticated)
 export const resetClientPassword = async (data) => {
-  const res = await api.put('/client/reset-password', data);
+  const res = await api.put("/client/reset-password", data);
   return res.data;
 };

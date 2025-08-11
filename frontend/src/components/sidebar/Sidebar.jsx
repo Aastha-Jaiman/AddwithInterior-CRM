@@ -161,7 +161,7 @@ export default function SidebarLayout({ children }) {
       icon: MessageSquareText,
     },
     { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
-    { name: "Create Project", href: "/projects/create", icon: LayoutDashboard },
+    { name: "Project", href: "/projects", icon: LayoutDashboard },
     { name: "Assign Team", href: "/projects/assign-team", icon: Users },
     { name: "Manage Users", href: "/users", icon: User2 },
     { name: "Manage Brochures", href: "/brochure", icon: FileText },
