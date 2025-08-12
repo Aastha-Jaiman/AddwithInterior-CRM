@@ -1,33 +1,50 @@
 // services/design.services.js
 import api from "./api";
 
-// 1. Upload a design PDF to a specific project
-export const uploadDesign = async (projectId, pdfFile) => {
-  const formData = new FormData();
-  formData.append("pdf", pdfFile);
-
-  const response = await api.post(`/design/${projectId}/upload`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return response.data;
+// Upload a design PDF to a specific project
+export const uploadDesign = async (projectId, formData) => {
+  try {
+    const response = await api.post(`/design/${projectId}/upload`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Upload design service error:", error);
+    throw error;
+  }
 };
 
-// 2. Get all designs for a specific project
+// Get all designs for a specific project
 export const getDesignsByProjectId = async (projectId) => {
-  const response = await api.get(`/design/project/${projectId}`);
-  return response.data;
+  try {
+    const response = await api.get(`/design/project/${projectId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Get designs service error:", error);
+    throw error;
+  }
 };
 
-// 3. Get all designs (admin view or authenticated)
+// Get all designs (admin view or authenticated)
 export const getAllDesigns = async () => {
-  const response = await api.get("/design/all");
-  return response.data;
+  try {
+    const response = await api.get("/design/all");
+    return response.data;
+  } catch (error) {
+    console.error("Get all designs service error:", error);
+    throw error;
+  }
 };
 
-// 4. Add feedback to a specific design
+// Add feedback to a specific design
 export const addFeedbackToDesign = async (designId, feedbackData) => {
-  const response = await api.put(`/design/feedback/${designId}`, feedbackData);
-  return response.data;
+  try {
+    const response = await api.put(`/design/feedback/${designId}`, feedbackData);
+    return response.data;
+  } catch (error) {
+    console.error("Add feedback service error:", error);
+    throw error;
+  }
 };

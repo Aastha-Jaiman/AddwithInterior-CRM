@@ -3,13 +3,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-  Calendar, 
-  User, 
-  Hammer, 
-  Image as ImageIcon, 
-  FileText, 
-  ArrowLeft, 
+import {
+  Calendar,
+  User,
+  Hammer,
+  Image as ImageIcon,
+  FileText,
+  ArrowLeft,
   Clock,
   Camera,
   MessageSquare,
@@ -21,112 +21,7 @@ import {
   ZoomIn,
   Download
 } from 'lucide-react';
-
-// Sample data with real image URLs
-const sampleUpdates = [
-  {
-    id: 1,
-    projectName: "Luxury Villa Interior",
-    carpenterName: "Rajesh Kumar",
-    carpenterImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
-    lastUpdateDate: "2024-01-15",
-    totalUpdates: 12,
-    totalImages: 45,
-    totalTexts: 25,
-    status: "Active",
-    location: "Sector 21, Gurgaon",
-    dailyUpdates: [
-      {
-        id: 1,
-        date: "2024-01-15",
-        time: "09:30 AM",
-        text: "Started working on bedroom wardrobe installation. Wood cutting completed.",
-        images: [
-          { id: 1, url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop", caption: "Wood cutting progress" },
-          { id: 2, url: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&h=600&fit=crop", caption: "Wardrobe frame setup" }
-        ]
-      },
-      {
-        id: 2,
-        date: "2024-01-14",
-        time: "02:15 PM",
-        text: "Completed kitchen cabinet door fitting. Applied primer coat.",
-        images: [
-          { id: 3, url: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop", caption: "Cabinet doors fitted" },
-          { id: 4, url: "https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?w=800&h=600&fit=crop", caption: "Primer application" },
-          { id: 5, url: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop", caption: "Final kitchen view" }
-        ]
-      },
-      {
-        id: 3,
-        date: "2024-01-13",
-        time: "11:45 AM",
-        text: "Measured and marked living room TV unit dimensions. Started wood preparation.",
-        images: [
-          { id: 6, url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop", caption: "TV unit measurements" }
-        ]
-      }
-    ]
-  },
-  {
-    id: 2,
-    projectName: "Modern Office Renovation",
-    carpenterName: "Amit Singh",
-    carpenterImage: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
-    lastUpdateDate: "2024-01-14",
-    totalUpdates: 8,
-    totalImages: 32,
-    totalTexts: 18,
-    status: "Active",
-    location: "Cyber City, Gurgaon",
-    dailyUpdates: [
-      {
-        id: 4,
-        date: "2024-01-14",
-        time: "10:00 AM",
-        text: "Conference room table installation completed. Working on chair assembly.",
-        images: [
-          { id: 7, url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop", caption: "Conference table setup" },
-          { id: 8, url: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=600&fit=crop", caption: "Chair assembly progress" }
-        ]
-      },
-      {
-        id: 5,
-        date: "2024-01-13",
-        time: "03:30 PM",
-        text: "Reception desk woodwork finished. Applying final polish.",
-        images: [
-          { id: 9, url: "https://images.unsplash.com/photo-1497366412874-3415097a27e7?w=800&h=600&fit=crop", caption: "Reception desk completed" }
-        ]
-      }
-    ]
-  },
-  {
-    id: 3,
-    projectName: "Residential Apartment",
-    carpenterName: "Suresh Yadav",
-    carpenterImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face",
-    lastUpdateDate: "2024-01-13",
-    totalUpdates: 15,
-    totalImages: 60,
-    totalTexts: 30,
-    status: "Completed",
-    location: "DLF Phase 2, Gurgaon",
-    dailyUpdates: [
-      {
-        id: 6,
-        date: "2024-01-13",
-        time: "04:00 PM",
-        text: "Final touches completed on all furniture. Project ready for handover.",
-        images: [
-          { id: 10, url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop", caption: "Bedroom furniture final" },
-          { id: 11, url: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&h=600&fit=crop", caption: "Living room setup" },
-          { id: 12, url: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop", caption: "Kitchen completion" }
-        ]
-      }
-    ]
-  }
-];
+import { deleteDailyUpdate, getAllDailyUpdates, getDailyUpdateById } from '@/services/dailyupdates.services';
 
 // Image Gallery Page Component
 const ImageGalleryPage = ({ update, dailyUpdate, onBack }) => {
@@ -312,11 +207,10 @@ const ImageGalleryPage = ({ update, dailyUpdate, onBack }) => {
                 <button
                   key={image.id}
                   onClick={() => setCurrentImageIndex(index)}
-                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                    index === currentImageIndex 
-                      ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg' 
-                      : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
-                  }`}
+                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${index === currentImageIndex
+                    ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg'
+                    : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
+                    }`}
                 >
                   <img
                     src={image.url}
@@ -343,32 +237,85 @@ const ImageGalleryPage = ({ update, dailyUpdate, onBack }) => {
 export default function AdminDailyUpdates() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [updates, setUpdates] = useState(sampleUpdates);
+  const [updates, setUpdates] = useState([]);
   const [selectedUpdate, setSelectedUpdate] = useState(null);
   const [selectedDailyUpdate, setSelectedDailyUpdate] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [projects, setProjects] = useState([]);
 
   // Get URL params
   const updateId = searchParams.get('id');
   const dateParam = searchParams.get('date');
 
   useEffect(() => {
-    if (updateId) {
-      const update = updates.find(u => u.id === parseInt(updateId));
-      setSelectedUpdate(update);
-      
-      if (dateParam && update) {
-        const dailyUpdate = update.dailyUpdates.find(du => du.date === dateParam);
-        setSelectedDailyUpdate(dailyUpdate);
+    const fetchUpdates = async () => {
+      try {
+        const data = await getAllDailyUpdates();
+        console.log("All Daily Updates:", data); // Log for debugging
+        setUpdates(data);
+      } catch (error) {
+        console.error("Error fetching updates:", error);
+      }
+    };
+
+    fetchUpdates();
+  }, []);
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await getMyProjects();
+        // Assuming backend sends array of projects
+        setProjects(res.data || []);
+      } catch (error) {
+        console.error("Error fetching project names:", error);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    const fetchUpdateDetails = async () => {
+      if (updateId) {
+        try {
+          const updateData = await getDailyUpdateById(updateId);
+          console.log("Single Update Data:", updateData);
+          setSelectedUpdate(updateData);
+
+          if (dateParam && updateData) {
+            const dailyUpdate = updateData.dailyUpdates.find(
+              du => du.date === dateParam
+            );
+            setSelectedDailyUpdate(dailyUpdate);
+          } else {
+            setSelectedDailyUpdate(null);
+          }
+        } catch (error) {
+          console.error("Error fetching update by ID:", error);
+        }
       } else {
+        setSelectedUpdate(null);
         setSelectedDailyUpdate(null);
       }
-    } else {
-      setSelectedUpdate(null);
-      setSelectedDailyUpdate(null);
+    };
+
+    fetchUpdateDetails();
+  }, [updateId, dateParam]);
+
+
+  const handleDeleteDailyUpdate = async (updateId, dailyUpdateId) => {
+    try {
+      const res = await deleteDailyUpdate(updateId, dailyUpdateId);
+      console.log("Deleted Daily Update:", res);
+      // Refresh data
+      const data = await getAllDailyUpdates();
+      setUpdates(data);
+    } catch (error) {
+      console.error("Error deleting daily update:", error);
     }
-  }, [updateId, dateParam, updates]);
+  };
+
 
   const handleUpdateClick = (update) => {
     router.push(`?id=${update.id}`);
@@ -383,6 +330,8 @@ export default function AdminDailyUpdates() {
   };
 
   const handleViewImages = (dailyUpdate) => {
+    console.log("Viewing Daily Update:", dailyUpdate);
+
     router.push(`?id=${selectedUpdate.id}&date=${dailyUpdate.date}`);
   };
 
@@ -409,7 +358,7 @@ export default function AdminDailyUpdates() {
 
   const filteredUpdates = updates.filter(update => {
     const matchesSearch = update.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         update.carpenterName.toLowerCase().includes(searchTerm.toLowerCase());
+      update.carpenterName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || update.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -502,7 +451,7 @@ export default function AdminDailyUpdates() {
             <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-4 border-b border-slate-200">
               <h3 className="text-lg font-semibold text-slate-800">Daily Progress Updates</h3>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-slate-50">
@@ -547,7 +496,7 @@ export default function AdminDailyUpdates() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button 
+                        <button
                           onClick={() => handleViewImages(update)}
                           className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
                         >
@@ -569,37 +518,37 @@ export default function AdminDailyUpdates() {
   return (
     <div className="min-h-screen">
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3 bg-white p-6">
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-3 text-slate-600 bg-white px-4 py-2 rounded-lg shadow-md">
-              <Hammer className="w-6 h-6 text-blue-600" />
-              <span className="font-medium text-lg">Carpenter Daily Updates</span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="w-5 h-5 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search projects or carpenters..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-80 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="All">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Completed">Completed</option>
-              <option value="On Hold">On Hold</option>
-            </select>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3 bg-white p-6">
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-3 text-slate-600 bg-white px-4 py-2 rounded-lg shadow-md">
+            <Hammer className="w-6 h-6 text-blue-600" />
+            <span className="font-medium text-lg">Carpenter Daily Updates</span>
           </div>
         </div>
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <Search className="w-5 h-5 absolute left-3 top-3 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search projects or carpenters..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 w-80 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="All">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Completed">Completed</option>
+            <option value="On Hold">On Hold</option>
+          </select>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto p-6">
 
@@ -613,7 +562,7 @@ export default function AdminDailyUpdates() {
               </div>
             </div>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50">

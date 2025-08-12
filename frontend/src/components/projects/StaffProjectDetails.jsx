@@ -138,7 +138,7 @@ const StaffProjectDetails = () => {
                 Project Details
               </h1>
             </div>
-            {user.role === "designer" && (
+            {user?.permission?.includes("upload_design") && (
               <button
                 onClick={handleUploadDesign}
                 className="flex items-center text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
@@ -147,6 +147,16 @@ const StaffProjectDetails = () => {
                 Upload Design
               </button>
             )}
+            {user?.permission?.includes("upload_morning_update" && "upload_evening_update") && (
+              <button
+                onClick={handleUploadDesign}
+                className="flex items-center text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Daily Updates 
+              </button>
+            )}
+
           </div>
 
           {/* Title Section */}

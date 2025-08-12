@@ -173,7 +173,7 @@ exports.getProjectById = async (req, res) => {
 
     const dailyUpdates = await UpdateModel.find({ project: id }).populate(
       "dailyUpdates.uploadedBy",
-      "name email phone"
+      "name email phone role"
     );
 
     res.status(200).json({
@@ -217,7 +217,7 @@ exports.getAllProject = async (req, res) => {
 
 
         const updates = await UpdateModel.find({ project: project._id })
-          .populate("dailyUpdates.uploadedBy", "name email phone");
+          .populate("dailyUpdates.uploadedBy", "name email phone role");
 
         return {
           ...project._doc,

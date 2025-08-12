@@ -150,16 +150,6 @@ export default function SidebarLayout({ children }) {
     { name: "Design", href: "/design", icon: NotebookPen },
     { name: "Profile", href: "/profile", icon: NotebookPen },
 
-    {
-      name: "Morning Update",
-      href: "/morning-update",
-      icon: MessageSquareText,
-    },
-    {
-      name: "Evening Update",
-      href: "/evening-update",
-      icon: MessageSquareText,
-    },
     { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
     { name: "Project", href: "/projects", icon: LayoutDashboard },
     { name: "Assign Team", href: "/projects/assign-team", icon: Users },

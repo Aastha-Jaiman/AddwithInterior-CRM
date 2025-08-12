@@ -5,10 +5,178 @@ import {
   ArrowLeft, Edit3, Calendar, MapPin, DollarSign,
   User, Phone, Mail, FileText, Users, Download, Camera,
   Calendar1,
-  Eye
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Clock,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 
 const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handleDownloadDocument }) => {
+  const [expandedRows, setExpandedRows] = React.useState({});
+  const [selectedDate, setSelectedDate] = React.useState(new Date());
+  const [currentMonth, setCurrentMonth] = React.useState(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+  const [expandedDesigns, setExpandedDesigns] = React.useState({});
+
+  // Get filtered daily updates based on selected date (5 days from selected date)
+  const getFilteredUpdates = () => {
+    if (!selectedProject.dailyUpdates?.length) return [];
+
+    const endDate = new Date(selectedDate);
+    const startDate = new Date(selectedDate);
+    startDate.setDate(startDate.getDate() - 4); // 5 days total (including selected date)
+
+    return selectedProject.dailyUpdates
+      .flatMap(updateGroup =>
+        updateGroup.dailyUpdates.map(update => ({
+          ...update,
+          date: new Date(update.createdAt)
+        }))
+      )
+      .filter(update => {
+        const updateDate = new Date(update.date.toDateString());
+        const start = new Date(startDate.toDateString());
+        const end = new Date(endDate.toDateString());
+        return updateDate >= start && updateDate <= end;
+      })
+      .sort((a, b) => b.date - a.date); // Sort by newest first
+  };
+
+  // Calendar Dropdown Component
+  const CalendarDropdown = () => {
+    const today = new Date();
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    const daysInMonth = lastDayOfMonth.getDate();
+
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    const days = [];
+
+    // Empty cells for days before month starts
+    for (let i = 0; i < firstDayWeekday; i++) {
+      days.push(<div key={`empty-${i}`} className="h-8"></div>);
+    }
+
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const isSelected = selectedDate.toDateString() === date.toDateString();
+      const isToday = today.toDateString() === date.toDateString();
+
+      // Check if there are updates on this date
+      const hasUpdates = selectedProject.dailyUpdates?.some(updateGroup =>
+        updateGroup.dailyUpdates.some(update => {
+          const updateDate = new Date(update.createdAt);
+          return updateDate.toDateString() === date.toDateString();
+        })
+      );
+
+      days.push(
+        <button
+          key={day}
+          onClick={() => {
+            setSelectedDate(date);
+            setIsCalendarOpen(false); // Close dropdown after selection
+          }}
+          className={`
+            h-8 w-8 rounded-full text-sm font-medium transition-colors
+            ${isSelected
+              ? 'bg-blue-600 text-white'
+              : isToday
+                ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
+                : hasUpdates
+                  ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }
+          `}
+        >
+          {day}
+        </button>
+      );
+    }
+
+    return (
+      <div className="relative">
+        {/* Dropdown Trigger */}
+        <button
+          onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <Calendar className="w-4 h-4" />
+          <span className="text-sm font-medium">
+            {selectedDate.toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            })}
+          </span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {/* Dropdown Calendar */}
+        {isCalendarOpen && (
+          <div className="absolute top-full left-0 mt-2 z-50 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg p-4 min-w-[280px]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {monthNames[month]} {year}
+              </h3>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setCurrentMonth(new Date(year, month - 1))}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setCurrentMonth(new Date(year, month + 1))}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+              {days}
+            </div>
+
+            <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-100 dark:bg-green-900/30 rounded-full"></div>
+                  <span>Has updates</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-100 dark:bg-blue-900/30 rounded-full"></div>
+                  <span>Today</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: {
@@ -31,7 +199,6 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
     const config = statusConfig[status?.toLowerCase()];
 
     if (!config) {
-      // Optional: fallback UI or nothing
       return (
         <span className="px-2 py-1 rounded-full text-xs font-medium border bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600">
           {status || "Unknown"}
@@ -45,8 +212,6 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
       </span>
     );
   };
-
-  const [expandedRows, setExpandedRows] = React.useState({});
 
   const InfoCard = ({ icon, title, children, className = "" }) => (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 ${className}`}>
@@ -70,9 +235,11 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
     </div>
   );
 
+  const filteredUpdates = getFilteredUpdates();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <button
@@ -83,11 +250,8 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
             <span className="text-sm font-medium">Back to Projects</span>
           </button>
           <div className="p-4 sm:p-6">
-
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-
-
                 <div className="flex items-center gap-4">
                   <img
                     src={
@@ -106,9 +270,7 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {selectedProject.category}
                       </span>
-                      {/* {getStatusBadge(selectedProject.designStatus)} */}
                       {selectedProject.designStatus && getStatusBadge(selectedProject.designStatus)}
-
                     </div>
                   </div>
                 </div>
@@ -133,9 +295,10 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Project Information */}
-          <div className="lg:col-span-2 space-y-6">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* Left Side - Project Information */}
+          <div className="xl:col-span-2 space-y-6">
             {/* Budget & Timeline */}
             <InfoCard icon={<DollarSign className="w-5 h-5" />} title="Budget & Timeline">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -235,12 +398,12 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
             </InfoCard>
           </div>
 
-          {/* Documents done but quotation Holding... */}
-          {/* Documents */}
-          <div className="lg:col-span-1">
+          {/* Right Side - Documents and Designs */}
+          <div className="xl:col-span-2 space-y-6">
+            {/* Documents Section */}
             <InfoCard icon={<FileText className="w-5 h-5" />} title="Documents">
               <div className="space-y-3">
-                {/* Only show uploaded documents */}
+                {/* Rough Quotation */}
                 {selectedProject.documents?.roughQuotation && (
                   <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
@@ -270,50 +433,7 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                   </div>
                 )}
 
-                {selectedProject.designs?.length > 0 && (
-                  <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <div className="mb-2">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          Design PDFs
-                        </span>
-                      </div>
-                    </div>
-
-                    {selectedProject.designs.map((design, index) => (
-                      <div key={design._id || index} className="mb-2 space-y-2">
-                        {design.pdfs?.map((pdf, idx) => (
-                          <div
-                            key={pdf._id || idx}
-                            className="flex flex-col gap-1 border border-gray-100 dark:border-gray-700 rounded p-3 text-sm text-gray-700 dark:text-gray-300"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="font-medium text-gray-900 dark:text-white">
-                                {pdf.message || "Untitled Design PDF"}
-                              </div>
-                              <button
-                                onClick={() => window.open(pdf.pdfUrl, "_blank")}
-                                className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
-                              >
-                                <Download className="w-4 h-4" />
-                              </button>
-                            </div>
-                            <div className="text-xs">
-                              <strong>Uploaded:</strong>{" "}
-                              {new Date(pdf.uploadedAt).toLocaleString()}
-                            </div>
-                            <div className="text-xs">
-                              <strong>By:</strong> {pdf.uploadedBy?.name} ({pdf.uploadedBy?.email})
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-
+                {/* Final Quotation */}
                 {selectedProject.documents?.finalQuotation && (
                   <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
@@ -345,7 +465,6 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
 
                 {/* Show message if no documents */}
                 {!selectedProject.documents?.roughQuotation &&
-                  !selectedProject.documents?.designPdf &&
                   !selectedProject.documents?.finalQuotation && (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                       <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -354,34 +473,207 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                   )}
               </div>
             </InfoCard>
-          </div>
 
+            {/* Designs Section */}
+            <InfoCard icon={<FileText className="w-5 h-5" />} title="Design Files & Approval History">
+              <div className="space-y-4">
+                {selectedProject.designs?.length > 0 ? (
+                  selectedProject.designs.map((design, index) => (
+                    <div key={design._id || index} className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                      {/* Design Header */}
+                      <div className="bg-gray-50 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                              Design #{index + 1}
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Created: {new Date(design.createdAt).toLocaleDateString('en-IN')}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() =>
+                              setExpandedDesigns((prev) => ({
+                                ...prev,
+                                [design._id]: !prev[design._id],
+                              }))
+                            }
+                            className="text-blue-600 hover:text-blue-800 transition"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Design Content */}
+                      {!expandedDesigns[design._id] && (
+                        <div className="p-4 space-y-4">
+                          {/* PDFs Section */}
+                          {design.pdfs?.length > 0 && (
+                            <div>
+                              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                                Design Files ({design.pdfs.length})
+                              </h5>
+                              <div className="space-y-2">
+                                {design.pdfs.map((pdf, idx) => (
+                                  <div
+                                    key={pdf._id || idx}
+                                    className="border border-gray-100 dark:border-gray-700 rounded p-3"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="font-medium text-gray-900 dark:text-white">
+                                        {pdf.message || "Untitled Design PDF"}
+                                      </div>
+                                      <button
+                                        onClick={() => window.open(pdf.pdfUrl, "_blank")}
+                                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                                      >
+                                        <Download className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                                      <div>
+                                        <strong>Version:</strong> {pdf.version}
+                                      </div>
+                                      <div>
+                                        <strong>Uploaded:</strong> {new Date(pdf.uploadedAt).toLocaleString('en-IN')}
+                                      </div>
+                                      <div>
+                                        <strong>By:</strong> {pdf.uploadedBy?.name} ({pdf.uploadedBy?.email})
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Approval History Section */}
+                          <div>
+                            <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              Approval History ({design.approvalHistory?.length || 0})
+                            </h5>
+
+                            {design.approvalHistory?.length > 0 ? (
+                              <div className="space-y-2">
+                                {design.approvalHistory.map((approval, idx) => (
+                                  <div
+                                    key={approval._id || idx}
+                                    className="border border-gray-100 dark:border-gray-700 rounded p-3 bg-gray-50 dark:bg-gray-700"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-2">
+                                        {approval.status === 'approved' ? (
+                                          <CheckCircle className="w-4 h-4 text-green-600" />
+                                        ) : approval.status === 'rejected' ? (
+                                          <XCircle className="w-4 h-4 text-red-600" />
+                                        ) : (
+                                          <Clock className="w-4 h-4 text-yellow-600" />
+                                        )}
+                                        <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                                          {approval.status}
+                                        </span>
+                                      </div>
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        {new Date(approval.date || approval.createdAt).toLocaleDateString('en-IN')}
+                                      </span>
+                                    </div>
+
+                                    <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1">
+                                      <div>
+                                        <strong>By:</strong> {approval.approvedBy?.name || approval.rejectedBy?.name || 'Unknown'}
+                                      </div>
+                                      {approval.comments && (
+                                        <div>
+                                          <strong>Comments:</strong> {approval.comments}
+                                        </div>
+                                      )}
+                                      {approval.reason && (
+                                        <div>
+                                          <strong>Reason:</strong> {approval.reason}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                                <Clock className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                                <p className="text-xs">No approval history yet</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No design files uploaded yet</p>
+                  </div>
+                )}
+              </div>
+            </InfoCard>
+          </div>
         </div>
 
-        {/* Daily Updates */}
+        {/* Daily Updates with Calendar Dropdown */}
         {selectedProject.dailyUpdates?.length > 0 && (
           <div className="mt-12">
-            <InfoCard icon={<Calendar1 className="w-5 h-5" />} title="Daily Updates">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead>
-                    <tr className="bg-gray-50 dark:bg-gray-700 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      <th className="px-4 py-2">Date</th>
-                      <th className="px-4 py-2">Time of Day</th>
-                      <th className="px-4 py-2">Uploaded By</th>
-                      <th className="px-4 py-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700 text-sm">
-                    {selectedProject.dailyUpdates.flatMap((updateGroup) =>
-                      updateGroup.dailyUpdates.map((update, index) => (
+            <InfoCard
+              icon={<Calendar1 className="w-5 h-5" />}
+              title="Daily Updates"
+            >
+              {/* Calendar Dropdown and Info */}
+              <div className="mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <CalendarDropdown />
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Showing updates from last 5 days (including selected date)
+                  </div>
+                </div>
+
+                {/* Date Range Display */}
+                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                  <div className="text-sm text-blue-800 dark:text-blue-300">
+                    <strong>Date Range:</strong> {
+                      (() => {
+                        const endDate = new Date(selectedDate);
+                        const startDate = new Date(selectedDate);
+                        startDate.setDate(startDate.getDate() - 4);
+                        return `${startDate.toLocaleDateString('en-IN')} to ${endDate.toLocaleDateString('en-IN')}`;
+                      })()
+                    }
+                  </div>
+                </div>
+              </div>
+
+              {/* Updates Table */}
+              {filteredUpdates.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-gray-700 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <th className="px-4 py-2">Date</th>
+                        <th className="px-4 py-2">Time of Day</th>
+                        <th className="px-4 py-2">Uploaded By</th>
+                        <th className="px-4 py-2">Role</th>
+                        <th className="px-4 py-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                      {filteredUpdates.map((update) => (
                         <React.Fragment key={update._id}>
                           <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             <td className="px-4 py-2">
-                              {new Date(update.createdAt).toLocaleDateString()}
+                              {update.date.toLocaleDateString('en-IN')}
                             </td>
                             <td className="px-4 py-2 capitalize">{update.type}</td>
                             <td className="px-4 py-2">{update.uploadedBy?.name}</td>
+                            <td className="px-4 py-2">{update.uploadedBy?.role}</td>
                             <td className="px-4 py-2">
                               <button
                                 onClick={() =>
@@ -399,7 +691,7 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
 
                           {expandedRows[update._id] && (
                             <tr className="bg-gray-50 dark:bg-gray-700">
-                              <td colSpan={4} className="px-4 py-4">
+                              <td colSpan={5} className="px-4 py-4">
                                 <div className="text-sm text-gray-800 dark:text-gray-200 mb-2">
                                   <strong>Message:</strong> {update.message}
                                 </div>
@@ -410,7 +702,8 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                                         key={img._id || i}
                                         src={img.url}
                                         alt={`Update Image ${i + 1}`}
-                                        className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                                        className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:opacity-80 transition-opacity"
+                                        onClick={() => window.open(img.url, '_blank')}
                                       />
                                     ))}
                                   </div>
@@ -419,19 +712,22 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                             </tr>
                           )}
                         </React.Fragment>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <Calendar1 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No updates found for the selected date range</p>
+                </div>
+              )}
             </InfoCard>
           </div>
         )}
-
       </div>
     </div>
   );
 };
 
 export default ProjectDetails;
-

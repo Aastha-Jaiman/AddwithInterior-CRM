@@ -1,4 +1,4 @@
-import api from "../utils/api";
+import api from "./api";
 
 // Upload new update with images
 export const uploadDailyUpdate = async (projectId, formData) => {

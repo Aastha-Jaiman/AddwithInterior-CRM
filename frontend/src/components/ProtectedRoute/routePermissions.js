@@ -12,10 +12,8 @@ export const routePermissionMap = {
   // Design
   "/design": ["upload_design", "view_design_feedback"],
 
-  // Daily Updates
-  "/morning-update": "upload_morning_update",
-  "/evening-update": "upload_evening_update",
-  "/daily-updates": "view_daily_updates",
+  "/daily-updates": ["upload_morning_update", "upload_evening_update", "view_daily_updates"],
+
 
   // Project Management
   "/projects/create": "create_project",
