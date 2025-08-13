@@ -35,6 +35,6 @@ app.use("/api/v1/contact", contactRoute);
 app.use("/api/v1/project", projectRoute);
 app.use("/api/v1/brochure", brochurRoute);
 app.use("/api/v1/design", designRoute);
-app.use("/api/v1/update", dailyupdateRoute);
+app.use("/api/v1/dailyupdate", dailyupdateRoute);
 
 module.exports = app;

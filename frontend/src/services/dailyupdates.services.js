@@ -14,15 +14,20 @@ export const uploadDailyUpdate = async (projectId, formData) => {
   }
 };
 
-// Get all daily updates
+
 export const getAllDailyUpdates = async () => {
   try {
-    const response = await api.get(`/dailyupdate/all`);
+    const response = await api.get(`/dailyupdate/all`, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    });
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
   }
 };
+
 
 // Get single update by ID
 export const getDailyUpdateById = async (id) => {
