@@ -171,3 +171,35 @@ exports.addFeedbackToDesign = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+exports.deletePdfs = async (req, res) => {
+  try {
+    const { designId, pdfId } = req.params;
+
+    const design = await DesignModel.findById(designId);
+    if (!design) {
+      return res.status(404).json({ success: false, message: "Design not found" });
+    }
+
+    const pdfIndex = design.pdfs.findIndex(
+      (pdf) => pdf._id.toString() === pdfId
+    );
+    if (pdfIndex === -1) {
+      return res.status(404).json({ success: false, message: "PDF not found in this design" });
+    }
+
+    design.pdfs.splice(pdfIndex, 1);
+
+    await design.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "PDF deleted successfully",
+      design
+    });
+
+  } catch (error) {
+    console.error("Error deleting PDF:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
