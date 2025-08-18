@@ -48,3 +48,14 @@ export const addFeedbackToDesign = async (designId, feedbackData) => {
     throw error;
   }
 };
+
+// Delete a specific PDF from a design
+export const deletePdfFromDesign = async (designId, pdfId) => {
+  try {
+    const response = await api.delete(`/design/${designId}/pdf/${pdfId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Delete PDF service error:", error);
+    throw error;
+  }
+};

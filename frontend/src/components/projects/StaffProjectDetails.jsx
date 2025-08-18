@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, FileText, Upload, X, Send, Download } from "lucide-react";
+import { ArrowLeft, FileText, Upload, X, Send, Download, Trash2 } from "lucide-react";
 import { getProjectById } from "@/services/project.services";
 import { useRouter } from "next/navigation";
-import { uploadDesign } from "@/services/design.services";
+import { uploadDesign, deletePdfFromDesign } from "@/services/design.services";
 import { useSelector } from "react-redux";
 
 const StaffProjectDetails = () => {
@@ -18,6 +18,8 @@ const StaffProjectDetails = () => {
     message: "",
     pdf: null,
   });
+  const [deletingPdf, setDeletingPdf] = useState(null);
+  const [uploadingDesign, setUploadingDesign] = useState(false); // Track upload state
   const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
@@ -67,14 +69,14 @@ const StaffProjectDetails = () => {
       return;
     }
 
+    setUploadingDesign(true); // Disable button during upload
+
     const formData = new FormData();
     formData.append("pdf", uploadData.pdf);
-
-    // If your backend accepts a message as well, uncomment this:
-    formData.append("message", uploadData.message); // optional
+    formData.append("message", uploadData.message);
 
     try {
-      await uploadDesign(id, formData); // `id` is your projectId
+      await uploadDesign(id, formData);
 
       // Re-fetch the updated project data
       const response = await getProjectById(id);
@@ -85,7 +87,40 @@ const StaffProjectDetails = () => {
       handleCloseForm();
     } catch (error) {
       console.error("Error uploading design:", error);
+    } finally {
+      setUploadingDesign(false); // Re-enable button
     }
+  };
+
+  // Handle PDF deletion
+  const handleDeletePdf = async (designId, pdfId) => {
+    if (!window.confirm("Are you sure you want to delete this PDF?")) {
+      return;
+    }
+
+    setDeletingPdf(pdfId);
+    try {
+      await deletePdfFromDesign(designId, pdfId);
+
+      // Re-fetch the updated project data
+      const response = await getProjectById(id);
+      setProject(response.data.project);
+
+      console.log("PDF deleted successfully");
+    } catch (error) {
+      console.error("Error deleting PDF:", error);
+      alert("Failed to delete PDF. Please try again.");
+    } finally {
+      setDeletingPdf(null);
+    }
+  };
+
+  // Check if user has permission to delete PDFs
+  const canDeletePdf = (pdf) => {
+    return (
+      user?.permission?.includes("delete_design") ||
+      pdf.uploadedBy?._id === user?._id
+    );
   };
 
   if (loading)
@@ -138,25 +173,30 @@ const StaffProjectDetails = () => {
                 Project Details
               </h1>
             </div>
-            {user?.permission?.includes("upload_design") && (
-              <button
-                onClick={handleUploadDesign}
-                className="flex items-center text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Design
-              </button>
-            )}
-            {user?.permission?.includes("upload_morning_update" && "upload_evening_update") && (
-              <button
-                onClick={handleUploadDesign}
-                className="flex items-center text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Daily Updates 
-              </button>
-            )}
-
+            <div className="flex gap-2">
+              {user?.permission?.includes("upload_design") && (
+                <button
+                  onClick={handleUploadDesign}
+                  disabled={showUploadForm || uploadingDesign}
+                  className={`flex items-center text-sm text-white px-4 py-2 rounded-lg transition-colors ${showUploadForm || uploadingDesign
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                    }`}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploadingDesign ? "Uploading..." : "Upload Design"}
+                </button>
+              )}
+              {user?.permission?.includes("upload_daily_updates") && (
+                <button
+                  onClick={handleUploadDesign}
+                  className="flex items-center text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Daily Updates
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Title Section */}
@@ -196,18 +236,12 @@ const StaffProjectDetails = () => {
             <div className="space-y-6 lg:col-span-2">
               {/* Budget & Timeline */}
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-4">
-                  Budget & Timeline
-                </h3>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <h3 className="font-semibold text-gray-900 mb-4">Budget & Timeline</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
-                    <p className="text-xs text-gray-500 mb-1">
-                      Estimated Budget
-                    </p>
+                    <p className="text-xs text-gray-500 mb-1">Estimated Budget</p>
                     <p className="text-gray-900 font-semibold">
-                      ₹
-                      {!isNaN(Number(project.estimatedBudget))
+                      ₹{!isNaN(Number(project.estimatedBudget))
                         ? Number(project.estimatedBudget).toLocaleString()
                         : "N/A"}
                     </p>
@@ -215,153 +249,179 @@ const StaffProjectDetails = () => {
                   <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
                     <p className="text-xs text-gray-500 mb-1">Final Budget</p>
                     <p className="text-gray-900 font-semibold">
-                      ₹{Number(project.finalBudget).toLocaleString()}
+                      ₹{!isNaN(Number(project.finalBudget))
+                        ? Number(project.finalBudget).toLocaleString()
+                        : "N/A"}
                     </p>
                   </div>
                   <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
                     <p className="text-xs text-gray-500 mb-1">Starting Date</p>
                     <p className="text-gray-900 font-medium text-sm">
-                      {new Date(project.startingDate).toLocaleDateString(
-                        "en-IN",
-                        {
+                      {project.startingDate
+                        ? new Date(project.startingDate).toLocaleDateString("en-IN", {
                           day: "2-digit",
                           month: "short",
                           year: "numeric",
-                        }
-                      )}
+                        })
+                        : "N/A"}
                     </p>
                   </div>
                   <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
                     <p className="text-xs text-gray-500 mb-1">Location</p>
-                    <p className="text-gray-900 font-medium text-sm">
-                      {project.location}
-                    </p>
+                    <p className="text-gray-900 font-medium text-sm">{project.location || "N/A"}</p>
                   </div>
                 </div>
               </div>
 
               {/* Customer Info */}
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-4">
-                  Customer Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="font-semibold text-gray-900 mb-4">Customer Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <p className="text-xs text-gray-500 mb-1">Customer Name</p>
-                    <p className="text-gray-900 font-medium">
-                      {project.client?.name}
-                    </p>
+                    <p className="text-gray-900 font-medium">{project.client?.name || "N/A"}</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <p className="text-xs text-gray-500 mb-1">Phone Number</p>
-                    <p className="text-gray-900 font-medium">
-                      {project.client?.phone}
-                    </p>
+                    <p className="text-gray-900 font-medium">{project.client?.phone || "N/A"}</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 sm:col-span-2">
                     <p className="text-xs text-gray-500 mb-1">Email</p>
-                    <p className="text-gray-900 font-medium">
-                      {project.client?.email}
-                    </p>
+                    <p className="text-gray-900 font-medium">{project.client?.email || "N/A"}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Documents */}
-            {/* Documents Section */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-gray-500" />
-                Documents
-              </h3>
-
-              {project.designs?.length > 0 ? (
-                <div className="space-y-4">
-                  {project.designs.map((design, designIndex) => (
-                    <div key={design._id || designIndex} className="space-y-3">
-                      {design.pdfs?.map((pdf, pdfIndex) => (
-                        <div
-                          key={pdf._id || pdfIndex}
-                          className="flex items-center justify-between border border-gray-100 rounded-lg p-4 hover:bg-gray-50"
-                        >
-                          <div>
-                            <p className="text-sm font-medium text-gray-800 mb-1">
-                              Document {designIndex + 1}.{pdfIndex + 1}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {pdf.message || "Untitled Design PDF"}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              Uploaded:{" "}
-                              {new Date(pdf.uploadedAt).toLocaleString("en-IN")}
-                            </p>
-                            {pdf.uploadedBy && (
-                              <p className="text-xs text-gray-400">
-                                By: {pdf.uploadedBy.name} (
-                                {pdf.uploadedBy.email})
-                              </p>
-                            )}
-                          </div>
-                          <a
-                            href={pdf.pdfUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 text-sm font-medium hover:underline"
-                          >
-                            <Download />
-                          </a>
-                        </div>
-                      ))}
+            {/* Team Info - Right Column */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col">
+              <h3 className="font-semibold text-gray-900 mb-4">Team Information</h3>
+              <div className="space-y-4">
+                {[
+                  { role: "salesperson", data: project.salesperson },
+                  { role: "designer", data: project.designer },
+                  { role: "carpenter", data: project.carpenter }
+                ].map(({ role, data }) => (
+                  <div
+                    key={role}
+                    className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col"
+                  >
+                    <span className="text-xs text-gray-500 mb-2">
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-10 mb-1">
+                      <span className="text-gray-900 font-medium">{data?.name || "N/A"}</span>
+                      <span className="text-gray-900 font-medium">{data?.phone || "N/A"}</span>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">
-                    No documents uploaded yet
-                  </p>
-                </div>
-              )}
+                    <span className="text-gray-900 font-medium">{data?.email || "N/A"}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Team Info */}
+
+          {/* Right Column: Documents */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-4">
-              Team Information
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-gray-500" />
+              Documents
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1">Salesperson</p>
-                <p className="text-gray-900 font-medium">
-                  {project.salesperson?.name}
-                </p>
-                <p className="text-gray-900 font-medium">
-                  {project.salesperson?.phone}
+            {project.designs?.length > 0 ? (
+              <div className="space-y-4">
+                {project.designs.map((design, designIndex) => (
+                  <div key={design._id || designIndex} className="space-y-3">
+                    {design.pdfs?.map((pdf, pdfIndex) => {
+                      // Filter feedback for this specific PDF's version
+                      const pdfFeedbackHistory = (design.approvalHistory || []).filter(
+                        (h) => h.versionSelect === pdf.version
+                      );
+
+                      return (
+                        <div key={pdf._id || pdfIndex} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-800 mb-1">
+                                Document {designIndex + 1}.{pdfIndex + 1}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {pdf.message || "Untitled Design PDF"}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                Uploaded:{" "}
+                                {new Date(pdf.uploadedAt).toLocaleString("en-IN")}
+                              </p>
+                              {pdf.uploadedBy && (
+                                <p className="text-xs text-gray-400">
+                                  By: {pdf.uploadedBy.name} (
+                                  {pdf.uploadedBy.email})
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={pdf.pdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 p-1"
+                                title="Download PDF"
+                              >
+                                <Download className="w-4 h-4" />
+                              </a>
+                              {canDeletePdf(pdf) && (
+                                <button
+                                  onClick={() =>
+                                    handleDeletePdf(design._id, pdf._id)
+                                  }
+                                  disabled={deletingPdf === pdf._id}
+                                  className="text-red-600 hover:text-red-800 p-1 disabled:opacity-50"
+                                  title="Delete PDF"
+                                >
+                                  {deletingPdf === pdf._id ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                  ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Feedback history for this specific PDF */}
+                          {pdfFeedbackHistory.length > 0 && (
+                            <div className="mt-3">
+                              <h4 className="text-sm font-semibold mb-2 text-gray-700">Approval History</h4>
+                              <ul className="space-y-2 text-gray-600 text-sm">
+                                {pdfFeedbackHistory.map((h, hi) => (
+                                  <li key={h._id || hi} className="border-b pb-1">
+                                    <span className={`mr-2 font-bold ${h.isApproved ? "text-green-700" : "text-red-700"}`}>
+                                      {h.isApproved ? "Approved" : "Rejected"}
+                                    </span>
+                                    (Document {designIndex + 1} Version {h.versionSelect}) - {h.feedbackMessage}
+                                    <span className="ml-2 text-xs text-gray-400">
+                                      {h.updatedAt ? new Date(h.updatedAt).toLocaleDateString("en-IN") : ""}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">
+                  No documents uploaded yet
                 </p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1">Designer</p>
-                <p className="text-gray-900 font-medium">
-                  {project.designer?.name}
-                </p>
-                <p className="text-gray-900 font-medium">
-                  {project.designer?.phone}
-                </p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1">Carpenter</p>
-                <p className="text-gray-900 font-medium">
-                  {project.carpenter?.name}
-                </p>
-                <p className="text-gray-900 font-medium">
-                  {project.carpenter?.phone}
-                </p>
-              </div>
-            </div>
+            )}
           </div>
+
 
           {/* All Project Images */}
           {project.projectImages?.length > 1 && (
@@ -400,6 +460,7 @@ const StaffProjectDetails = () => {
                 <button
                   onClick={handleCloseForm}
                   className="text-gray-400 hover:text-gray-600"
+                  disabled={uploadingDesign}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -422,6 +483,7 @@ const StaffProjectDetails = () => {
                     }
                     placeholder="Enter message for the document"
                     required
+                    disabled={uploadingDesign}
                   />
                 </div>
 
@@ -432,22 +494,22 @@ const StaffProjectDetails = () => {
                   <input
                     type="file"
                     accept="application/pdf"
-                    onChange={(e) =>
-                      setUploadData((prev) => ({
-                        ...prev,
-                        pdf: e.target.files[0],
-                      }))
-                    }
+                    onChange={handleFileChange}
                     required
+                    disabled={uploadingDesign}
                   />
                 </div>
 
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    className={`px-4 py-2 rounded transition-colors ${uploadingDesign
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
+                    disabled={uploadingDesign}
                   >
-                    Upload
+                    {uploadingDesign ? "Uploading..." : "Upload"}
                   </button>
                 </div>
               </form>
