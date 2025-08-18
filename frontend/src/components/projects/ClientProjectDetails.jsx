@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, FileText, Download, MessageCircle } from "lucide-react";
+import { ArrowLeft, FileText, Download, MessageCircle, Eye } from "lucide-react";
 import { getProjectById } from "@/services/project.services";
 import { addFeedbackToDesign } from "@/services/design.services";
 import { useRouter } from "next/navigation";
@@ -19,11 +19,21 @@ const ClientProjectDetails = () => {
   const [feedbackLoading, setFeedbackLoading] = useState({});
   const [feedbackError, setFeedbackError] = useState({});
 
+  // For daily update listing
+  const [selectedDate, setSelectedDate] = useState(""); // YYYY-MM-DD
+  const [expandedUpdateId, setExpandedUpdateId] = useState(null);
+
+  const [showDailyUpdates, setShowDailyUpdates] = useState(true);
+  const [showDocuments, setShowDocuments] = useState(true);
+
+
+
   useEffect(() => {
     const fetchProject = async () => {
       try {
         const response = await getProjectById(id);
         setProject(response.data.project);
+        console.log("d", response)
       } catch (error) {
         console.error("Failed to fetch project:", error);
       } finally {
@@ -89,6 +99,25 @@ const ClientProjectDetails = () => {
   };
 
   const handleCloseForm = () => setOpenFeedback({ designId: null, pdfId: null });
+
+  // ---- DAILY UPDATES PREP ----
+  const dailyUpdatesDays = project?.dailyUpdates
+    ? [...project.dailyUpdates].sort((a, b) =>
+      new Date(b.createdAt) - new Date(a.createdAt)
+    )
+    : [];
+
+  let shownDays = dailyUpdatesDays;
+  if (!selectedDate) {
+    shownDays = dailyUpdatesDays.slice(0, 5);
+  } else {
+    shownDays = dailyUpdatesDays.filter(day =>
+      day.createdAt &&
+      new Date(day.createdAt).toISOString().slice(0, 10) === selectedDate
+    );
+  }
+  shownDays = shownDays.filter(day => Array.isArray(day.dailyUpdates) && day.dailyUpdates.length > 0);
+
 
   if (loading) {
     return (
@@ -256,210 +285,311 @@ const ClientProjectDetails = () => {
             </div>
           </div>
 
-
-          {/* Documents Section */}
+          {/* ---- Daily Updates Section ---- */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-gray-500" />
-              Documents
-            </h3>
+            {/* Toggle Header */}
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setShowDailyUpdates((v) => !v)}
+            >
+              <h3 className="font-semibold text-gray-900 text-lg flex items-center gap-2">
+                <FileText className="w-4 h-4 text-gray-500" /> Daily Updates
+                <span className="text-gray-500 ml-2 text-sm font-normal">
+                  {selectedDate
+                    ? `Filtered by: ${selectedDate.split('-').reverse().join('-')}`
+                    : "Last 5 days"}
+                </span>
+              </h3>
+              <button
+                type="button"
+                className="text-gray-700 text-2xl font-bold focus:outline-none"
+                aria-label="Toggle Daily Updates"
+                tabIndex={-1}
+              >
+                {showDailyUpdates ? '−' : '+'}
+              </button>
+            </div>
+            {showDailyUpdates && (
+              <>
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-3">
+                  <input
+                    type="date"
+                    className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-400 w-44"
+                    value={selectedDate}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                  />
+                  {selectedDate && (
+                    <button
+                      className="px-3 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 ml-2"
+                      onClick={() => setSelectedDate("")}
+                    >
+                      Clear Filter
+                    </button>
+                  )}
+                </div>
 
-            {/* Designs */}
-            {project.designs?.length > 0 ? (
-              <div className="space-y-8">
-                {project.designs.map((design, designIndex) => (
-                  <div key={design._id || designIndex}>
-                    {/* PDFs list */}
-                    <div className="space-y-3">
-                      {design.pdfs?.map((pdf, pdfIndex) => {
-                        const isFormOpen =
-                          openFeedback.designId === design._id && openFeedback.pdfId === pdf._id;
-                        const feedbackKey = `${design._id}_${pdf._id}`;
-
-                        // Filter feedback for this pdf's version
-                        const pdfFeedbackHistory = (design.approvalHistory || []).filter(
-                          (h) => h.versionSelect === pdf.version
-                        );
-
-                        return (
-                          <div key={pdf._id || pdfIndex} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 mb-2">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-medium text-gray-800 mb-1">
-                                  Document {designIndex + 1}.{pdfIndex + 1}
-                                </p>
-                                <p className="text-sm text-gray-600">{pdf.message || "Untitled Design PDF"}</p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                  Uploaded: {new Date(pdf.uploadedAt).toLocaleString("en-IN")}
-                                </p>
-                                {pdf.uploadedBy && (
-                                  <p className="text-xs text-gray-400">
-                                    By: {pdf.uploadedBy.name} ({pdf.uploadedBy.email})
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <a
-                                  href={pdf.pdfUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 text-sm font-medium hover:underline"
-                                >
-                                  <Download />
-                                </a>
-                                <button
-                                  type="button"
-                                  className={`flex items-center gap-1 text-blue-600 hover:text-blue-800 ${isFormOpen ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                  title="Give Feedback"
-                                  disabled={isFormOpen}
-                                  onClick={() =>
-                                    !isFormOpen &&
-                                    setOpenFeedback({ designId: design._id, pdfId: pdf._id })
-                                  }
-                                >
-                                  <MessageCircle className="w-5 h-5" />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Feedback form */}
-                            {isFormOpen && (
-                              <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                <h4 className="text-base font-semibold mb-2 text-gray-800">
-                                  Add Feedback For This Design
-                                </h4>
-                                <form
-                                  onSubmit={e => {
-                                    e.preventDefault();
-                                    handleFeedbackSubmit(design._id, pdf._id);
-                                  }}
-                                  className="space-y-3"
-                                >
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                      Is Approved?
-                                    </label>
-                                    <select
-                                      value={feedbackForms[feedbackKey]?.isApproved ?? ""}
-                                      onChange={e =>
-                                        handleFeedbackChange(
-                                          design._id,
-                                          pdf._id,
-                                          "isApproved",
-                                          e.target.value
-                                        )
-                                      }
-                                      required
-                                      className="border rounded p-2 w-full"
-                                    >
-                                      <option value="">Select</option>
-                                      <option value="true">Approved</option>
-                                      <option value="false">Not Approved</option>
-                                    </select>
+                {shownDays.length > 0 ? (
+                  <div className="space-y-8">
+                    {shownDays.map((day, idx) => (
+                      <div key={day.createdAt || idx}>
+                        <div className="font-semibold text-blue-700 mb-2">
+                          {new Date(day.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                        </div>
+                        <div className="space-y-3">
+                          {day.dailyUpdates.map((du, i) => (
+                            <div key={du._id || i} className="border border-gray-100 rounded p-4 flex flex-col bg-gray-50">
+                              {/* ...your old daily update row code here... */}
+                              {/* Don't change the code inside, just wrap the whole block in {showDailyUpdates && (...)} */}
+                              {/* rest of your daily update JSX unchanged */}
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex gap-2 items-center text-sm">
+                                    <span className="px-2 py-1 rounded-full border border-gray-200 bg-gray-100 font-semibold capitalize">{du.type}</span>
+                                    <span className="font-medium text-gray-800">{du.message}</span>
                                   </div>
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                      Feedback Message
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={feedbackForms[feedbackKey]?.feedbackMessage ?? ""}
-                                      onChange={e =>
-                                        handleFeedbackChange(
-                                          design._id,
-                                          pdf._id,
-                                          "feedbackMessage",
-                                          e.target.value
-                                        )
-                                      }
-                                      className="border rounded p-2 w-full"
-                                      required
-                                      placeholder="Enter your feedback"
-                                    />
+                                  <div className="text-xs text-gray-500">
+                                    Uploaded: {du.createdAt
+                                      ? new Date(du.createdAt).toLocaleString("en-IN")
+                                      : "N/A"}
+                                    {" | "}By: {du.uploadedBy?.name || "Unknown"}
                                   </div>
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                      Version
-                                    </label>
-                                    <input
-                                      type="number"
-                                      value={feedbackForms[feedbackKey]?.versionSelect ?? ""}
-                                      onChange={e =>
-                                        handleFeedbackChange(
-                                          design._id,
-                                          pdf._id,
-                                          "versionSelect",
-                                          e.target.value
-                                        )
-                                      }
-                                      className="border rounded p-2 w-full"
-                                      required
-                                      min={1}
-                                      placeholder="Enter version number"
-                                    />
-                                  </div>
-                                  {feedbackError[feedbackKey] && (
-                                    <p className="text-xs text-red-600">
-                                      {feedbackError[feedbackKey]}
-                                    </p>
-                                  )}
-                                  <div className="flex gap-2">
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                  <span className="text-gray-600 text-sm">
+                                    {du.images?.length > 0 ? `${du.images.length} Images` : "No Images"}
+                                  </span>
+                                  {du.images?.length > 0 && (
                                     <button
-                                      type="submit"
-                                      className={`bg-blue-600 text-white px-4 py-1 rounded ${feedbackLoading[feedbackKey]
-                                          ? "opacity-50 cursor-not-allowed"
-                                          : ""
-                                        }`}
-                                      disabled={feedbackLoading[feedbackKey]}
-                                    >
-                                      {feedbackLoading[feedbackKey] ? "Submitting..." : "Submit Feedback"}
-                                    </button>
-                                    <button
+                                      className="px-3 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium flex items-center gap-1"
+                                      onClick={() => setExpandedUpdateId(expandedUpdateId === du._id ? null : du._id)}
                                       type="button"
-                                      className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300"
-                                      onClick={handleCloseForm}
                                     >
-                                      Close
+                                      <Eye className="w-4 h-4" />
+                                      View Images
                                     </button>
-                                  </div>
-                                </form>
+                                  )}
+                                </div>
                               </div>
-                            )}
-
-                            {/* Feedback history for this specific PDF */}
-                            {pdfFeedbackHistory.length > 0 && (
-                              <div className="mt-3">
-                                <h4 className="text-sm font-semibold mb-2 text-gray-700">Feedback History</h4>
-                                <ul className="space-y-2 text-gray-600 text-sm">
-                                  {pdfFeedbackHistory.map((h, hi) => (
-                                    <li key={hi} className="border-b pb-1">
-                                      <span className={`mr-2 font-bold ${h.isApproved ? "text-green-700" : "text-red-700"}`}>
-                                        {h.isApproved ? "Approved" : "Rejected"}
-                                      </span>
-                                      (Document {designIndex + 1} Version {h.versionSelect}) - {h.feedbackMessage}
-                                      <span className="ml-2 text-xs text-gray-400">
-                                        {h.updatedAt ? new Date(h.updatedAt).toLocaleDateString("en-IN") : ""}
-                                      </span>
-                                    </li>
+                              {/* Collapsible image gallery */}
+                              {expandedUpdateId === du._id && (
+                                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 border-t pt-4 border-blue-100">
+                                  {du.images.map((img, idx) => (
+                                    <a
+                                      key={img._id || idx}
+                                      href={img.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block"
+                                    >
+                                      <img
+                                        src={img.url}
+                                        alt={`Daily update ${idx + 1}`}
+                                        className="rounded shadow border w-full h-32 object-cover hover:scale-105 transition"
+                                      />
+                                    </a>
                                   ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm text-gray-500">No documents uploaded yet</p>
-              </div>
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    No daily updates found for this project {selectedDate && `on ${selectedDate.split('-').reverse().join('-')}`}.
+                  </div>
+                )}
+              </>
             )}
           </div>
 
+
+          {/* Documents Section */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6">
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setShowDocuments((v) => !v)}
+            >
+              <h3 className="font-semibold text-lg text-gray-900 flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Documents
+              </h3>
+              <button
+                type="button"
+                className="text-gray-700 text-2xl font-bold focus:outline-none"
+                aria-label="Toggle Documents"
+                tabIndex={-1}
+              >
+                {showDocuments ? '−' : '+'}
+              </button>
+            </div>
+
+            {showDocuments && (
+              <>
+                {project.documents?.length || project.designs?.length ? (
+                  <div className="space-y-8">
+                    {(project.documents || project.designs).map((design, designIndex) => (
+                      <div key={design._id || designIndex}>
+                        {(design.pdfs || []).map((pdf, pdfIndex) => {
+                          const isFormOpen = openFeedback.designId === design._id && openFeedback.pdfId === pdf._id;
+                          const feedbackKey = `${design._id}_${pdf._id}`;
+
+                          // Filter feedback history by pdf version
+                          const pdfFeedbackHistory = (design.approvalHistory || []).filter(h => h.versionSelect === pdf.version);
+
+                          return (
+                            <div
+                              key={pdf._id || pdfIndex}
+                              className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 mb-2"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium mb-1 text-gray-800">
+                                    Document {designIndex + 1}.{pdfIndex + 1}
+                                  </p>
+                                  <p className="text-sm text-gray-600">{pdf.message || "Untitled PDF"}</p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    Uploaded: {new Date(pdf.uploadedAt).toLocaleString()}
+                                  </p>
+                                  {pdf.uploadedBy && (
+                                    <p className="text-xs text-gray-400">
+                                      By: {pdf.uploadedBy.name} ({pdf.uploadedBy.email})
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <a
+                                    href={pdf.pdfUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 text-sm font-medium hover:underline"
+                                    title="Download PDF"
+                                  >
+                                    <Download />
+                                  </a>
+                                  <button
+                                    type="button"
+                                    className={`flex items-center gap-1 text-blue-600 ${isFormOpen ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    title="Give Feedback"
+                                    disabled={isFormOpen}
+                                    onClick={() => {
+                                      if (!isFormOpen) setOpenFeedback({ designId: design._id, pdfId: pdf._id });
+                                    }}
+                                  >
+                                    <MessageCircle />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Feedback Form */}
+                              {isFormOpen && (
+                                <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                  <h4 className="text-base font-semibold mb-2 text-gray-800">
+                                    Add Feedback For This PDF
+                                  </h4>
+                                  <form
+                                    onSubmit={e => {
+                                      e.preventDefault();
+                                      handleFeedbackSubmit(design._id, pdf._id);
+                                    }}
+                                    className="space-y-3"
+                                  >
+                                    <div>
+                                      <label className="block text-sm font-medium mb-1">Is Approved?</label>
+                                      <select
+                                        value={feedbackForms[feedbackKey]?.isApproved ?? ""}
+                                        onChange={e => handleFeedbackChange(design._id, pdf._id, 'isApproved', e.target.value)}
+                                        required
+                                        className="border rounded p-2 w-full"
+                                      >
+                                        <option value="">Select</option>
+                                        <option value="true">Approved</option>
+                                        <option value="false">Not Approved</option>
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium mb-1">Feedback Message</label>
+                                      <input
+                                        type="text"
+                                        value={feedbackForms[feedbackKey]?.feedbackMessage ?? ""}
+                                        onChange={e => handleFeedbackChange(design._id, pdf._id, 'feedbackMessage', e.target.value)}
+                                        required
+                                        placeholder="Enter your feedback"
+                                        className="border rounded p-2 w-full"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-medium mb-1">Version</label>
+                                      <input
+                                        type="number"
+                                        value={feedbackForms[feedbackKey]?.versionSelect ?? ""}
+                                        onChange={e => handleFeedbackChange(design._id, pdf._id, 'versionSelect', e.target.value)}
+                                        required
+                                        min={1}
+                                        placeholder="Enter version number"
+                                        className="border rounded p-2 w-full"
+                                      />
+                                    </div>
+                                    {feedbackError[feedbackKey] && (
+                                      <p className="text-xs text-red-600">{feedbackError[feedbackKey]}</p>
+                                    )}
+                                    <div className="flex gap-2">
+                                      <button
+                                        type="submit"
+                                        disabled={feedbackLoading[feedbackKey]}
+                                        className={`bg-blue-600 text-white px-4 py-1 rounded ${feedbackLoading[feedbackKey] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                      >
+                                        {feedbackLoading[feedbackKey] ? 'Submitting...' : 'Submit Feedback'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300"
+                                        onClick={handleCloseForm}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </form>
+                                </div>
+                              )}
+
+                              {/* Feedback History */}
+                              {pdfFeedbackHistory.length > 0 && (
+                                <div className="mt-3">
+                                  <h5 className="text-sm font-semibold mb-2 text-gray-700">Feedback History</h5>
+                                  <ul className="space-y-2 text-gray-600 text-sm">
+                                    {pdfFeedbackHistory.map((fback, idx) => (
+                                      <li key={idx} className="border-b pb-1">
+                                        <span className={`mr-2 font-bold ${fback.isApproved ? 'text-green-700' : 'text-red-700'}`}>
+                                          {fback.isApproved ? 'Approved' : 'Rejected'}
+                                        </span>
+                                        (Version {fback.versionSelect}) - {fback.feedbackMessage}
+                                        <span className="ml-2 text-xs text-gray-400">
+                                          {fback.updatedAt ? new Date(fback.updatedAt).toLocaleDateString() : ''}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    No documents uploaded yet
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
 
           {/* Project Images */}

@@ -1,12 +1,14 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, FileText, Upload, X, Send, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Upload, X, Download, Trash2 } from "lucide-react";
 import { getProjectById } from "@/services/project.services";
 import { useRouter } from "next/navigation";
 import { uploadDesign, deletePdfFromDesign } from "@/services/design.services";
 import { useSelector } from "react-redux";
+import { uploadDailyUpdate, getAllDailyUpdates } from "@/services/dailyupdates.services";
 
 const StaffProjectDetails = () => {
   const { id } = useParams();
@@ -14,30 +16,133 @@ const StaffProjectDetails = () => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [uploadData, setUploadData] = useState({
-    message: "",
-    pdf: null,
-  });
+  const [uploadData, setUploadData] = useState({ message: "", pdf: null });
   const [deletingPdf, setDeletingPdf] = useState(null);
-  const [uploadingDesign, setUploadingDesign] = useState(false); // Track upload state
+  const [uploadingDesign, setUploadingDesign] = useState(false);
   const user = useSelector((state) => state.auth.user);
 
+  const [dailyUpdates, setDailyUpdates] = useState([]);
+  const [showDailyUpdateForm, setShowDailyUpdateForm] = useState(false);
+  const [dailyUpdateData, setDailyUpdateData] = useState({
+    type: "",
+    message: "",
+    images: [],
+  });
+  const [uploadingDailyUpdate, setUploadingDailyUpdate] = useState(false);
+
+  // Success messages & timer refs
+  const [dailyUpdateSuccessMsg, setDailyUpdateSuccessMsg] = useState("");
+  const [designSuccessMsg, setDesignSuccessMsg] = useState("");
+  const dailyUpdateTimerRef = useRef(null);
+  const designTimerRef = useRef(null);
+
+  // Fetch project details
   useEffect(() => {
     const fetchProject = async () => {
       try {
         const response = await getProjectById(id);
         setProject(response.data.project);
-        console.log("response", response);
       } catch (error) {
         console.error("Failed to fetch project:", error);
       } finally {
         setLoading(false);
       }
     };
-
     if (id) fetchProject();
   }, [id]);
 
+  // Fetch daily updates for project
+  useEffect(() => {
+    const fetchDailyUpdates = async () => {
+      try {
+        const response = await getAllDailyUpdates();
+        const updates =
+          Array.isArray(response.data?.updates)
+            ? response.data.updates
+            : Array.isArray(response.data)
+              ? response.data
+              : [];
+        const projectUpdates = updates.filter((u) => u.project === id);
+        setDailyUpdates(projectUpdates);
+      } catch (error) {
+        console.error("Failed to fetch daily updates:", error);
+      }
+    };
+    if (id) fetchDailyUpdates();
+  }, [id]);
+
+  // Helper: success message with auto-hide
+  const showSuccessMessage = (setter, timerRef, message) => {
+    setter(message);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setter("");
+      timerRef.current = null;
+    }, 10000);
+  };
+
+  // Upload handlers
+  const handleUploadDailyUpdate = () => {
+    setShowDailyUpdateForm(true);
+    setTimeout(() => {
+      document.getElementById("daily-update-form")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 100);
+  };
+
+  const handleCloseDailyUpdateForm = () => {
+    setShowDailyUpdateForm(false);
+    setDailyUpdateData({ type: "", message: "", images: [] });
+  };
+
+  const handleDailyUpdateImageChange = (e) => {
+    setDailyUpdateData((prev) => ({
+      ...prev,
+      images: Array.from(e.target.files),
+    }));
+  };
+
+  const handleSubmitDailyUpdate = async (e) => {
+    e.preventDefault();
+    if (!dailyUpdateData.type) return;
+    setUploadingDailyUpdate(true);
+    setDailyUpdateSuccessMsg("");
+
+    const formData = new FormData();
+    formData.append("type", dailyUpdateData.type);
+    formData.append("message", dailyUpdateData.message);
+    dailyUpdateData.images.forEach((image) => formData.append("images", image));
+
+    try {
+      await uploadDailyUpdate(id, formData);
+      const response = await getAllDailyUpdates();
+      const updates =
+        Array.isArray(response.data?.updates)
+          ? response.data.updates
+          : Array.isArray(response.data)
+            ? response.data
+            : [];
+      const projectUpdates = updates.filter((u) => u.project === id);
+      setDailyUpdates(projectUpdates);
+
+      setDailyUpdateData({ type: "", message: "", images: [] });
+      handleCloseDailyUpdateForm();
+
+      showSuccessMessage(
+        setDailyUpdateSuccessMsg,
+        dailyUpdateTimerRef,
+        "Successfully uploaded daily update!"
+      );
+    } catch (error) {
+      console.error("Error uploading daily update:", error);
+    } finally {
+      setUploadingDailyUpdate(false);
+    }
+  };
+
+  // --- Design handlers ---
   const handleUploadDesign = () => {
     setShowUploadForm(true);
     setTimeout(() => {
@@ -64,12 +169,8 @@ const StaffProjectDetails = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!uploadData.pdf) {
-      return;
-    }
-
-    setUploadingDesign(true); // Disable button during upload
+    if (!uploadData.pdf) return;
+    setUploadingDesign(true);
 
     const formData = new FormData();
     formData.append("pdf", uploadData.pdf);
@@ -77,36 +178,30 @@ const StaffProjectDetails = () => {
 
     try {
       await uploadDesign(id, formData);
-
-      // Re-fetch the updated project data
       const response = await getProjectById(id);
       setProject(response.data.project);
-
-      // Close the modal and reset form
       setUploadData({ message: "", pdf: null });
       handleCloseForm();
+
+      showSuccessMessage(
+        setDesignSuccessMsg,
+        designTimerRef,
+        "Successfully uploaded design!"
+      );
     } catch (error) {
       console.error("Error uploading design:", error);
     } finally {
-      setUploadingDesign(false); // Re-enable button
+      setUploadingDesign(false);
     }
   };
 
-  // Handle PDF deletion
   const handleDeletePdf = async (designId, pdfId) => {
-    if (!window.confirm("Are you sure you want to delete this PDF?")) {
-      return;
-    }
-
+    if (!window.confirm("Are you sure you want to delete this PDF?")) return;
     setDeletingPdf(pdfId);
     try {
       await deletePdfFromDesign(designId, pdfId);
-
-      // Re-fetch the updated project data
       const response = await getProjectById(id);
       setProject(response.data.project);
-
-      console.log("PDF deleted successfully");
     } catch (error) {
       console.error("Error deleting PDF:", error);
       alert("Failed to delete PDF. Please try again.");
@@ -115,13 +210,9 @@ const StaffProjectDetails = () => {
     }
   };
 
-  // Check if user has permission to delete PDFs
-  const canDeletePdf = (pdf) => {
-    return (
-      user?.permission?.includes("delete_design") ||
-      pdf.uploadedBy?._id === user?._id
-    );
-  };
+  const canDeletePdf = (pdf) =>
+    user?.permission?.includes("delete_design") ||
+    pdf.uploadedBy?._id === user?._id;
 
   if (loading)
     return (
@@ -139,8 +230,7 @@ const StaffProjectDetails = () => {
       </div>
     );
 
-  const mainImage =
-    project.projectImages?.[0]?.url || "https://via.placeholder.com/64";
+  const mainImage = project.projectImages?.[0]?.url || "https://via.placeholder.com/64";
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -189,17 +279,41 @@ const StaffProjectDetails = () => {
               )}
               {user?.permission?.includes("upload_daily_updates") && (
                 <button
-                  onClick={handleUploadDesign}
-                  className="flex items-center text-sm text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
+                  onClick={handleUploadDailyUpdate}
+                  disabled={showDailyUpdateForm || uploadingDailyUpdate}
+                  className={`flex items-center text-sm text-white px-4 py-2 rounded-lg transition-colors ${showDailyUpdateForm || uploadingDailyUpdate
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                    }`}
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  Upload Daily Updates
+                  {uploadingDailyUpdate ? "Uploading..." : "Upload Daily Update"}
                 </button>
               )}
             </div>
           </div>
 
+          {/* Success message for design upload */}
+          {designSuccessMsg && (
+            <div className="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-300 flex justify-between items-center">
+              <span>{designSuccessMsg}</span>
+              <button
+                onClick={() => {
+                  setDesignSuccessMsg("");
+                  if (designTimerRef.current) {
+                    clearTimeout(designTimerRef.current);
+                    designTimerRef.current = null;
+                  }
+                }}
+                className="text-green-700 font-bold px-2 py-1 hover:text-green-900"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
           {/* Title Section */}
+
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <img
@@ -320,8 +434,7 @@ const StaffProjectDetails = () => {
             </div>
           </div>
 
-
-          {/* Right Column: Documents */}
+          {/* Documents */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <FileText className="w-4 h-4 text-gray-500" />
@@ -332,7 +445,6 @@ const StaffProjectDetails = () => {
                 {project.designs.map((design, designIndex) => (
                   <div key={design._id || designIndex} className="space-y-3">
                     {design.pdfs?.map((pdf, pdfIndex) => {
-                      // Filter feedback for this specific PDF's version
                       const pdfFeedbackHistory = (design.approvalHistory || []).filter(
                         (h) => h.versionSelect === pdf.version
                       );
@@ -386,8 +498,6 @@ const StaffProjectDetails = () => {
                               )}
                             </div>
                           </div>
-
-                          {/* Feedback history for this specific PDF */}
                           {pdfFeedbackHistory.length > 0 && (
                             <div className="mt-3">
                               <h4 className="text-sm font-semibold mb-2 text-gray-700">Approval History</h4>
@@ -422,7 +532,6 @@ const StaffProjectDetails = () => {
             )}
           </div>
 
-
           {/* All Project Images */}
           {project.projectImages?.length > 1 && (
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -448,10 +557,7 @@ const StaffProjectDetails = () => {
 
           {/* Upload Design Form */}
           {showUploadForm && (
-            <div
-              id="upload-form"
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
-            >
+            <div id="upload-form" className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                   <Upload className="w-4 h-4 text-gray-500" />
@@ -465,8 +571,8 @@ const StaffProjectDetails = () => {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-
               <form onSubmit={handleSubmit}>
+                {/* ...fields... */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Message
@@ -486,7 +592,6 @@ const StaffProjectDetails = () => {
                     disabled={uploadingDesign}
                   />
                 </div>
-
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Upload PDF
@@ -499,7 +604,6 @@ const StaffProjectDetails = () => {
                     disabled={uploadingDesign}
                   />
                 </div>
-
                 <div className="flex justify-end">
                   <button
                     type="submit"
@@ -510,6 +614,91 @@ const StaffProjectDetails = () => {
                     disabled={uploadingDesign}
                   >
                     {uploadingDesign ? "Uploading..." : "Upload"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Daily update success message */}
+          {dailyUpdateSuccessMsg && (
+            <div className="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-300 flex justify-between items-center">
+              <span>{dailyUpdateSuccessMsg}</span>
+              <button
+                onClick={() => {
+                  setDailyUpdateSuccessMsg("");
+                  if (dailyUpdateTimerRef.current) {
+                    clearTimeout(dailyUpdateTimerRef.current);
+                    dailyUpdateTimerRef.current = null;
+                  }
+                }}
+                className="text-green-700 font-bold px-2 py-1 hover:text-green-900"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {/* Daily Update Form */}
+          {showDailyUpdateForm && (
+            <div id="daily-update-form" className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-gray-500" /> Upload Daily Update
+                </h3>
+                <button
+                  onClick={handleCloseDailyUpdateForm}
+                  className="text-gray-400 hover:text-gray-600"
+                  disabled={uploadingDailyUpdate}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form onSubmit={handleSubmitDailyUpdate}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <select
+                    className="w-full border border-gray-300 p-2 rounded"
+                    value={dailyUpdateData.type}
+                    onChange={(e) => setDailyUpdateData((prev) => ({ ...prev, type: e.target.value }))}
+                    required
+                    disabled={uploadingDailyUpdate}
+                  >
+                    <option value="">Select Type</option>
+                    <option value="morning">Morning</option>
+                    <option value="evening">Evening</option>
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 p-2 rounded"
+                    value={dailyUpdateData.message}
+                    onChange={(e) => setDailyUpdateData((prev) => ({ ...prev, message: e.target.value }))}
+                    placeholder="Enter update message"
+                    required
+                    disabled={uploadingDailyUpdate}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Images</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleDailyUpdateImageChange}
+                    disabled={uploadingDailyUpdate}
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className={`px-4 py-2 rounded transition-colors ${uploadingDailyUpdate ? "bg-gray-400 text-white cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
+                    disabled={uploadingDailyUpdate}
+                  >
+                    {uploadingDailyUpdate ? "Uploading..." : "Upload"}
                   </button>
                 </div>
               </form>

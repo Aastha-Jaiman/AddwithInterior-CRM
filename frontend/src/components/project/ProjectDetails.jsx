@@ -476,137 +476,93 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
 
             {/* Designs Section */}
             <InfoCard icon={<FileText className="w-5 h-5" />} title="Design Files & Approval History">
-              <div className="space-y-4">
+              <div className="space-y-8">
                 {selectedProject.designs?.length > 0 ? (
-                  selectedProject.designs.map((design, index) => (
-                    <div key={design._id || index} className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-                      {/* Design Header */}
+                  selectedProject.designs.map((design, designIndex) => (
+                    <div key={design._id || designIndex} className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
                       <div className="bg-gray-50 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
                         <div className="flex items-center justify-between">
                           <div>
                             <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                              Design #{index + 1}
+                              Design #{designIndex + 1}
                             </h4>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Created: {new Date(design.createdAt).toLocaleDateString('en-IN')}
+                              Created: {design.createdAt ? new Date(design.createdAt).toLocaleDateString('en-IN') : "N/A"}
                             </p>
                           </div>
-                          <button
-                            onClick={() =>
-                              setExpandedDesigns((prev) => ({
-                                ...prev,
-                                [design._id]: !prev[design._id],
-                              }))
-                            }
-                            className="text-blue-600 hover:text-blue-800 transition"
-                          >
-                            <Eye className="w-5 h-5" />
-                          </button>
                         </div>
                       </div>
-
-                      {/* Design Content */}
-                      {!expandedDesigns[design._id] && (
-                        <div className="p-4 space-y-4">
-                          {/* PDFs Section */}
-                          {design.pdfs?.length > 0 && (
-                            <div>
-                              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                                Design Files ({design.pdfs.length})
-                              </h5>
-                              <div className="space-y-2">
-                                {design.pdfs.map((pdf, idx) => (
-                                  <div
-                                    key={pdf._id || idx}
-                                    className="border border-gray-100 dark:border-gray-700 rounded p-3"
-                                  >
-                                    <div className="flex items-center justify-between mb-2">
+                      <div className="p-4 space-y-4">
+                        {/* PDFs Section */}
+                        {design.pdfs?.length > 0 ? (
+                          <div className="space-y-6">
+                            {design.pdfs.map((pdf, pdfIndex) => {
+                              const pdfFeedbackHistory = (design.approvalHistory || []).filter(
+                                (h) => h.versionSelect === pdf.version
+                              );
+                              return (
+                                <div
+                                  key={pdf._id || pdfIndex}
+                                  className="border border-gray-100 dark:border-gray-700 rounded p-3 mb-4"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div>
                                       <div className="font-medium text-gray-900 dark:text-white">
-                                        {pdf.message || "Untitled Design PDF"}
+                                        Document {designIndex + 1}.{pdfIndex + 1}: {pdf.message || "Untitled Design PDF"}
                                       </div>
-                                      <button
-                                        onClick={() => window.open(pdf.pdfUrl, "_blank")}
-                                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
-                                      >
-                                        <Download className="w-4 h-4" />
-                                      </button>
-                                    </div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                                      <div>
-                                        <strong>Version:</strong> {pdf.version}
-                                      </div>
-                                      <div>
-                                        <strong>Uploaded:</strong> {new Date(pdf.uploadedAt).toLocaleString('en-IN')}
-                                      </div>
-                                      <div>
-                                        <strong>By:</strong> {pdf.uploadedBy?.name} ({pdf.uploadedBy?.email})
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Approval History Section */}
-                          <div>
-                            <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                              <Clock className="w-4 h-4" />
-                              Approval History ({design.approvalHistory?.length || 0})
-                            </h5>
-
-                            {design.approvalHistory?.length > 0 ? (
-                              <div className="space-y-2">
-                                {design.approvalHistory.map((approval, idx) => (
-                                  <div
-                                    key={approval._id || idx}
-                                    className="border border-gray-100 dark:border-gray-700 rounded p-3 bg-gray-50 dark:bg-gray-700"
-                                  >
-                                    <div className="flex items-center justify-between mb-2">
-                                      <div className="flex items-center gap-2">
-                                        {approval.status === 'approved' ? (
-                                          <CheckCircle className="w-4 h-4 text-green-600" />
-                                        ) : approval.status === 'rejected' ? (
-                                          <XCircle className="w-4 h-4 text-red-600" />
-                                        ) : (
-                                          <Clock className="w-4 h-4 text-yellow-600" />
-                                        )}
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                                          {approval.status}
-                                        </span>
-                                      </div>
-                                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                                        {new Date(approval.date || approval.createdAt).toLocaleDateString('en-IN')}
-                                      </span>
-                                    </div>
-
-                                    <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1">
-                                      <div>
-                                        <strong>By:</strong> {approval.approvedBy?.name || approval.rejectedBy?.name || 'Unknown'}
-                                      </div>
-                                      {approval.comments && (
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 space-y-1">
                                         <div>
-                                          <strong>Comments:</strong> {approval.comments}
+                                          <strong>Version:</strong> {pdf.version}
                                         </div>
-                                      )}
-                                      {approval.reason && (
                                         <div>
-                                          <strong>Reason:</strong> {approval.reason}
+                                          <strong>Uploaded:</strong> {new Date(pdf.uploadedAt).toLocaleString("en-IN")}
                                         </div>
-                                      )}
+                                        <div>
+                                          <strong>By:</strong> {pdf.uploadedBy?.name} ({pdf.uploadedBy?.email})
+                                        </div>
+                                      </div>
                                     </div>
+                                    <button
+                                      onClick={() => window.open(pdf.pdfUrl, "_blank")}
+                                      className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                                      title="Download"
+                                    >
+                                      <Download className="w-4 h-4" />
+                                    </button>
                                   </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-                                <Clock className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                                <p className="text-xs">No approval history yet</p>
-                              </div>
-                            )}
+                                  {/* FEEDBACK history directly below this PDF */}
+                                  {pdfFeedbackHistory.length > 0 && (
+                                    <div className="mt-3">
+                                      <h5 className="text-sm font-semibold mb-2 text-gray-700 dark:text-white flex items-center gap-2">
+                                        <Clock className="w-4 h-4" />
+                                        Feedback History
+                                      </h5>
+                                      <ul className="space-y-2 text-gray-600 dark:text-gray-300 text-sm">
+                                        {pdfFeedbackHistory.map((h, hi) => (
+                                          <li key={h._id || hi} className="border-b border-gray-100 dark:border-gray-700 pb-1">
+                                            <span className={`mr-2 font-bold ${h.isApproved ? "text-green-700" : "text-red-700"}`}>
+                                              {h.isApproved ? "Approved" : "Rejected"}
+                                            </span>
+                                            (Document {designIndex + 1} Version {h.versionSelect}) - {h.feedbackMessage}
+                                            <span className="ml-2 text-xs text-gray-400">
+                                              {h.updatedAt ? new Date(h.updatedAt).toLocaleDateString("en-IN") : ""}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                            <FileText className="w-5 h-5 mx-auto mb-1 opacity-50" />
+                            <span>No design files uploaded yet</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -617,6 +573,7 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                 )}
               </div>
             </InfoCard>
+
           </div>
         </div>
 

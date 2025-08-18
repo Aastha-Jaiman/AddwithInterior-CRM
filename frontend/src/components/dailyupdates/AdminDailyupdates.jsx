@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Search, ExternalLink } from "lucide-react";
-import { getAllDailyUpdates } from "@/services/dailyupdates.services";
+import { getAllDailyUpdates, deleteDailyUpdate } from "@/services/dailyupdates.services";
+
 import { format, isSameDay } from "date-fns";
 import { useRouter } from "next/navigation";
 
@@ -46,6 +47,8 @@ const filterUpdates = (updates, search, selectedDate) => {
 };
 
 export default function DailyUpdatesList() {
+  const [deletingDailyUpdateId, setDeletingDailyUpdateId] = useState(null);
+
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -71,6 +74,26 @@ export default function DailyUpdatesList() {
   useEffect(() => {
     fetchUpdates();
   }, []);
+
+  const handleDeleteDailyUpdate = async (updateId, dailyUpdateId) => {
+    if (!window.confirm("Are you sure you want to delete this update?")) return;
+
+    setDeletingDailyUpdateId(dailyUpdateId);
+
+    try {
+      await deleteDailyUpdate(updateId, dailyUpdateId);
+
+      // Refresh updated list from server
+      await fetchUpdates();
+
+    } catch (error) {
+      console.error("Error deleting daily update:", error);
+      alert("Failed to delete daily update.");
+    } finally {
+      setDeletingDailyUpdateId(null);
+    }
+  };
+
 
   const visibleUpdates = filterUpdates(updates, search, selectedDate);
 
@@ -220,17 +243,29 @@ export default function DailyUpdatesList() {
                       )}
                     </td>
 
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center flex justify-center gap-2">
                       <button
-                        onClick={() =>
-                          router.push(`/admin/daily-updates/${update._id}`)
-                        }
+                        onClick={() => router.push(`/daily-updates/${update._id}`)}
                         className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium hover:bg-blue-200 transition"
                       >
                         <ExternalLink size={12} className="inline-block mr-1" />
                         Details
                       </button>
+
+                      <button
+                        onClick={() => handleDeleteDailyUpdate(update._id, du._id)}
+                        disabled={deletingDailyUpdateId === du._id}
+                        className="px-3 py-1 bg-red-100 text-red-700 rounded-md text-xs font-medium hover:bg-red-200 transition disabled:opacity-50"
+                        title="Delete Update"
+                      >
+                        {deletingDailyUpdateId === du._id ? (
+                          <span className="animate-spin inline-block w-4 h-4 border-2 border-red-700 border-t-transparent rounded-full"></span>
+                        ) : (
+                          "Delete"
+                        )}
+                      </button>
                     </td>
+
                   </tr>
                 ))
               )
