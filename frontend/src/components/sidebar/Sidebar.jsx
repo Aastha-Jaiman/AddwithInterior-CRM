@@ -152,14 +152,13 @@ export default function SidebarLayout({ children }) {
 
     { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
     { name: "Project", href: "/projects", icon: LayoutDashboard },
-    { name: "Assign Team", href: "/projects/assign-team", icon: Users },
+    // { name: "Assign Team", href: "/projects/assign-team", icon: Users },
     { name: "Manage Users", href: "/users", icon: User2 },
     { name: "Manage Brochures", href: "/brochure", icon: FileText },
-    { name: "All Projects", href: "/projects/all", icon: LayoutDashboard },
     { name: "Payments", href: "/payments", icon: ReceiptIndianRupee },
     { name: "Generate Invoice", href: "/generate-invoice", icon: FileText },
-    { name: "Assign Service", href: "/services/assign", icon: Wrench },
-    { name: "Track Service", href: "/services/track", icon: Wrench },
+    // { name: "Assign Service", href: "/services/assign", icon: Wrench },
+    // { name: "Track Service", href: "/services/track", icon: Wrench },
   ];
 
   const adminNavigationItems = [
@@ -167,16 +166,8 @@ export default function SidebarLayout({ children }) {
     { name: "Quotation", href: "/admin/quotation", icon: FileText },
     { name: "Brochure", href: "/admin/brochure", icon: ReceiptIndianRupee },
     { name: "Profile", href: "/profile", icon: NotebookPen },
-    {
-      name: "registerstaff",
-      href: "/admin/registerstaff",
-      icon: MessageSquareText,
-    },
-    {
-      name: "registerclient",
-      href: "/admin/registerclient",
-      icon: MessageSquareText,
-    },
+    { name: "registerstaff", href: "/admin/registerstaff", icon: MessageSquareText },
+    { name: "registerclient", href: "/admin/registerclient", icon: MessageSquareText },
     { name: "Staff-Users", href: "/admin/staffusers", icon: FileQuestion },
     { name: "Clients", href: "/admin/clients", icon: NotebookPen },
     { name: "Projects", href: "/admin/projects", icon: ClipboardList },

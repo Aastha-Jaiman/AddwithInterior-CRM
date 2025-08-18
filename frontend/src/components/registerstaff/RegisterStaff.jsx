@@ -43,19 +43,35 @@ const RegisterStaff = ({ onBack, onSuccess }) => {
     // "generate_invoice",
     // "assign_service",
     // "track_service",
+
+    
+    // "upload_quotation",
+    // "view_quotations",
+    // "upload_design",
+    // "view_design_feedback",
+    // "upload_morning_update",
+    // "upload_evening_update",
+    // "view_daily_updates",
+    // "create_project",
+    // "manage_users",
+    // "manage_brochures",
+    // "view_client_info",
+    // "view_invoice",
+    // "generate_invoice",
+
     "upload_quotation",
     "view_quotations",
     "upload_design",
     "view_design_feedback",
-    "upload_morning_update",
-    "upload_evening_update",
+    "upload_daily_updates",
     "view_daily_updates",
     "create_project",
     "manage_users",
+    "create_brochures",
     "manage_brochures",
     "view_client_info",
     "view_invoice",
-    "generate_invoice"
+    "generate_invoice",
   ];
 
   const formatPermissionName = (permission) => {
@@ -310,8 +326,8 @@ const RegisterStaff = ({ onBack, onSuccess }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {roles.map(role => (
                 <label key={role} className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${formData.role === role
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
                   }`}>
                   <input
                     type="radio"
@@ -324,8 +340,8 @@ const RegisterStaff = ({ onBack, onSuccess }) => {
                   />
                   <div className="flex items-center">
                     <div className={`w-4 h-4 rounded-full border-2 mr-3 ${formData.role === role
-                        ? 'border-blue-500 bg-blue-500'
-                        : 'border-gray-300'
+                      ? 'border-blue-500 bg-blue-500'
+                      : 'border-gray-300'
                       }`}>
                       {formData.role === role && (
                         <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
@@ -344,8 +360,8 @@ const RegisterStaff = ({ onBack, onSuccess }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {permissionsList.map(permission => (
                 <label key={permission} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${formData.permission.includes(permission)
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
                   }`}>
                   <input
                     type="checkbox"

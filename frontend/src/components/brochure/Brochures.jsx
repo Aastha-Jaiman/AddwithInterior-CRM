@@ -15,7 +15,6 @@ import {
   getAllBrochures,
 } from "@/services/brochure.services";
 import { useSelector } from "react-redux";
-import { getProjectById } from "@/services/project.services";
 
 const BrochureManager = () => {
   const [brochures, setBrochures] = useState([]);
@@ -139,6 +138,11 @@ const BrochureManager = () => {
     return matchesSearch && matchesCategory;
   });
 
+  if (!user) {
+    return null;
+  }
+
+
   return (
     <div className="max-w-7xl mx-auto p-6 bg-white">
       <div className="mb-8">
@@ -227,8 +231,17 @@ const BrochureManager = () => {
             ))}
           </select>
         </div>
-
-        {user.role === "admin" && (
+        {/* {user.permission?.includes("create_brochures") && user.role === "admin" && (
+          // {user.role === "admin" && (
+          <button
+            onClick={() => setShowUploadForm(true)}
+            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add New Brochure
+          </button>
+        )} */}
+        {(user.role === "admin" || user.permission?.includes("create_brochures")) && (
           <button
             onClick={() => setShowUploadForm(true)}
             className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2"
@@ -237,6 +250,7 @@ const BrochureManager = () => {
             Add New Brochure
           </button>
         )}
+
       </div>
 
       {/* Upload Form */}
@@ -317,11 +331,10 @@ const BrochureManager = () => {
                 onClick={handleSubmit}
                 disabled={isUploading}
                 className={`px-6 py-2 rounded-md flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 
-    ${
-      isUploading
-        ? "bg-blue-300 cursor-not-allowed"
-        : "bg-blue-600 hover:bg-blue-700 text-white"
-    }
+    ${isUploading
+                    ? "bg-blue-300 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                  }
   `}
               >
                 <Upload className="w-4 h-4" />
@@ -398,11 +411,10 @@ const BrochureManager = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          brochure.category === "modular_kitchen"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-purple-100 text-purple-800"
-                        }`}
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${brochure.category === "modular_kitchen"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-purple-100 text-purple-800"
+                          }`}
                       >
                         {brochure.category === "modular_kitchen"
                           ? "Modular Kitchen"

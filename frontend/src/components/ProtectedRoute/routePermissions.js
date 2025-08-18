@@ -6,28 +6,27 @@ export const routePermissionMap = {
   "/quotations": ["view_quotations", "upload_quotation"],
 
   // Design
-  "/upload-design": "upload_design",
-  "/design-feedback": "view_design_feedback",
+  // "/upload-design": "upload_design",
+  // "/design-feedback": "view_design_feedback",
 
   // Design
   "/design": ["upload_design", "view_design_feedback"],
 
-  "/daily-updates": ["upload_morning_update", "upload_evening_update", "view_daily_updates"],
-
+  "/daily-updates": ["upload_daily_updates", "view_daily_updates"],
 
   // Project Management
   "/projects/create": "create_project",
-  "/projects/assign-team": "assign_team",
   "/users": "manage_users",
-  "/brochures": "manage_brochures",
-  "/projects/all": "see_all_projects",
+
+  "/brochures": ["create_brochures" , "manage_brochures"] ,
+  // "/projects/all": "see_all_projects",
 
   // Client & Finance
   "/clients": "view_client_info",
   "/payments": "view_payment",
   "/generate-invoice": "generate_invoice",
 
-  // Services
-  "/services/assign": "assign_service",
-  "/services/track": "track_service",
+  // // Services
+  // "/services/assign": "assign_service",
+  // "/services/track": "track_service",
 };
