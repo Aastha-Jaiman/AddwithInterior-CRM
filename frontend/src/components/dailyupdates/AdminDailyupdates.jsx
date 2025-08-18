@@ -25,11 +25,21 @@ const filterUpdates = (updates, search, selectedDate) => {
   // Search Filter
   if (search.trim()) {
     const s = search.toLowerCase();
-    filtered = filtered.filter(
-      (u) =>
-        (u.project?.title || "").toLowerCase().includes(s) ||
-        (u.project?.client || "").toLowerCase().includes(s)
-    );
+    filtered = filtered.filter((u) => {
+      const projectTitle =
+        typeof u.project?.title === "object"
+          ? JSON.stringify(u.project?.title)
+          : u.project?.title || "";
+      const clientName =
+        typeof u.project?.client === "object"
+          ? u.project?.client?.name || u.project?.client?.email || JSON.stringify(u.project?.client)
+          : u.project?.client || "";
+
+      return (
+        projectTitle.toLowerCase().includes(s) ||
+        clientName.toLowerCase().includes(s)
+      );
+    });
   }
 
   return filtered;
@@ -132,7 +142,7 @@ export default function DailyUpdatesList() {
         />
       </div>
 
-      {/* TABLE - Professional Look */}
+      {/* TABLE */}
       <div className="overflow-x-auto rounded-xl shadow-sm border border-gray-100 bg-white">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 text-gray-600 uppercase text-xs tracking-wider">
@@ -156,20 +166,28 @@ export default function DailyUpdatesList() {
                     className="hover:bg-blue-50 transition border-b border-gray-100 last:border-0"
                   >
                     <td className="px-4 py-3 font-medium text-gray-800">
-                      {update.project?.title || "Untitled"}
+                      {typeof update.project?.title === "object"
+                        ? JSON.stringify(update.project?.title)
+                        : update.project?.title || "Untitled"}
                     </td>
                     <td className="px-4 py-3 text-gray-600">
-                      {update.project?.client || "Unknown"}
+                      {typeof update.project?.client === "object"
+                        ? update.project?.client?.name || update.project?.client?.email || JSON.stringify(update.project?.client)
+                        : update.project?.client || "Unknown"}
                     </td>
                     <td className="px-4 py-3 capitalize">{du.type}</td>
                     <td className="px-4 py-3">{du.message || "-"}</td>
-                    <td className="px-4 py-3">{du.uploadedBy?.name || "Unknown"}</td>
+                    <td className="px-4 py-3">
+                      {typeof du.uploadedBy === "object"
+                        ? du.uploadedBy?.name || du.uploadedBy?.email || JSON.stringify(du.uploadedBy)
+                        : du.uploadedBy || "Unknown"}
+                    </td>
                     <td className="px-4 py-3 text-gray-500">
                       {du.createdAt
                         ? format(new Date(du.createdAt), "dd MMM yyyy, HH:mm")
                         : ""}
                     </td>
-                    <td className="px-4 py-3">
+                    {/* <td className="px-4 py-3">
                       {du.images?.length > 0 ? (
                         <div className="flex gap-2">
                           {du.images.map((img, i) => (
@@ -190,7 +208,18 @@ export default function DailyUpdatesList() {
                       ) : (
                         <span className="text-gray-400 italic">No Images</span>
                       )}
+                    </td> */}
+
+                    <td className="px-4 py-3">
+                      {du.images?.length > 0 ? (
+                        <span className="text-gray-700 font-medium">
+                          {du.images.length} image{du.images.length > 1 ? "s" : ""} uploaded
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic">No Images</span>
+                      )}
                     </td>
+
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() =>

@@ -7,15 +7,14 @@ import { format } from "date-fns";
 export default function DailyUpdateDetails() {
   const { id } = useParams();
   const router = useRouter();
-  const [updateData, setUpdateData] = useState(null); // updated
+  const [updateData, setUpdateData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchDetails = async () => {
     try {
       const data = await getDailyUpdateById(id);
       console.log("Daily Update Details:", data);
-      // यहां store करेंगे सिर्फ update object
-      setUpdateData(data.update); // updated
+      setUpdateData(data.update);
     } catch (err) {
       console.error("Error loading details:", err);
     } finally {
@@ -45,44 +44,62 @@ export default function DailyUpdateDetails() {
           {updateData.project?.title || "Untitled Project"}
         </h1>
         <p className="text-gray-500">
-          Client: {updateData.project?.client || "Unknown"}
+          Client:{" "}
+          {typeof updateData.project?.client === "object"
+            ? updateData.project?.client?.name || "Unknown"
+            : updateData.project?.client || "Unknown"}
         </p>
         <p className="text-xs text-gray-400 mt-1">
-          Project ID: {updateData.project?._id}
+          Project Title: {updateData.project?.title}
+        </p>
+         <p className="text-xs text-gray-400">
+          Project Category: {updateData.project?.category}
         </p>
         <p className="text-xs text-gray-400">
           Update Record ID: {updateData._id}
         </p>
         <p className="text-xs text-gray-400">
-          Created At: {format(new Date(updateData.createdAt), "dd MMM yyyy, HH:mm")}
+          Created At:{" "}
+          {format(new Date(updateData.createdAt), "dd MMM yyyy, HH:mm")}
         </p>
       </div>
 
       {/* Daily Updates */}
       {(updateData.dailyUpdates || []).map((du) => (
-        <div key={du._id} className="mb-6 border rounded-lg p-4 bg-gray-50 shadow">
+        <div
+          key={du._id}
+          className="mb-6 border rounded-lg p-4 bg-gray-50 shadow"
+        >
           <div className="flex justify-between mb-2">
-            <span className="font-semibold capitalize">
-              {du.type} update
-            </span>
+            <span className="font-semibold capitalize">{du.type} update</span>
             <span className="text-xs text-gray-500">
               {du.createdAt
                 ? format(new Date(du.createdAt), "dd MMM yyyy, HH:mm")
                 : ""}
             </span>
           </div>
-          <p className="mb-2 text-sm text-gray-700">{du.message}</p>
+          <p className="mb-2 text-sm text-gray-700">message:{du.message}</p>
 
           {/* Uploaded By */}
           <div className="mb-4 text-sm">
             <p>
-              Uploaded By: <strong>{du.uploadedBy?.name || "Unknown"}</strong>
+              Uploaded By:{" "}
+              <strong>
+                {typeof du.uploadedBy === "object"
+                  ? du.uploadedBy?.name || "Unknown"
+                  : du.uploadedBy || "Unknown"}
+              </strong>
             </p>
             {du.uploadedBy?.email && (
-              <p>Email: <span className="text-gray-600">{du.uploadedBy.email}</span></p>
+              <p>
+                Email:{" "}
+                <span className="text-gray-600">{du.uploadedBy.email}</span>
+              </p>
             )}
             {du.uploadedBy?.role && (
-              <p>Role: <span className="capitalize">{du.uploadedBy.role}</span></p>
+              <p>
+                Role: <span className="capitalize">{du.uploadedBy.role}</span>
+              </p>
             )}
           </div>
 
@@ -90,7 +107,12 @@ export default function DailyUpdateDetails() {
           {du.images?.length > 0 && (
             <div className="flex flex-wrap gap-3">
               {du.images.map((img, idx) => (
-                <a key={idx} href={img.url} target="_blank" rel="noopener noreferrer">
+                <a
+                  key={idx}
+                  href={img.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <img
                     src={img.url}
                     alt={`img-${idx}`}
