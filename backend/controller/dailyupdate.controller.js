@@ -79,11 +79,17 @@ exports.addUpdate = async (req, res) => {
   }
 };
 
-
 exports.getAllUpdates = async (req, res) => {
   try {
     const allUpdates = await UpdateModel.find()
-      .populate("project", "title client") 
+       .populate({
+        path: "project",
+        select: "title location category startingDate client",
+        populate: {
+          path: "client",
+          select: "name email phone" 
+        }
+      })
       .populate("dailyUpdates.uploadedBy", "name email role");
 
     if (!allUpdates || allUpdates.length === 0) {
@@ -111,7 +117,14 @@ exports.getUpdateById = async (req, res) => {
   try {
     const { id } = req.params;
     const update = await UpdateModel.findById(id)
-    .populate("project" ,"title client")
+     .populate({
+        path: "project",
+        select: "title location category startingDate client",
+        populate: {
+          path: "client",
+          select: "name email phone" 
+        }
+      })
     .populate("dailyUpdates.uploadedBy", "name email role");
 
     if (!update) {
