@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, FileText, Download, MessageCircle, Eye } from "lucide-react";
 import { getProjectById } from "@/services/project.services";
 import { addFeedbackToDesign } from "@/services/design.services";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; 
 
 const ClientProjectDetails = () => {
   const { id } = useParams();
