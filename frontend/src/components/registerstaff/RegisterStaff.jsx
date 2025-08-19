@@ -162,12 +162,6 @@ const RegisterStaff = ({ onBack, onSuccess }) => {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Staff Registered Successfully!</h2>
             <p className="text-gray-600 mb-6">The new staff member has been added to your team.</p>
-            <button
-              onClick={onBack}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Back to Staff List
-            </button>
           </div>
         </div>
       </div>
@@ -405,7 +399,6 @@ const RegisterStaff = ({ onBack, onSuccess }) => {
                   accept="image/*"
                   onChange={handleFileChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  required
                 />
               </div>
             </div>

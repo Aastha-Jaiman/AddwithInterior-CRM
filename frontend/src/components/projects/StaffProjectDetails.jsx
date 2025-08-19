@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, FileText, Upload, X, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Upload, X, Download, Trash2, Eye } from "lucide-react";
 import { getProjectById } from "@/services/project.services";
 import { useRouter } from "next/navigation";
 import { uploadDesign, deletePdfFromDesign } from "@/services/design.services";
@@ -36,7 +35,32 @@ const StaffProjectDetails = () => {
   const dailyUpdateTimerRef = useRef(null);
   const designTimerRef = useRef(null);
 
-  // Fetch project details
+  const [selectedDate, setSelectedDate] = useState(""); // YYYY-MM-DD
+  const [showDailyUpdates, setShowDailyUpdates] = useState(true);
+  const [expandedUpdateId, setExpandedUpdateId] = useState(null);
+
+  // Helper function to refresh both project and daily updates data
+  const refreshData = async () => {
+    try {
+      const [projectResp, updatesResp] = await Promise.all([
+        getProjectById(id),
+        getAllDailyUpdates(),
+      ]);
+      setProject(projectResp.data.project);
+
+      const updates = Array.isArray(updatesResp.data?.updates)
+        ? updatesResp.data.updates
+        : Array.isArray(updatesResp.data)
+        ? updatesResp.data
+        : [];
+
+      setDailyUpdates(updates.filter((u) => u.project === id));
+    } catch (error) {
+      console.error("Failed to refresh data:", error);
+    }
+  };
+
+  // Fetch project details on mount or id change
   useEffect(() => {
     const fetchProject = async () => {
       try {
@@ -51,7 +75,7 @@ const StaffProjectDetails = () => {
     if (id) fetchProject();
   }, [id]);
 
-  // Fetch daily updates for project
+  // Fetch daily updates for project on mount or id change
   useEffect(() => {
     const fetchDailyUpdates = async () => {
       try {
@@ -60,8 +84,8 @@ const StaffProjectDetails = () => {
           Array.isArray(response.data?.updates)
             ? response.data.updates
             : Array.isArray(response.data)
-              ? response.data
-              : [];
+            ? response.data
+            : [];
         const projectUpdates = updates.filter((u) => u.project === id);
         setDailyUpdates(projectUpdates);
       } catch (error) {
@@ -70,6 +94,27 @@ const StaffProjectDetails = () => {
     };
     if (id) fetchDailyUpdates();
   }, [id]);
+
+  // ---- DAILY UPDATES PREP ----
+  const dailyUpdatesDays = project?.dailyUpdates
+    ? [...project.dailyUpdates].sort((a, b) =>
+        new Date(b.createdAt) - new Date(a.createdAt)
+      )
+    : [];
+
+  let shownDays = dailyUpdatesDays;
+  if (!selectedDate) {
+    shownDays = dailyUpdatesDays.slice(0, 5);
+  } else {
+    shownDays = dailyUpdatesDays.filter(
+      (day) =>
+        day.createdAt &&
+        new Date(day.createdAt).toISOString().slice(0, 10) === selectedDate
+    );
+  }
+  shownDays = shownDays.filter(
+    (day) => Array.isArray(day.dailyUpdates) && day.dailyUpdates.length > 0
+  );
 
   // Helper: success message with auto-hide
   const showSuccessMessage = (setter, timerRef, message) => {
@@ -117,15 +162,7 @@ const StaffProjectDetails = () => {
 
     try {
       await uploadDailyUpdate(id, formData);
-      const response = await getAllDailyUpdates();
-      const updates =
-        Array.isArray(response.data?.updates)
-          ? response.data.updates
-          : Array.isArray(response.data)
-            ? response.data
-            : [];
-      const projectUpdates = updates.filter((u) => u.project === id);
-      setDailyUpdates(projectUpdates);
+      await refreshData();
 
       setDailyUpdateData({ type: "", message: "", images: [] });
       handleCloseDailyUpdateForm();
@@ -178,8 +215,7 @@ const StaffProjectDetails = () => {
 
     try {
       await uploadDesign(id, formData);
-      const response = await getProjectById(id);
-      setProject(response.data.project);
+      await refreshData();
       setUploadData({ message: "", pdf: null });
       handleCloseForm();
 
@@ -200,8 +236,7 @@ const StaffProjectDetails = () => {
     setDeletingPdf(pdfId);
     try {
       await deletePdfFromDesign(designId, pdfId);
-      const response = await getProjectById(id);
-      setProject(response.data.project);
+      await refreshData();
     } catch (error) {
       console.error("Error deleting PDF:", error);
       alert("Failed to delete PDF. Please try again.");
@@ -211,8 +246,7 @@ const StaffProjectDetails = () => {
   };
 
   const canDeletePdf = (pdf) =>
-    user?.permission?.includes("delete_design") ||
-    pdf.uploadedBy?._id === user?._id;
+    user?.permission?.includes("delete_design") || pdf.uploadedBy?._id === user?._id;
 
   if (loading)
     return (
@@ -259,19 +293,18 @@ const StaffProjectDetails = () => {
                 <ArrowLeft className="w-5 h-5 mr-1" />
                 Back
               </button>
-              <h1 className="text-2xl font-semibold text-gray-900">
-                Project Details
-              </h1>
+              <h1 className="text-2xl font-semibold text-gray-900">Project Details</h1>
             </div>
             <div className="flex gap-2">
               {user?.permission?.includes("upload_design") && (
                 <button
                   onClick={handleUploadDesign}
                   disabled={showUploadForm || uploadingDesign}
-                  className={`flex items-center text-sm text-white px-4 py-2 rounded-lg transition-colors ${showUploadForm || uploadingDesign
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                    }`}
+                  className={`flex items-center text-sm text-white px-4 py-2 rounded-lg transition-colors ${
+                    showUploadForm || uploadingDesign
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   {uploadingDesign ? "Uploading..." : "Upload Design"}
@@ -281,10 +314,11 @@ const StaffProjectDetails = () => {
                 <button
                   onClick={handleUploadDailyUpdate}
                   disabled={showDailyUpdateForm || uploadingDailyUpdate}
-                  className={`flex items-center text-sm text-white px-4 py-2 rounded-lg transition-colors ${showDailyUpdateForm || uploadingDailyUpdate
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                    }`}
+                  className={`flex items-center text-sm text-white px-4 py-2 rounded-lg transition-colors ${
+                    showDailyUpdateForm || uploadingDailyUpdate
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   {uploadingDailyUpdate ? "Uploading..." : "Upload Daily Update"}
@@ -313,7 +347,6 @@ const StaffProjectDetails = () => {
           )}
 
           {/* Title Section */}
-
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <img
@@ -322,9 +355,7 @@ const StaffProjectDetails = () => {
                 className="w-20 h-20 rounded-lg border border-gray-200 object-cover"
               />
               <div className="flex-1">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                  {project.title}
-                </h2>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-2">{project.title}</h2>
                 <div className="flex items-center gap-3">
                   <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full border border-gray-200">
                     {project.category.replaceAll("_", " ")}
@@ -339,9 +370,7 @@ const StaffProjectDetails = () => {
                 </div>
               </div>
             </div>
-            <p className="mt-4 text-gray-600 leading-relaxed">
-              {project.description}
-            </p>
+            <p className="mt-4 text-gray-600 leading-relaxed">{project.description}</p>
           </div>
 
           {/* Combined Section: Budget, Customer Info, and Documents */}
@@ -355,7 +384,8 @@ const StaffProjectDetails = () => {
                   <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
                     <p className="text-xs text-gray-500 mb-1">Estimated Budget</p>
                     <p className="text-gray-900 font-semibold">
-                      ₹{!isNaN(Number(project.estimatedBudget))
+                      ₹
+                      {!isNaN(Number(project.estimatedBudget))
                         ? Number(project.estimatedBudget).toLocaleString()
                         : "N/A"}
                     </p>
@@ -363,7 +393,8 @@ const StaffProjectDetails = () => {
                   <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
                     <p className="text-xs text-gray-500 mb-1">Final Budget</p>
                     <p className="text-gray-900 font-semibold">
-                      ₹{!isNaN(Number(project.finalBudget))
+                      ₹
+                      {!isNaN(Number(project.finalBudget))
                         ? Number(project.finalBudget).toLocaleString()
                         : "N/A"}
                     </p>
@@ -373,10 +404,10 @@ const StaffProjectDetails = () => {
                     <p className="text-gray-900 font-medium text-sm">
                       {project.startingDate
                         ? new Date(project.startingDate).toLocaleDateString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
                         : "N/A"}
                     </p>
                   </div>
@@ -414,7 +445,7 @@ const StaffProjectDetails = () => {
                 {[
                   { role: "salesperson", data: project.salesperson },
                   { role: "designer", data: project.designer },
-                  { role: "carpenter", data: project.carpenter }
+                  { role: "carpenter", data: project.carpenter },
                 ].map(({ role, data }) => (
                   <div
                     key={role}
@@ -434,7 +465,143 @@ const StaffProjectDetails = () => {
             </div>
           </div>
 
+          {/* ---- Daily Updates Section ---- */}
+          {user?.permission?.includes("view_daily_updates") && (
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            {/* Toggle Header */}
+            <div
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setShowDailyUpdates((v) => !v)}
+            >
+              <h3 className="font-semibold text-gray-900 text-lg flex items-center gap-2">
+                <FileText className="w-4 h-4 text-gray-500" /> Daily Updates
+                <span className="text-gray-500 ml-2 text-sm font-normal">
+                  {selectedDate
+                    ? `Filtered by: ${selectedDate.split("-").reverse().join("-")}`
+                    : "Last 5 days"}
+                </span>
+              </h3>
+              <button
+                type="button"
+                className="text-gray-700 text-2xl font-bold focus:outline-none"
+                aria-label="Toggle Daily Updates"
+                tabIndex={-1}
+              >
+                {showDailyUpdates ? "−" : "+"}
+              </button>
+            </div>
+            {showDailyUpdates && (
+              <>
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-3">
+                  <input
+                    type="date"
+                    className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-400 w-44"
+                    value={selectedDate}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                  />
+                  {selectedDate && (
+                    <button
+                      className="px-3 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 ml-2"
+                      onClick={() => setSelectedDate("")}
+                    >
+                      Clear Filter
+                    </button>
+                  )}
+                </div>
+
+                {shownDays.length > 0 ? (
+                  <div className="space-y-8">
+                    {shownDays.map((day, idx) => (
+                      <div key={day.createdAt || idx}>
+                        <div className="font-semibold text-blue-700 mb-2">
+                          {new Date(day.createdAt).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </div>
+                        <div className="space-y-3">
+                          {day.dailyUpdates.map((du, i) => (
+                            <div
+                              key={du._id || i}
+                              className="border border-gray-100 rounded p-4 flex flex-col bg-gray-50"
+                            >
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex gap-2 items-center text-sm">
+                                    <span className="px-2 py-1 rounded-full border border-gray-200 bg-gray-100 font-semibold capitalize">
+                                      {du.type}
+                                    </span>
+                                    <span className="font-medium text-gray-800">{du.message}</span>
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    Uploaded:{" "}
+                                    {du.createdAt
+                                      ? new Date(du.createdAt).toLocaleString("en-IN")
+                                      : "N/A"}{" "}
+                                    | By: {du.uploadedBy?.name || "Unknown"}
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                  <span className="text-gray-600 text-sm">
+                                    {du.images?.length > 0
+                                      ? `${du.images.length} Images`
+                                      : "No Images"}
+                                  </span>
+                                  {du.images?.length > 0 && (
+                                    <button
+                                      className="px-3 py-1 rounded bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium flex items-center gap-1"
+                                      onClick={() =>
+                                        setExpandedUpdateId(expandedUpdateId === du._id ? null : du._id)
+                                      }
+                                      type="button"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                      View Images
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              {/* Collapsible image gallery */}
+                              {expandedUpdateId === du._id && (
+                                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 border-t pt-4 border-blue-100">
+                                  {du.images.map((img, idx) => (
+                                    <a
+                                      key={img._id || idx}
+                                      href={img.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block"
+                                    >
+                                      <img
+                                        src={img.url}
+                                        alt={`Daily update ${idx + 1}`}
+                                        className="rounded shadow border w-full h-32 object-cover hover:scale-105 transition"
+                                      />
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    No daily updates found for this project{" "}
+                    {selectedDate && `on ${selectedDate.split("-").reverse().join("-")}`}.
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          )}
+
           {/* Documents */}
+          {user?.permission?.includes("view_design_feedback") && (
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <FileText className="w-4 h-4 text-gray-500" />
@@ -450,7 +617,10 @@ const StaffProjectDetails = () => {
                       );
 
                       return (
-                        <div key={pdf._id || pdfIndex} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50">
+                        <div
+                          key={pdf._id || pdfIndex}
+                          className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50"
+                        >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <p className="text-sm font-medium text-gray-800 mb-1">
@@ -460,13 +630,11 @@ const StaffProjectDetails = () => {
                                 {pdf.message || "Untitled Design PDF"}
                               </p>
                               <p className="text-xs text-gray-400 mt-1">
-                                Uploaded:{" "}
-                                {new Date(pdf.uploadedAt).toLocaleString("en-IN")}
+                                Uploaded: {new Date(pdf.uploadedAt).toLocaleString("en-IN")}
                               </p>
                               {pdf.uploadedBy && (
                                 <p className="text-xs text-gray-400">
-                                  By: {pdf.uploadedBy.name} (
-                                  {pdf.uploadedBy.email})
+                                  By: {pdf.uploadedBy.name} ({pdf.uploadedBy.email})
                                 </p>
                               )}
                             </div>
@@ -482,9 +650,7 @@ const StaffProjectDetails = () => {
                               </a>
                               {canDeletePdf(pdf) && (
                                 <button
-                                  onClick={() =>
-                                    handleDeletePdf(design._id, pdf._id)
-                                  }
+                                  onClick={() => handleDeletePdf(design._id, pdf._id)}
                                   disabled={deletingPdf === pdf._id}
                                   className="text-red-600 hover:text-red-800 p-1 disabled:opacity-50"
                                   title="Delete PDF"
@@ -504,10 +670,15 @@ const StaffProjectDetails = () => {
                               <ul className="space-y-2 text-gray-600 text-sm">
                                 {pdfFeedbackHistory.map((h, hi) => (
                                   <li key={h._id || hi} className="border-b pb-1">
-                                    <span className={`mr-2 font-bold ${h.isApproved ? "text-green-700" : "text-red-700"}`}>
+                                    <span
+                                      className={`mr-2 font-bold ${
+                                        h.isApproved ? "text-green-700" : "text-red-700"
+                                      }`}
+                                    >
                                       {h.isApproved ? "Approved" : "Rejected"}
                                     </span>
-                                    (Document {designIndex + 1} Version {h.versionSelect}) - {h.feedbackMessage}
+                                    (Document {designIndex + 1} Version {h.versionSelect}) -{" "}
+                                    {h.feedbackMessage}
                                     <span className="ml-2 text-xs text-gray-400">
                                       {h.updatedAt ? new Date(h.updatedAt).toLocaleDateString("en-IN") : ""}
                                     </span>
@@ -525,21 +696,18 @@ const StaffProjectDetails = () => {
             ) : (
               <div className="text-center py-6">
                 <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm text-gray-500">
-                  No documents uploaded yet
-                </p>
+                <p className="text-sm text-gray-500">No documents uploaded yet</p>
               </div>
             )}
           </div>
+          )}
 
           {/* All Project Images */}
           {project.projectImages?.length > 1 && (
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">Project Images</h3>
-                <span className="text-sm text-gray-500">
-                  {project.projectImages.length} images
-                </span>
+                <span className="text-sm text-gray-500">{project.projectImages.length} images</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {project.projectImages.map((img, index) => (
@@ -572,11 +740,8 @@ const StaffProjectDetails = () => {
                 </button>
               </div>
               <form onSubmit={handleSubmit}>
-                {/* ...fields... */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Message
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
                   <input
                     type="text"
                     className="w-full border border-gray-300 p-2 rounded"
@@ -593,9 +758,7 @@ const StaffProjectDetails = () => {
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Upload PDF
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Upload PDF</label>
                   <input
                     type="file"
                     accept="application/pdf"
@@ -607,10 +770,11 @@ const StaffProjectDetails = () => {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className={`px-4 py-2 rounded transition-colors ${uploadingDesign
-                      ? "bg-gray-400 text-white cursor-not-allowed"
-                      : "bg-blue-600 text-white hover:bg-blue-700"
-                      }`}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      uploadingDesign
+                        ? "bg-gray-400 text-white cursor-not-allowed"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
                     disabled={uploadingDesign}
                   >
                     {uploadingDesign ? "Uploading..." : "Upload"}
@@ -641,7 +805,10 @@ const StaffProjectDetails = () => {
 
           {/* Daily Update Form */}
           {showDailyUpdateForm && (
-            <div id="daily-update-form" className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div
+              id="daily-update-form"
+              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6"
+            >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                   <Upload className="w-4 h-4 text-gray-500" /> Upload Daily Update
@@ -694,8 +861,9 @@ const StaffProjectDetails = () => {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className={`px-4 py-2 rounded transition-colors ${uploadingDailyUpdate ? "bg-gray-400 text-white cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"
-                      }`}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      uploadingDailyUpdate ? "bg-gray-400 text-white cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
                     disabled={uploadingDailyUpdate}
                   >
                     {uploadingDailyUpdate ? "Uploading..." : "Upload"}

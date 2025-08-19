@@ -149,10 +149,17 @@ const ClientDetailsPage = () => {
     if (!editFormData.phone.trim()) newErrors.phone = 'Phone is required';
     else if (!phoneRegex.test(editFormData.phone)) newErrors.phone = 'Invalid phone';
 
-    if (!editFormData.aadharCardNumber.trim()) { newErrors.aadharCardNumber = 'Aadhar is required'; }
-    else if (!aadharCardNumberRegex.test(editFormData.aadharCardNumber)) {
-      newErrors.aadharCardNumber = 'Aadhar must be exactly 12 digits';
+    // if (!editFormData.aadharCardNumber.trim()) { newErrors.aadharCardNumber = 'Aadhar is required'; }
+    // else if (!aadharCardNumberRegex.test(editFormData.aadharCardNumber)) {
+    //   newErrors.aadharCardNumber = 'Aadhar must be exactly 12 digits';
+    // }
+
+    if (editFormData.aadharCardNumber.trim()) {
+      if (!aadharCardNumberRegex.test(editFormData.aadharCardNumber)) {
+        newErrors.aadharCardNumber = 'Aadhar must be exactly 12 digits';
+      }
     }
+
 
 
     editAddresses.forEach((addr, i) => {
@@ -460,7 +467,7 @@ const ClientDetailsPage = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <Phone className="inline mr-1" size={16} />
-                      Aadhar Number *
+                      Aadhar Number (Optional)
                     </label>
                     <input
                       type="text"
@@ -686,40 +693,6 @@ const ClientDetailsPage = () => {
                 </div>
               </div>
 
-              {/* Project Information */}
-              {(client.project || client.quotation) && (
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                    <FileText className="w-6 h-6 mr-2 text-purple-600" />
-                    Project Information
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {client.project && (
-                      <div className="flex items-center space-x-3 p-4 bg-purple-50 rounded-lg">
-                        <div className="bg-purple-100 p-3 rounded-full">
-                          <FileText className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Project</p>
-                          <p className="text-gray-900 font-medium">{client.project}</p>
-                        </div>
-                      </div>
-                    )}
-                    {client.quotation && (
-                      <div className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg">
-                        <div className="bg-green-100 p-3 rounded-full">
-                          <DollarSign className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Quotation</p>
-                          <p className="text-gray-900 font-medium">{client.quotation}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* Address Information */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
@@ -802,12 +775,6 @@ const ClientDetailsPage = () => {
                     <span className="text-gray-600">Addresses</span>
                     <span className="font-bold text-2xl text-blue-600">
                       {client.address ? client.address.length : 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Projects</span>
-                    <span className="font-bold text-2xl text-purple-600">
-                      {client.project ? 1 : 0}
                     </span>
                   </div>
                 </div>
