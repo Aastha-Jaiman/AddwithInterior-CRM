@@ -10,6 +10,8 @@ import {
 import { loginClient, resetClientEmailToken } from "@/services/client.services";
 import { loginSuccess } from "@/store/authSlice";
 import PublicRoute from "./PublicRoutes";
+import { Eye, EyeOff } from "lucide-react";
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +23,10 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [userType, setUserType] = useState("admin");
+
+  const [showPassword, setShowPassword] = useState(false);
+
+
 
   // Forgot Password States
   const [showForgot, setShowForgot] = useState(false);
@@ -142,11 +148,10 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setUserType("admin")}
-                  className={`flex-1 px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 ${
-                    userType === "admin"
+                  className={`flex-1 px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 ${userType === "admin"
                       ? "bg-white text-blue-600 shadow-md border border-blue-200"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
                     <svg
@@ -169,11 +174,10 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setUserType("client")}
-                  className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    userType === "client"
+                  className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${userType === "client"
                       ? "bg-white text-blue-600 shadow-md border border-blue-200"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center gap-2">
                     <svg
@@ -253,7 +257,7 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <label
                         htmlFor="password"
                         className="block text-sm font-medium text-gray-700"
@@ -286,7 +290,51 @@ export default function LoginPage() {
                           required
                         />
                       </div>
-                    </div>
+                    </div> */}
+
+                    <div className="space-y-2">
+  <label
+    htmlFor="password"
+    className="block text-sm font-medium text-gray-700"
+  >
+    Password
+  </label>
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <svg
+        className="h-5 w-5 text-gray-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+        />
+      </svg>
+    </div>
+    <input
+      id="password"
+      type={showPassword ? "text" : "password"}
+      placeholder="Enter your password"
+      className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      required
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword((prev) => !prev)}
+      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+      tabIndex={-1}
+    >
+      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+    </button>
+  </div>
+</div>
+
                   </div>
 
                   {/* Forgot Password Link */}
