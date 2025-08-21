@@ -249,11 +249,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
         formDataToSend.append("description", formData.description);
         formDataToSend.append("status", formData.status);
         formDataToSend.append("finalBudget", formData.finalBudget);
-
-        // if (formData.finalBudget !== '' && formData.finalBudget !== undefined) {
-        //   formDataToSend.append("finalBudget", formData.finalBudget);
-        // }
-
         formDataToSend.append("salespersonId", formData.salespersonId);
         formDataToSend.append("designerId", formData.designerId);
         formDataToSend.append("carpenterId", formData.carpenterId);
