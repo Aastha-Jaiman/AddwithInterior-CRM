@@ -163,7 +163,7 @@ const ClientProfile = () => {
           }`}>
             <div className="flex items-center">
               {message.type === 'success' ? (
-                <CheckCircle className="h-5 w-5 mr-2" />
+                <CheckCircle className="h-5 w-5 mr-2" /> 
               ) : (
                 <AlertCircle className="h-5 w-5 mr-2" />
               )}
