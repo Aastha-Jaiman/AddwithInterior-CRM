@@ -28,6 +28,7 @@ const projectRoute = require('./routes/project.router');
 const brochurRoute = require('./routes/brochur.router');
 const designRoute = require('./routes/design.router');
 const dailyupdateRoute = require('./routes/dailyupdate.router');
+const serviceRoute = require('./routes/service.router');
 
 app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/client", clientRoute);
@@ -36,5 +37,6 @@ app.use("/api/v1/project", projectRoute);
 app.use("/api/v1/brochure", brochurRoute);
 app.use("/api/v1/design", designRoute);
 app.use("/api/v1/dailyupdate", dailyupdateRoute);
+app.use("/api/v1/service", serviceRoute);
 
 module.exports = app;

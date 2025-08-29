@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const ServiceHistorySchema = new mongoose.Schema(
+const ServiceSchema = new mongoose.Schema(
   {
     client: {
       type: mongoose.Schema.Types.ObjectId,
@@ -12,39 +12,47 @@ const ServiceHistorySchema = new mongoose.Schema(
       ref: "Project",
       required: true,
     },
-    type: {
-      type: String,
-      enum: ["free", "paid"],
-      required: true,
-    },
-    visitDate: {
+    startDate: {
       type: Date,
       default: Date.now,
     },
-    remarks: {
-      type: String,
-      trim: true,
-    },
-    visitMode: {
-      type: String,
-      enum: ["free_visit", "paid_visit"],
-      default: "free_visit",
-    },
-    totalAllowedVisits: {
-      type: Number,
-      default: function () {
-        return this.type === "free" ? 3 : 10;
-      },
-    },
-    visitNumber: {
+    durationYears: {
       type: Number,
       required: true,
     },
-    reducedFromYear: {
+    allowedVisits: {
       type: Number,
+      required: true,
     },
+    usedVisits: {
+      type: Number,
+      default: 0,
+    },
+    isExpired: {
+      type: Boolean,
+      default: false,
+    },
+    visits: [
+      {
+        visitDate: { type: Date, default: Date.now },
+        remarks: { type: String, trim: true },
+      },
+    ],
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("ServiceHistory", ServiceHistorySchema);
+ServiceSchema.pre("save", function (next) {
+  const now = new Date();
+  if (this.usedVisits >= this.allowedVisits) {
+    this.isExpired = true;
+  }
+  const expiryDate = new Date(this.startDate);
+  expiryDate.setFullYear(expiryDate.getFullYear() + this.durationYears);
+  if (now >= expiryDate) {
+    this.isExpired = true;
+  }
+  next();
+});
+
+module.exports = mongoose.model("Service", ServiceSchema);
