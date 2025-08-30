@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { type } = require('os');
 
 const ProjectSchema = new mongoose.Schema(
   {
@@ -61,27 +60,28 @@ const ProjectSchema = new mongoose.Schema(
       enum: ["Pending", "In-Process", "Completed"],
       default: "Pending",
     },
-    quotation: [
+    quotation: 
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Quotation",
       },
-    ],
     designs: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Design",
       },
     ],
-    designsUploaded: {
-      type: Boolean,
-      default: false
-    },
     updates: 
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Update",
+        default: null
       },
+    designsUploaded: {
+      type: Boolean,
+      default: false
+    },
+    
   },
   {
     timestamps: true,

@@ -30,9 +30,11 @@ exports.addUpdate = async (req, res) => {
       }
     }
 
+    // 🔹 Check if update exists for this project
     let existingUpdate = await UpdateModel.findOne({ project: projectId });
 
     if (existingUpdate) {
+      // Add new daily update
       existingUpdate.dailyUpdates.push({
         uploadedBy,
         type,
@@ -42,12 +44,18 @@ exports.addUpdate = async (req, res) => {
 
       await existingUpdate.save();
 
+      // 🔹 Set update id into project
+      await ProjectModel.findByIdAndUpdate(projectId, {
+        $set: { updates: existingUpdate._id }
+      });
+
       return res.status(200).json({
         success: true,
         message: "Daily update added to existing project update",
         data: existingUpdate,
       });
     } else {
+      // Create new update
       const newUpdate = await UpdateModel.create({
         project: projectId,
         dailyUpdates: [
@@ -60,8 +68,9 @@ exports.addUpdate = async (req, res) => {
         ],
       });
 
+      // 🔹 Set update id into project
       await ProjectModel.findByIdAndUpdate(projectId, {
-        $push: { updates: newUpdate._id },
+        $set: { updates: newUpdate._id }
       });
 
       return res.status(201).json({

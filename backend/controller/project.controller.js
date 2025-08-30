@@ -191,7 +191,6 @@ exports.getProjectById = async (req, res) => {
   }
 };
 
-
 exports.getAllProject = async (req, res) => {
   try {
     const user = req.user;
@@ -201,36 +200,32 @@ exports.getAllProject = async (req, res) => {
     }
 
     const projects = await ProjectModel.find()
-      .populate("client", "name email phone address")
-      .populate("salesperson", "name email phone")
-      .populate("designer", "name email phone")
-      .populate("carpenter", "name email phone");
+  .populate("client", "name email phone address")
+  .populate("salesperson", "name email phone")
+  .populate("designer", "name email phone")
+  .populate("carpenter", "name email phone")
+  .populate({
+    path: "quotation",
+    populate: { path: "client project" } 
+  })
+  .populate({
+    path: "designs",
+    populate: { path: "pdfs.uploadedBy", select: "name email phone" } 
+  })
+  .populate({
+    path: "updates",
+    populate: { path: "dailyUpdates.uploadedBy", select: "name email phone role" }
+  });
+
 
     if (!projects || projects.length === 0) {
       return res.status(400).json({ message: "Projects Not Found." });
     }
 
-    const projectsWithDesigns = await Promise.all(
-      projects.map(async (project) => {
-        const designs = await DesignModel.find({ project: project._id })
-          .populate("pdfs.uploadedBy", "name email phone");
-
-
-        const updates = await UpdateModel.find({ project: project._id })
-          .populate("dailyUpdates.uploadedBy", "name email phone role");
-
-        return {
-          ...project._doc,
-          designs,
-          updates
-        };
-      })
-    );
-
     res.status(200).json({
       success: true,
       message: "Fetched all projects with design details.",
-      projects: projectsWithDesigns,
+      projects
     });
 
   } catch (error) {

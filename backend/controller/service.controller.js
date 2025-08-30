@@ -6,6 +6,12 @@ exports.createService = async (req, res) => {
     const { projectId } = req.params;
     const { durationYears, allowedVisits } = req.body;
 
+     if (!req.user || !["admin", "salesperson"].includes(req.user.role)) {
+      return res.status(403).json({
+        message: "Access denied. Only admin or salesperson can create a service."
+      });
+    }
+
     let missingFields = [];
     if (!durationYears) missingFields.push("durationYears");
     if (!allowedVisits) missingFields.push("allowedVisits");
@@ -88,6 +94,13 @@ exports.updateService = async (req, res) => {
   try {
     const { serviceId } = req.params;
     const { remarks } = req.body;
+
+      if (!req.user || !["admin", "salesperson"].includes(req.user.role)) {
+      return res.status(403).json({
+        message: "Access denied. Only admin or salesperson can update service."
+      });
+    }
+
 
     const service = await ServiceModel.findById(serviceId);
     if (!service) {
