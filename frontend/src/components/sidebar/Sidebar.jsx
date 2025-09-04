@@ -172,6 +172,7 @@ export default function SidebarLayout({ children }) {
     { name: "Clients", href: "/admin/clients", icon: NotebookPen },
     { name: "Projects", href: "/admin/projects", icon: ClipboardList },
     { name: "Payment History", href: "/admin/paymenthistory", icon: User2 },
+    { name: "Services", href: "/admin/services", icon: User2 },
     {
       name: "Daily Updates",
       href: "/admin/daily-updates",

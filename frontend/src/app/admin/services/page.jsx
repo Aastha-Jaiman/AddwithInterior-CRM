@@ -1,10 +1,13 @@
 import Services from '@/components/services/AdminServices'
+import SidebarLayout from '@/components/sidebar/Sidebar'
 import React from 'react'
 
 export default function page() {
   return (
     <div>
-      <Services />
+      <SidebarLayout>
+        <Services />
+      </SidebarLayout>
     </div>
   )
 }

@@ -13,6 +13,7 @@ import {
   CheckCircle,
   XCircle
 } from "lucide-react";
+import { createService } from "@/services/service.services";
 
 const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handleDownloadDocument }) => {
   const [expandedRows, setExpandedRows] = React.useState({});
@@ -20,6 +21,77 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const [expandedDesigns, setExpandedDesigns] = React.useState({});
+
+
+  const [isServiceOpen, setIsServiceOpen] = React.useState(false);
+  const [serviceForm, setServiceForm] = React.useState({ durationYears: "", allowedVisits: "" });
+  const [serviceLoading, setServiceLoading] = React.useState(false);
+  const [serviceError, setServiceError] = React.useState("");
+
+  const toggleService = () => setIsServiceOpen(v => !v);
+
+  const handleServiceChange = (e) => {
+    const { name, value } = e.target;
+    setServiceForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleServiceSubmit = async (e) => {
+    e.preventDefault();
+    setServiceError("");
+    const duration = Number(serviceForm.durationYears);
+    const visits = Number(serviceForm.allowedVisits);
+
+    if (!Number.isFinite(duration) || duration <= 0) {
+      const msg = "Duration must be a positive number";
+      setServiceError(msg);
+      setServiceNotice({ show: true, type: "error", text: msg });
+      return;
+    }
+    if (!Number.isFinite(visits) || visits < 0) {
+      const msg = "Allowed visits must be 0 or more";
+      setServiceError(msg);
+      setServiceNotice({ show: true, type: "error", text: msg });
+      return;
+    }
+
+    try {
+      setServiceLoading(true);
+      await createService(selectedProject._id, {
+        durationYears: duration,
+        allowedVisits: visits,
+      });
+      setIsServiceOpen(false);
+      setServiceForm({ durationYears: "", allowedVisits: "" });
+      setServiceNotice({
+        show: true,
+        type: "success",
+        text: "Service details saved successfully",
+      });
+    } catch (err) {
+      const msg = typeof err === "string" ? err : (err?.message || "Failed to save service");
+      setServiceError(msg);
+      setServiceNotice({ show: true, type: "error", text: msg });
+    } finally {
+      setServiceLoading(false);
+    }
+  };
+
+  const [serviceNotice, setServiceNotice] = React.useState({
+    show: false,
+    type: "success", // "success" | "error"
+    text: "",
+  });
+
+  React.useEffect(() => {
+    if (!serviceNotice.show) return;
+    const t = setTimeout(() => {
+      setServiceNotice(prev => ({ ...prev, show: false }));
+    }, 2500); // auto-hide after 2.5s
+    return () => clearTimeout(t);
+  }, [serviceNotice.show]);
+
+
+
 
   // Get filtered daily updates based on selected date (5 days from selected date)
   const getFilteredUpdates = () => {
@@ -277,6 +349,16 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
               </div>
 
               <button
+                onClick={toggleService}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span className="text-sm font-medium">Service</span>
+              </button>
+
+
+
+              <button
                 onClick={navigateToEdit}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
               >
@@ -290,8 +372,116 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                 <p className="text-gray-700 dark:text-gray-300 text-sm">
                   {selectedProject.description}
                 </p>
+
+                {/* Service form panel */}
+                <div
+                  className={`
+        overflow-hidden transition-all duration-300
+        ${isServiceOpen ? "max-h-[500px] mt-4" : "max-h-0"}
+      `}
+                >
+                  <form
+                    onSubmit={handleServiceSubmit}
+                    className="mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                  >
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                      Service Details
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                          Duration (years)
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          name="durationYears"
+                          value={serviceForm.durationYears}
+                          onChange={handleServiceChange}
+                          className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g. 2"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                          Allowed Visits
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          name="allowedVisits"
+                          value={serviceForm.allowedVisits}
+                          onChange={handleServiceChange}
+                          className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g. 4"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center gap-2">
+                      <button
+                        type="submit"
+                        disabled={serviceLoading}
+                        className={`px-4 py-2 rounded-lg transition
+    ${serviceLoading
+                            ? "bg-blue-400 cursor-not-allowed opacity-70"
+                            : "bg-blue-600 hover:bg-blue-700"
+                          }
+    text-white disabled:pointer-events-none`}
+                      >
+                        {serviceLoading ? "Saving..." : "Save"}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={serviceLoading}
+                        onClick={() => setIsServiceOpen(false)}
+                        className={`px-4 py-2 rounded-lg transition
+    ${serviceLoading
+                            ? "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+                            : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+                          }`}
+                      >
+                        Cancel
+                      </button>
+
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
+
+            {serviceNotice.show && (
+              <div
+                role="alert"
+                className={`mb-3 flex items-start gap-2 rounded-lg border p-3 text-sm
+      ${serviceNotice.type === "success"
+                    ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200"
+                    : "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"
+                  }`}
+              >
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/60 dark:bg-white/10">
+                  {serviceNotice.type === "success" ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                </span>
+                <div className="flex-1">{serviceNotice.text}</div>
+                <button
+                  type="button"
+                  onClick={() => setServiceNotice(prev => ({ ...prev, show: false }))}
+                  className="ml-2 rounded px-1 text-xs opacity-70 hover:opacity-100"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+
           </div>
         </div>
 
