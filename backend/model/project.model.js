@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { type } = require('os');
 
 const ProjectSchema = new mongoose.Schema(
   {
@@ -71,6 +72,11 @@ const ProjectSchema = new mongoose.Schema(
         ref: "Design",
       },
     ],
+    service: {
+      type:  mongoose.Schema.Types.ObjectId,
+      ref: "Service",
+      default: null
+    },
     updates: 
       {
         type: mongoose.Schema.Types.ObjectId,
