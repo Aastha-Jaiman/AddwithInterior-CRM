@@ -6,7 +6,7 @@ exports.createService = async (req, res) => {
     const { projectId } = req.params;
     const { durationYears, allowedVisits } = req.body;
 
-     if (!req.user || !["admin", "salesperson"].includes(req.user.role)) {
+    if (!req.user || !["admin", "salesperson"].includes(req.user.role)) {
       return res.status(403).json({
         message: "Access denied. Only admin or salesperson can create a service."
       });
@@ -19,7 +19,7 @@ exports.createService = async (req, res) => {
     if (missingFields.length > 0) {
       return res.status(400).json({
         message: "Missing required fields",
-        missingFields: missingFields,
+        missingFields,
       });
     }
 
@@ -28,18 +28,20 @@ exports.createService = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    const newHistory = new ServiceModel({
+    const newService = new ServiceModel({
       client: project.client,
       project: project._id,
       durationYears,
       allowedVisits,
     });
+    await newService.save();
 
-    await newHistory.save();
+    project.service = newService._id;
+    await project.save();
 
     return res.status(201).json({
       message: "Service history created successfully",
-      data: newHistory,
+      data: newService,
     });
   } catch (error) {
     return res.status(500).json({
@@ -93,14 +95,13 @@ exports.getServiceById = async (req, res) => {
 exports.updateService = async (req, res) => {
   try {
     const { serviceId } = req.params;
-    const { remarks } = req.body;
+    const { remarks, visitDate } = req.body;
 
-      if (!req.user || !["admin", "salesperson"].includes(req.user.role)) {
+    if (!req.user || !["admin", "salesperson"].includes(req.user.role)) {
       return res.status(403).json({
         message: "Access denied. Only admin or salesperson can update service."
       });
     }
-
 
     const service = await ServiceModel.findById(serviceId);
     if (!service) {
@@ -108,15 +109,13 @@ exports.updateService = async (req, res) => {
     }
 
     if (service.isExpired || service.usedVisits >= service.allowedVisits) {
-      return res.status(400).json({
-        message: "Service has expired. No more visits can be added.",
-      });
+      return res.status(400).json({ message: "Service has expired. No more visits can be added." });
     }
 
     if (remarks) {
       service.visits.push({
-        visitDate: new Date(),
-        remarks: remarks,
+        visitDate: visitDate ? new Date(visitDate) : new Date(),
+        remarks
       });
     }
 
@@ -125,25 +124,18 @@ exports.updateService = async (req, res) => {
     const expiryDate = new Date(service.startDate);
     expiryDate.setFullYear(expiryDate.getFullYear() + service.durationYears);
 
-    if (
-      service.usedVisits >= service.allowedVisits ||
-      new Date() >= expiryDate
-    ) {
-      service.isExpired = true;
-    } else {
-      service.isExpired = false;
-    }
+    service.isExpired = service.usedVisits >= service.allowedVisits || new Date() >= expiryDate;
 
     await service.save();
 
     return res.status(200).json({
       message: "Service updated successfully",
-      data: service,
+      data: service
     });
   } catch (error) {
     return res.status(500).json({
       message: "Error updating service",
-      error: error.message,
+      error: error.message
     });
   }
 };
