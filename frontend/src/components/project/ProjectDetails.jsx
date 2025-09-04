@@ -1,99 +1,1170 @@
+// "use client";
+
+// import React from "react";
+// import {
+//   ArrowLeft, Edit3, Calendar, MapPin, DollarSign,
+//   User, Phone, Mail, FileText, Users, Download, Camera,
+//   Calendar1,
+//   Eye,
+//   ChevronLeft,
+//   ChevronRight,
+//   ChevronDown,
+//   Clock,
+//   CheckCircle,
+//   XCircle
+// } from "lucide-react";
+// import { createService, updateService } from "@/services/service.services";
+
+// const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handleDownloadDocument }) => {
+//   const [expandedRows, setExpandedRows] = React.useState({});
+//   const [selectedDate, setSelectedDate] = React.useState(new Date());
+//   const [currentMonth, setCurrentMonth] = React.useState(new Date());
+//   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+//   const [expandedDesigns, setExpandedDesigns] = React.useState({});
+//   const [panel, setPanel] = React.useState(null);
+
+
+//   const [isServiceOpen, setIsServiceOpen] = React.useState(false);
+//   const [serviceForm, setServiceForm] = React.useState({ durationYears: "", allowedVisits: "" });
+//   const [serviceLoading, setServiceLoading] = React.useState(false);
+//   const [serviceError, setServiceError] = React.useState("");
+
+//   const [updateForm, setUpdateForm] = React.useState({ remarks: "", visitDate: "" });
+// const [updateLoading, setUpdateLoading] = React.useState(false);
+
+// const handleUpdateChange = (e) => {
+//   const { name, value } = e.target;
+//   setUpdateForm(prev => ({ ...prev, [name]: value }));
+// };
+
+// const handleUpdateSubmit = async (e) => {
+//   e.preventDefault();
+//   // Basic validation: remarks required
+//   if (!updateForm.remarks.trim()) {
+//     setServiceNotice({ show: true, type: "error", text: "Remarks are required" });
+//     return;
+//   }
+//   try {
+//     setUpdateLoading(true);
+//     const payload = { remarks: updateForm.remarks.trim() };
+//     if (updateForm.visitDate) payload.visitDate = updateForm.visitDate; // ISO string acceptable
+//     await updateService(selectedProject.service._id, payload);
+//     setServiceNotice({ show: true, type: "success", text: "Service updated successfully" });
+//     setPanel(null);
+//     setUpdateForm({ remarks: "", visitDate: "" });
+//   } catch (err) {
+//     const msg = err?.message || err?.error || "Failed to update service";
+//     setServiceNotice({ show: true, type: "error", text: msg });
+//   } finally {
+//     setUpdateLoading(false);
+//   }
+// };
+
+
+//   const toggleService = () => setIsServiceOpen(v => !v);
+
+//   const handleServiceChange = (e) => {
+//     const { name, value } = e.target;
+//     setServiceForm(prev => ({ ...prev, [name]: value }));
+//   };
+
+//   const handleServiceSubmit = async (e) => {
+//     e.preventDefault();
+//     setServiceError("");
+//     const duration = Number(serviceForm.durationYears);
+//     const visits = Number(serviceForm.allowedVisits);
+
+//     if (!Number.isFinite(duration) || duration <= 0) {
+//       const msg = "Duration must be a positive number";
+//       setServiceError(msg);
+//       setServiceNotice({ show: true, type: "error", text: msg });
+//       return;
+//     }
+//     if (!Number.isFinite(visits) || visits < 0) {
+//       const msg = "Allowed visits must be 0 or more";
+//       setServiceError(msg);
+//       setServiceNotice({ show: true, type: "error", text: msg });
+//       return;
+//     }
+
+//     try {
+//       setServiceLoading(true);
+//       await createService(selectedProject._id, {
+//         durationYears: duration,
+//         allowedVisits: visits,
+//       });
+//       setIsServiceOpen(false);
+//       setServiceForm({ durationYears: "", allowedVisits: "" });
+//       setServiceNotice({
+//         show: true,
+//         type: "success",
+//         text: "Service details saved successfully",
+//       });
+//     } catch (err) {
+//       const msg = typeof err === "string" ? err : (err?.message || "Failed to save service");
+//       setServiceError(msg);
+//       setServiceNotice({ show: true, type: "error", text: msg });
+//     } finally {
+//       setServiceLoading(false);
+//     }
+//   };
+
+//   const [serviceNotice, setServiceNotice] = React.useState({
+//     show: false,
+//     type: "success", // "success" | "error"
+//     text: "",
+//   });
+
+//   React.useEffect(() => {
+//     if (!serviceNotice.show) return;
+//     const t = setTimeout(() => {
+//       setServiceNotice(prev => ({ ...prev, show: false }));
+//     }, 2500); // auto-hide after 2.5s
+//     return () => clearTimeout(t);
+//   }, [serviceNotice.show]);
+
+
+
+
+//   // Get filtered daily updates based on selected date (5 days from selected date)
+//   const getFilteredUpdates = () => {
+//     if (!selectedProject.dailyUpdates?.length) return [];
+
+//     const endDate = new Date(selectedDate);
+//     const startDate = new Date(selectedDate);
+//     startDate.setDate(startDate.getDate() - 4); // 5 days total (including selected date)
+
+//     return selectedProject.dailyUpdates
+//       .flatMap(updateGroup =>
+//         updateGroup.dailyUpdates.map(update => ({
+//           ...update,
+//           date: new Date(update.createdAt)
+//         }))
+//       )
+//       .filter(update => {
+//         const updateDate = new Date(update.date.toDateString());
+//         const start = new Date(startDate.toDateString());
+//         const end = new Date(endDate.toDateString());
+//         return updateDate >= start && updateDate <= end;
+//       })
+//       .sort((a, b) => b.date - a.date); // Sort by newest first
+//   };
+
+//   // Calendar Dropdown Component
+//   const CalendarDropdown = () => {
+//     const today = new Date();
+//     const year = currentMonth.getFullYear();
+//     const month = currentMonth.getMonth();
+
+//     const firstDayOfMonth = new Date(year, month, 1);
+//     const lastDayOfMonth = new Date(year, month + 1, 0);
+//     const firstDayWeekday = firstDayOfMonth.getDay();
+//     const daysInMonth = lastDayOfMonth.getDate();
+
+//     const monthNames = [
+//       "January", "February", "March", "April", "May", "June",
+//       "July", "August", "September", "October", "November", "December"
+//     ];
+
+//     const days = [];
+
+//     // Empty cells for days before month starts
+//     for (let i = 0; i < firstDayWeekday; i++) {
+//       days.push(<div key={`empty-${i}`} className="h-8"></div>);
+//     }
+
+//     // Days of the month
+//     for (let day = 1; day <= daysInMonth; day++) {
+//       const date = new Date(year, month, day);
+//       const isSelected = selectedDate.toDateString() === date.toDateString();
+//       const isToday = today.toDateString() === date.toDateString();
+
+//       // Check if there are updates on this date
+//       const hasUpdates = selectedProject.dailyUpdates?.some(updateGroup =>
+//         updateGroup.dailyUpdates.some(update => {
+//           const updateDate = new Date(update.createdAt);
+//           return updateDate.toDateString() === date.toDateString();
+//         })
+//       );
+
+//       days.push(
+//         <button
+//           key={day}
+//           onClick={() => {
+//             setSelectedDate(date);
+//             setIsCalendarOpen(false); // Close dropdown after selection
+//           }}
+//           className={`
+//             h-8 w-8 rounded-full text-sm font-medium transition-colors
+//             ${isSelected
+//               ? 'bg-blue-600 text-white'
+//               : isToday
+//                 ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
+//                 : hasUpdates
+//                   ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
+//                   : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+//             }
+//           `}
+//         >
+//           {day}
+//         </button>
+//       );
+//     }
+
+//     return (
+//       <div className="relative">
+//         {/* Dropdown Trigger */}
+//         <button
+//           onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+//           className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+//         >
+//           <Calendar className="w-4 h-4" />
+//           <span className="text-sm font-medium">
+//             {selectedDate.toLocaleDateString('en-IN', {
+//               day: 'numeric',
+//               month: 'short',
+//               year: 'numeric'
+//             })}
+//           </span>
+//           <ChevronDown className={`w-4 h-4 transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`} />
+//         </button>
+
+//         {/* Dropdown Calendar */}
+//         {isCalendarOpen && (
+//           <div className="absolute top-full left-0 mt-2 z-50 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg p-4 min-w-[280px]">
+//             <div className="flex items-center justify-between mb-4">
+//               <h3 className="font-semibold text-gray-900 dark:text-white">
+//                 {monthNames[month]} {year}
+//               </h3>
+//               <div className="flex gap-1">
+//                 <button
+//                   onClick={() => setCurrentMonth(new Date(year, month - 1))}
+//                   className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+//                 >
+//                   <ChevronLeft className="w-4 h-4" />
+//                 </button>
+//                 <button
+//                   onClick={() => setCurrentMonth(new Date(year, month + 1))}
+//                   className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+//                 >
+//                   <ChevronRight className="w-4 h-4" />
+//                 </button>
+//               </div>
+//             </div>
+
+//             <div className="grid grid-cols-7 gap-1 mb-2">
+//               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+//                 <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+//                   {day}
+//                 </div>
+//               ))}
+//             </div>
+
+//             <div className="grid grid-cols-7 gap-1">
+//               {days}
+//             </div>
+
+//             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+//               <div className="flex items-center gap-4">
+//                 <div className="flex items-center gap-2">
+//                   <div className="w-3 h-3 bg-green-100 dark:bg-green-900/30 rounded-full"></div>
+//                   <span>Has updates</span>
+//                 </div>
+//                 <div className="flex items-center gap-2">
+//                   <div className="w-3 h-3 bg-blue-100 dark:bg-blue-900/30 rounded-full"></div>
+//                   <span>Today</span>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     );
+//   };
+
+//   const getStatusBadge = (status) => {
+//     const statusConfig = {
+//       pending: {
+//         bg: "bg-yellow-100 dark:bg-yellow-900/30",
+//         text: "text-yellow-800 dark:text-yellow-300",
+//         border: "border-yellow-200 dark:border-yellow-800",
+//       },
+//       uploaded: {
+//         bg: "bg-blue-100 dark:bg-blue-900/30",
+//         text: "text-blue-800 dark:text-blue-300",
+//         border: "border-blue-200 dark:border-blue-800",
+//       },
+//       finalize: {
+//         bg: "bg-green-100 dark:bg-green-900/30",
+//         text: "text-green-800 dark:text-green-300",
+//         border: "border-green-200 dark:border-green-800",
+//       },
+//     };
+
+//     const config = statusConfig[status?.toLowerCase()];
+
+//     if (!config) {
+//       return (
+//         <span className="px-2 py-1 rounded-full text-xs font-medium border bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600">
+//           {status || "Unknown"}
+//         </span>
+//       );
+//     }
+
+//     return (
+//       <span className={`px-2 py-1 rounded-full text-xs font-medium border ${config.bg} ${config.text} ${config.border}`}>
+//         {status.charAt(0).toUpperCase() + status.slice(1)}
+//       </span>
+//     );
+//   };
+
+//   const InfoCard = ({ icon, title, children, className = "" }) => (
+//     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 ${className}`}>
+//       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+//         {icon}
+//         {title}
+//       </h3>
+//       {children}
+//     </div>
+//   );
+
+//   const InfoItem = ({ label, value, icon }) => (
+//     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+//       <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 mb-1 sm:mb-0">
+//         {icon && icon}
+//         {label}
+//       </div>
+//       <div className="text-sm sm:text-right text-gray-900 dark:text-white font-medium">
+//         {value}
+//       </div>
+//     </div>
+//   );
+
+//   const filteredUpdates = getFilteredUpdates();
+
+//   return (
+//     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+//       <div className="container mx-auto px-4 py-6 max-w-7xl">
+//         {/* Header */}
+//         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+//           <button
+//             onClick={navigateToList}
+//             className="pt-4 pl-4 flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors w-fit"
+//           >
+//             <ArrowLeft className="w-4 h-4" />
+//             <span className="text-sm font-medium">Back to Projects</span>
+//           </button>
+//           <div className="p-4 sm:p-6">
+//             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+//               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+//                 <div className="flex items-center gap-4">
+//                   <img
+//                     src={
+//                       Array.isArray(selectedProject.projectImages)
+//                         ? selectedProject.projectImages[0]?.url
+//                         : selectedProject.projectImages?.url
+//                     }
+//                     alt={selectedProject.title}
+//                     className="w-16 h-12 sm:w-20 sm:h-15 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+//                   />
+//                   <div>
+//                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+//                       {selectedProject.title}
+//                     </h1>
+//                     <div className="flex flex-wrap items-center gap-2 mt-1">
+//                       <span className="text-sm text-gray-600 dark:text-gray-400">
+//                         {selectedProject.category}
+//                       </span>
+//                       {selectedProject.designStatus && getStatusBadge(selectedProject.designStatus)}
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* <button
+//                 onClick={toggleService}
+//                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
+//               >
+//                 <Edit3 className="w-4 h-4" />
+//                 <span className="text-sm font-medium">Service</span>
+//               </button> */}
+
+//               <button
+//   onClick={() => setPanel(selectedProject.service ? "update" : "create")}
+//   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
+// >
+//   <Edit3 className="w-4 h-4" />
+//   <span className="text-sm font-medium">
+//     {selectedProject.service ? "Update Service" : "Create Service"}
+//   </span>
+// </button>
+
+
+
+
+//               <button
+//                 onClick={navigateToEdit}
+//                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
+//               >
+//                 <Edit3 className="w-4 h-4" />
+//                 <span className="text-sm font-medium">Edit Project</span>
+//               </button>
+//             </div>
+
+//             {selectedProject.description && (
+//               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+//                 <p className="text-gray-700 dark:text-gray-300 text-sm">
+//                   {selectedProject.description}
+//                 </p>
+
+//                 {/* Service form panel */}
+//                 {/* <div
+//                   className={`
+//         overflow-hidden transition-all duration-300
+//         ${isServiceOpen ? "max-h-[500px] mt-4" : "max-h-0"}
+//       `}
+//                 >
+//                   <form
+//                     onSubmit={handleServiceSubmit}
+//                     className="mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+//                   >
+//                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+//                       Service Details
+//                     </h4>
+
+//                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//                       <div>
+//                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+//                           Duration (years)
+//                         </label>
+//                         <input
+//                           type="number"
+//                           min="1"
+//                           step="1"
+//                           name="durationYears"
+//                           value={serviceForm.durationYears}
+//                           onChange={handleServiceChange}
+//                           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                           placeholder="e.g. 2"
+//                           required
+//                         />
+//                       </div>
+
+//                       <div>
+//                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+//                           Allowed Visits
+//                         </label>
+//                         <input
+//                           type="number"
+//                           min="0"
+//                           step="1"
+//                           name="allowedVisits"
+//                           value={serviceForm.allowedVisits}
+//                           onChange={handleServiceChange}
+//                           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                           placeholder="e.g. 4"
+//                           required
+//                         />
+//                       </div>
+//                     </div>
+
+//                     <div className="mt-4 flex items-center gap-2">
+//                       <button
+//                         type="submit"
+//                         disabled={serviceLoading}
+//                         className={`px-4 py-2 rounded-lg transition
+//     ${serviceLoading
+//                             ? "bg-blue-400 cursor-not-allowed opacity-70"
+//                             : "bg-blue-600 hover:bg-blue-700"
+//                           }
+//     text-white disabled:pointer-events-none`}
+//                       >
+//                         {serviceLoading ? "Saving..." : "Save"}
+//                       </button>
+
+//                       <button
+//                         type="button"
+//                         disabled={serviceLoading}
+//                         onClick={() => setIsServiceOpen(false)}
+//                         className={`px-4 py-2 rounded-lg transition
+//     ${serviceLoading
+//                             ? "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+//                             : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+//                           }`}
+//                       >
+//                         Cancel
+//                       </button>
+
+//                     </div>
+//                   </form>
+//                 </div> */}
+
+//                 <div className={`overflow-hidden transition-all duration-300 ${panel === "create" ? "max-h-[500px] mt-4" : "max-h-0"}`}>
+//   <form onSubmit={handleServiceSubmit} className="mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+//     <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Create Service</h4>
+
+//     {serviceNotice.show && (
+//       <div role="alert" className={`mb-3 flex items-start gap-2 rounded-lg border p-3 text-sm
+//         ${serviceNotice.type === "success"
+//           ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200"
+//           : "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"}`}>
+//         <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/60 dark:bg-white/10">
+//           {serviceNotice.type === "success" ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+//         </span>
+//         <div className="flex-1">{serviceNotice.text}</div>
+//         <button type="button" onClick={() => setServiceNotice(prev => ({ ...prev, show: false }))} className="ml-2 rounded px-1 text-xs opacity-70 hover:opacity-100" aria-label="Close">×</button>
+//       </div>
+//     )}
+
+//     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//       <div>
+//         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Duration (years)</label>
+//         <input
+//           type="number" min="1" step="1" name="durationYears" value={serviceForm.durationYears} onChange={handleServiceChange}
+//           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+//           placeholder="e.g. 2" required
+//         />
+//       </div>
+//       <div>
+//         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Allowed Visits</label>
+//         <input
+//           type="number" min="0" step="1" name="allowedVisits" value={serviceForm.allowedVisits} onChange={handleServiceChange}
+//           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+//           placeholder="e.g. 4" required
+//         />
+//       </div>
+//     </div>
+
+//     <div className="mt-4 flex items-center gap-2">
+//       <button type="submit" disabled={serviceLoading}
+//         className={`px-4 py-2 rounded-lg transition text-white disabled:pointer-events-none ${serviceLoading ? "bg-blue-400 cursor-not-allowed opacity-70" : "bg-blue-600 hover:bg-blue-700"}`}>
+//         {serviceLoading ? "Saving..." : "Save"}
+//       </button>
+//       <button type="button" disabled={serviceLoading} onClick={() => setPanel(null)}
+//         className={`px-4 py-2 rounded-lg transition ${serviceLoading ? "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+//         Cancel
+//       </button>
+//     </div>
+//   </form>
+// </div>
+
+// <div className={`overflow-hidden transition-all duration-300 ${panel === "update" ? "max-h-[500px] mt-4" : "max-h-0"}`}>
+//   <form onSubmit={handleUpdateSubmit} className="mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+//     <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Update Service</h4>
+
+//     {serviceNotice.show && (
+//       <div role="alert" className={`mb-3 flex items-start gap-2 rounded-lg border p-3 text-sm
+//         ${serviceNotice.type === "success"
+//           ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200"
+//           : "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"}`}>
+//         <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/60 dark:bg-white/10">
+//           {serviceNotice.type === "success" ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+//         </span>
+//         <div className="flex-1">{serviceNotice.text}</div>
+//         <button type="button" onClick={() => setServiceNotice(prev => ({ ...prev, show: false }))} className="ml-2 rounded px-1 text-xs opacity-70 hover:opacity-100" aria-label="Close">×</button>
+//       </div>
+//     )}
+
+//     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//       <div className="sm:col-span-2">
+//         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Remarks</label>
+//         <textarea
+//           name="remarks" value={updateForm.remarks} onChange={handleUpdateChange} required
+//           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+//           placeholder="Add visit remarks..."
+//           rows={3}
+//         />
+//       </div>
+//       <div>
+//         <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Visit Date (optional)</label>
+//         <input
+//           type="date" name="visitDate" value={updateForm.visitDate} onChange={handleUpdateChange}
+//           className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+//         />
+//       </div>
+//     </div>
+
+//     <div className="mt-4 flex items-center gap-2">
+//       <button type="submit" disabled={updateLoading}
+//         className={`px-4 py-2 rounded-lg transition text-white disabled:pointer-events-none ${updateLoading ? "bg-blue-400 cursor-not-allowed opacity-70" : "bg-blue-600 hover:bg-blue-700"}`}>
+//         {updateLoading ? "Updating..." : "Update"}
+//       </button>
+//       <button type="button" disabled={updateLoading}
+//         onClick={() => setPanel(null)}
+//         className={`px-4 py-2 rounded-lg transition ${updateLoading ? "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed" : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+//         Cancel
+//       </button>
+//     </div>
+
+//     <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+//       Only admin or salesperson can add visits; service must be active and within allowed visits. Errors will be shown if expired or maxed out. 
+//     </p>
+//   </form>
+// </div>
+
+
+//               </div>
+//             )}
+
+//             {serviceNotice.show && (
+//               <div
+//                 role="alert"
+//                 className={`mb-3 flex items-start gap-2 rounded-lg border p-3 text-sm
+//       ${serviceNotice.type === "success"
+//                     ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200"
+//                     : "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"
+//                   }`}
+//               >
+//                 <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/60 dark:bg-white/10">
+//                   {serviceNotice.type === "success" ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+//                 </span>
+//                 <div className="flex-1">{serviceNotice.text}</div>
+//                 <button
+//                   type="button"
+//                   onClick={() => setServiceNotice(prev => ({ ...prev, show: false }))}
+//                   className="ml-2 rounded px-1 text-xs opacity-70 hover:opacity-100"
+//                   aria-label="Close"
+//                 >
+//                   ×
+//                 </button>
+//               </div>
+//             )}
+
+
+//           </div>
+//         </div>
+
+//         {/* Main Content Grid */}
+//         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+//           {/* Left Side - Project Information */}
+//           <div className="xl:col-span-2 space-y-6">
+//             {/* Budget & Timeline */}
+//             <InfoCard icon={<DollarSign className="w-5 h-5" />} title="Budget & Timeline">
+//               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//                 <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+//                   <div className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+//                     Estimated Budget
+//                   </div>
+//                   <div className="text-lg font-bold text-blue-900 dark:text-blue-200">
+//                     ₹{selectedProject.estimatedBudget?.toLocaleString()}
+//                   </div>
+//                 </div>
+
+//                 {selectedProject.finalBudget && (
+//                   <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+//                     <div className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">
+//                       Final Budget
+//                     </div>
+//                     <div className="text-lg font-bold text-green-900 dark:text-green-200">
+//                       ₹{selectedProject.finalBudget.toLocaleString()}
+//                     </div>
+//                   </div>
+//                 )}
+//               </div>
+
+//               <div className="mt-4 space-y-2">
+//                 <InfoItem
+//                   label="Starting Date"
+//                   value={new Date(selectedProject.startingDate).toLocaleDateString('en-IN', {
+//                     year: 'numeric',
+//                     month: 'long',
+//                     day: 'numeric'
+//                   })}
+//                   icon={<Calendar className="w-4 h-4" />}
+//                 />
+//                 <InfoItem
+//                   label="Location"
+//                   value={selectedProject.location}
+//                   icon={<MapPin className="w-4 h-4" />}
+//                 />
+//                 <InfoItem
+//                   label="Category"
+//                   value={selectedProject.category}
+//                   icon={<FileText className="w-4 h-4" />}
+//                 />
+//               </div>
+//             </InfoCard>
+
+//             {/* Customer Information */}
+//             <InfoCard icon={<User className="w-5 h-5" />} title="Customer Information">
+//               <div className="space-y-2">
+//                 <InfoItem
+//                   label="Customer Name"
+//                   value={selectedProject.client?.name}
+//                   icon={<User className="w-4 h-4" />}
+//                 />
+//                 <InfoItem
+//                   label="Phone Number"
+//                   value={selectedProject.client?.phone}
+//                   icon={<Phone className="w-4 h-4" />}
+//                 />
+//                 {selectedProject.customerEmail && (
+//                   <InfoItem
+//                     label="Email"
+//                     value={selectedProject.client?.email}
+//                     icon={<Mail className="w-4 h-4" />}
+//                   />
+//                 )}
+//                 {selectedProject.customerAddress && (
+//                   <InfoItem
+//                     label="Address"
+//                     value={selectedProject.client?.address}
+//                     icon={<MapPin className="w-4 h-4" />}
+//                   />
+//                 )}
+//               </div>
+//             </InfoCard>
+
+//             {/* Team Information */}
+//             <InfoCard icon={<Users className="w-5 h-5" />} title="Team Information">
+//               <div className="space-y-2">
+//                 <InfoItem
+//                   label="Salesperson"
+//                   value={selectedProject.salesperson?.name}
+//                   icon={<User className="w-4 h-4" />}
+//                 />
+//                 <InfoItem
+//                   label="Designer"
+//                   value={selectedProject.designer?.name}
+//                   icon={<User className="w-4 h-4" />}
+//                 />
+//                 <InfoItem
+//                   label="Carpenter"
+//                   value={selectedProject.carpenter?.name}
+//                   icon={<Users className="w-4 h-4" />}
+//                 />
+//               </div>
+//             </InfoCard>
+//           </div>
+
+//           {/* Right Side - Documents and Designs */}
+//           <div className="xl:col-span-2 space-y-6">
+
+//             {/* Services Section */}
+//             <InfoCard icon={<FileText className="w-5 h-5" />} title="Service Details & Visit History">
+//               <div className="space-y-6">
+//                 {selectedProject.service ? (
+//                   <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800">
+//                     {/* Header */}
+//                     <div className="flex items-center justify-between gap-3 bg-gray-50/60 dark:bg-gray-700/60 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+//                       <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+//                         Service Information
+//                       </h4>
+//                       <span
+//                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset
+//               ${selectedProject.service.isExpired
+//                             ? "bg-red-50 text-red-700 ring-red-200 dark:bg-red-900/30 dark:text-red-200 dark:ring-red-800"
+//                             : "bg-green-50 text-green-700 ring-green-200 dark:bg-green-900/30 dark:text-green-200 dark:ring-green-800"
+//                           }`}
+//                       >
+//                         <span className={`h-1.5 w-1.5 rounded-full ${selectedProject.service.isExpired ? "bg-red-500" : "bg-green-500"}`} />
+//                         {selectedProject.service.isExpired ? "Expired" : "Active"}
+//                       </span>
+//                     </div>
+
+//                     {/* Key stats */}
+//                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
+//                       <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
+//                         <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Duration</div>
+//                         <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+//                           {selectedProject.service.durationYears} Years
+//                         </div>
+//                       </div>
+//                       <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
+//                         <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Allowed Visits</div>
+//                         <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+//                           {selectedProject.service.allowedVisits}
+//                         </div>
+//                       </div>
+//                       <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
+//                         <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Used Visits</div>
+//                         <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+//                           {selectedProject.service.usedVisits}
+//                         </div>
+//                       </div>
+//                     </div>
+
+//                     {/* Visit history */}
+//                     <div className="px-4 pb-4">
+//                       <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
+//                         <Clock className="w-4 h-4" />
+//                         Visit History
+//                       </h5>
+
+//                       {selectedProject.service.visits?.length > 0 ? (
+//                         <ol className="relative border-s border-gray-200 dark:border-gray-700 ms-3">
+//                           {selectedProject.service.visits.map((visit, i) => (
+//                             <li key={visit._id || i} className="mb-4 ms-3">
+//                               <span className="absolute -start-1.5 mt-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 ring-4 ring-white dark:ring-gray-800"></span>
+//                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+//                                 <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+//                                   {new Date(visit.visitDate).toLocaleDateString("en-IN")}
+//                                 </div>
+//                                 <span className="inline-flex w-fit rounded-md bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:text-blue-200 ring-1 ring-blue-200 dark:ring-blue-800">
+//                                   Visit #{i + 1}
+//                                 </span>
+//                               </div>
+//                               <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+//                                 <span className="font-semibold text-gray-800 dark:text-gray-100">Remarks:</span> {visit.remarks || "N/A"}
+//                               </p>
+//                             </li>
+//                           ))}
+//                         </ol>
+//                       ) : (
+//                         <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 py-8">
+//                           <div className="text-center">
+//                             <FileText className="w-8 h-8 mx-auto mb-2 opacity-60 text-gray-400" />
+//                             <p className="text-sm text-gray-500 dark:text-gray-400">No visits recorded yet</p>
+//                           </div>
+//                         </div>
+//                       )}
+//                     </div>
+//                   </div>
+//                 ) : (
+//                   <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 py-10 text-center">
+//                     <FileText className="w-8 h-8 mx-auto mb-2 opacity-60 text-gray-400" />
+//                     <p className="text-sm text-gray-600 dark:text-gray-400">No service details available</p>
+//                   </div>
+//                 )}
+//               </div>
+//             </InfoCard>
+
+
+
+//             {/* Documents Section */}
+//             <InfoCard icon={<FileText className="w-5 h-5" />} title="Documents">
+//               <div className="space-y-3">
+//                 {/* Rough Quotation */}
+//                 {selectedProject.documents?.roughQuotation && (
+//                   <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+//                     <div className="flex items-center justify-between mb-2">
+//                       <div className="flex items-center gap-2">
+//                         <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+//                         <span className="text-sm font-medium text-gray-900 dark:text-white">
+//                           Rough Quotation
+//                         </span>
+//                       </div>
+//                       <button
+//                         onClick={() => handleDownloadDocument(
+//                           selectedProject._id,
+//                           'roughQuotation',
+//                           selectedProject.documents.roughQuotation.filename
+//                         )}
+//                         className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+//                       >
+//                         <Download className="w-4 h-4" />
+//                       </button>
+//                     </div>
+//                     <div className="text-xs text-gray-500 dark:text-gray-400">
+//                       {selectedProject.documents.roughQuotation.filename}
+//                     </div>
+//                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+//                       Uploaded: {selectedProject.documents.roughQuotation.uploadDate}
+//                     </div>
+//                   </div>
+//                 )}
+
+//                 {/* Final Quotation */}
+//                 {selectedProject.documents?.finalQuotation && (
+//                   <div className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+//                     <div className="flex items-center justify-between mb-2">
+//                       <div className="flex items-center gap-2">
+//                         <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+//                         <span className="text-sm font-medium text-gray-900 dark:text-white">
+//                           Final Quotation
+//                         </span>
+//                       </div>
+//                       <button
+//                         onClick={() => handleDownloadDocument(
+//                           selectedProject._id,
+//                           'finalQuotation',
+//                           selectedProject.documents.finalQuotation.filename
+//                         )}
+//                         className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+//                       >
+//                         <Download className="w-4 h-4" />
+//                       </button>
+//                     </div>
+//                     <div className="text-xs text-gray-500 dark:text-gray-400">
+//                       {selectedProject.documents.finalQuotation.filename}
+//                     </div>
+//                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+//                       Uploaded: {selectedProject.documents.finalQuotation.uploadDate}
+//                     </div>
+//                   </div>
+//                 )}
+
+//                 {/* Show message if no documents */}
+//                 {!selectedProject.documents?.roughQuotation &&
+//                   !selectedProject.documents?.finalQuotation && (
+//                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+//                       <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+//                       <p className="text-sm">No documents uploaded yet</p>
+//                     </div>
+//                   )}
+//               </div>
+//             </InfoCard>
+
+//             {/* Designs Section */}
+//             <InfoCard icon={<FileText className="w-5 h-5" />} title="Design Files & Approval History">
+//               <div className="space-y-8">
+//                 {selectedProject.designs?.length > 0 ? (
+//                   selectedProject.designs.map((design, designIndex) => (
+//                     <div key={design._id || designIndex} className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+//                       <div className="bg-gray-50 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
+//                         <div className="flex items-center justify-between">
+//                           <div>
+//                             <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+//                               Design #{designIndex + 1}
+//                             </h4>
+//                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+//                               Created: {design.createdAt ? new Date(design.createdAt).toLocaleDateString('en-IN') : "N/A"}
+//                             </p>
+//                           </div>
+//                         </div>
+//                       </div>
+//                       <div className="p-4 space-y-4">
+//                         {/* PDFs Section */}
+//                         {design.pdfs?.length > 0 ? (
+//                           <div className="space-y-6">
+//                             {design.pdfs.map((pdf, pdfIndex) => {
+//                               const pdfFeedbackHistory = (design.approvalHistory || []).filter(
+//                                 (h) => h.versionSelect === pdf.version
+//                               );
+//                               return (
+//                                 <div
+//                                   key={pdf._id || pdfIndex}
+//                                   className="border border-gray-100 dark:border-gray-700 rounded p-3 mb-4"
+//                                 >
+//                                   <div className="flex items-center justify-between">
+//                                     <div>
+//                                       <div className="font-medium text-gray-900 dark:text-white">
+//                                         Document {designIndex + 1}.{pdfIndex + 1}: {pdf.message || "Untitled Design PDF"}
+//                                       </div>
+//                                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 space-y-1">
+//                                         <div>
+//                                           <strong>Version:</strong> {pdf.version}
+//                                         </div>
+//                                         <div>
+//                                           <strong>Uploaded:</strong> {new Date(pdf.uploadedAt).toLocaleString("en-IN")}
+//                                         </div>
+//                                         <div>
+//                                           <strong>By:</strong> {pdf.uploadedBy?.name} ({pdf.uploadedBy?.email})
+//                                         </div>
+//                                       </div>
+//                                     </div>
+//                                     <button
+//                                       onClick={() => window.open(pdf.pdfUrl, "_blank")}
+//                                       className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+//                                       title="Download"
+//                                     >
+//                                       <Download className="w-4 h-4" />
+//                                     </button>
+//                                   </div>
+//                                   {/* FEEDBACK history directly below this PDF */}
+//                                   {pdfFeedbackHistory.length > 0 && (
+//                                     <div className="mt-3">
+//                                       <h5 className="text-sm font-semibold mb-2 text-gray-700 dark:text-white flex items-center gap-2">
+//                                         <Clock className="w-4 h-4" />
+//                                         Feedback History
+//                                       </h5>
+//                                       <ul className="space-y-2 text-gray-600 dark:text-gray-300 text-sm">
+//                                         {pdfFeedbackHistory.map((h, hi) => (
+//                                           <li key={h._id || hi} className="border-b border-gray-100 dark:border-gray-700 pb-1">
+//                                             <span className={`mr-2 font-bold ${h.isApproved ? "text-green-700" : "text-red-700"}`}>
+//                                               {h.isApproved ? "Approved" : "Rejected"}
+//                                             </span>
+//                                             (Document {designIndex + 1} Version {h.versionSelect}) - {h.feedbackMessage}
+//                                             <span className="ml-2 text-xs text-gray-400">
+//                                               {h.updatedAt ? new Date(h.updatedAt).toLocaleDateString("en-IN") : ""}
+//                                             </span>
+//                                           </li>
+//                                         ))}
+//                                       </ul>
+//                                     </div>
+//                                   )}
+//                                 </div>
+//                               );
+//                             })}
+//                           </div>
+//                         ) : (
+//                           <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+//                             <FileText className="w-5 h-5 mx-auto mb-1 opacity-50" />
+//                             <span>No design files uploaded yet</span>
+//                           </div>
+//                         )}
+//                       </div>
+//                     </div>
+//                   ))
+//                 ) : (
+//                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+//                     <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+//                     <p className="text-sm">No design files uploaded yet</p>
+//                   </div>
+//                 )}
+//               </div>
+//             </InfoCard>
+
+//           </div>
+//         </div>
+
+//         {/* Daily Updates with Calendar Dropdown */}
+//         {selectedProject.dailyUpdates?.length > 0 && (
+//           <div className="mt-12">
+//             <InfoCard
+//               icon={<Calendar1 className="w-5 h-5" />}
+//               title="Daily Updates"
+//             >
+//               {/* Calendar Dropdown and Info */}
+//               <div className="mb-6">
+//                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+//                   <CalendarDropdown />
+//                   <div className="text-sm text-gray-600 dark:text-gray-400">
+//                     Showing updates from last 5 days (including selected date)
+//                   </div>
+//                 </div>
+
+//                 {/* Date Range Display */}
+//                 <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+//                   <div className="text-sm text-blue-800 dark:text-blue-300">
+//                     <strong>Date Range:</strong> {
+//                       (() => {
+//                         const endDate = new Date(selectedDate);
+//                         const startDate = new Date(selectedDate);
+//                         startDate.setDate(startDate.getDate() - 4);
+//                         return `${startDate.toLocaleDateString('en-IN')} to ${endDate.toLocaleDateString('en-IN')}`;
+//                       })()
+//                     }
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* Updates Table */}
+//               {filteredUpdates.length > 0 ? (
+//                 <div className="overflow-x-auto">
+//                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+//                     <thead>
+//                       <tr className="bg-gray-50 dark:bg-gray-700 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
+//                         <th className="px-4 py-2">Date</th>
+//                         <th className="px-4 py-2">Time of Day</th>
+//                         <th className="px-4 py-2">Uploaded By</th>
+//                         <th className="px-4 py-2">Role</th>
+//                         <th className="px-4 py-2">Actions</th>
+//                       </tr>
+//                     </thead>
+//                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+//                       {filteredUpdates.map((update) => (
+//                         <React.Fragment key={update._id}>
+//                           <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+//                             <td className="px-4 py-2">
+//                               {update.date.toLocaleDateString('en-IN')}
+//                             </td>
+//                             <td className="px-4 py-2 capitalize">{update.type}</td>
+//                             <td className="px-4 py-2">{update.uploadedBy?.name}</td>
+//                             <td className="px-4 py-2">{update.uploadedBy?.role}</td>
+//                             <td className="px-4 py-2">
+//                               <button
+//                                 onClick={() =>
+//                                   setExpandedRows((prev) => ({
+//                                     ...prev,
+//                                     [update._id]: !prev[update._id],
+//                                   }))
+//                                 }
+//                                 className="text-blue-600 hover:text-blue-800 transition"
+//                               >
+//                                 <Eye className="w-5 h-5" />
+//                               </button>
+//                             </td>
+//                           </tr>
+
+//                           {expandedRows[update._id] && (
+//                             <tr className="bg-gray-50 dark:bg-gray-700">
+//                               <td colSpan={5} className="px-4 py-4">
+//                                 <div className="text-sm text-gray-800 dark:text-gray-200 mb-2">
+//                                   <strong>Message:</strong> {update.message}
+//                                 </div>
+//                                 {update.images?.length > 0 && (
+//                                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-2">
+//                                     {update.images.map((img, i) => (
+//                                       <img
+//                                         key={img._id || i}
+//                                         src={img.url}
+//                                         alt={`Update Image ${i + 1}`}
+//                                         className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:opacity-80 transition-opacity"
+//                                         onClick={() => window.open(img.url, '_blank')}
+//                                       />
+//                                     ))}
+//                                   </div>
+//                                 )}
+//                               </td>
+//                             </tr>
+//                           )}
+//                         </React.Fragment>
+//                       ))}
+//                     </tbody>
+//                   </table>
+//                 </div>
+//               ) : (
+//                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+//                   <Calendar1 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+//                   <p className="text-sm">No updates found for the selected date range</p>
+//                 </div>
+//               )}
+//             </InfoCard>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default ProjectDetails;
+
+
+
+
+
 "use client";
 
 import React from "react";
 import {
-  ArrowLeft, Edit3, Calendar, MapPin, DollarSign,
-  User, Phone, Mail, FileText, Users, Download, Camera,
+  ArrowLeft,
+  Edit3,
+  Calendar,
+  MapPin,
+  DollarSign,
+  User,
+  Phone,
+  Mail,
+  FileText,
+  Users,
+  Download,
   Calendar1,
   Eye,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Clock,
-  CheckCircle,
-  XCircle
+  Clock
 } from "lucide-react";
-import { createService } from "@/services/service.services";
 
-const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handleDownloadDocument }) => {
+import ProjectService, { ServiceActionButton } from "./ProjectService";
+
+const ProjectDetails = ({
+  selectedProject,
+  navigateToList,
+  navigateToEdit,
+  handleDownloadDocument,
+}) => {
   const [expandedRows, setExpandedRows] = React.useState({});
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const [expandedDesigns, setExpandedDesigns] = React.useState({});
+  const [servicePanelOpen, setServicePanelOpen] = React.useState(false);
 
+  // ... (Other unchanged logic: filtered updates, calendar dropdown, InfoCard, InfoItem, status badges, etc.)
 
-  const [isServiceOpen, setIsServiceOpen] = React.useState(false);
-  const [serviceForm, setServiceForm] = React.useState({ durationYears: "", allowedVisits: "" });
-  const [serviceLoading, setServiceLoading] = React.useState(false);
-  const [serviceError, setServiceError] = React.useState("");
-
-  const toggleService = () => setIsServiceOpen(v => !v);
-
-  const handleServiceChange = (e) => {
-    const { name, value } = e.target;
-    setServiceForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleServiceSubmit = async (e) => {
-    e.preventDefault();
-    setServiceError("");
-    const duration = Number(serviceForm.durationYears);
-    const visits = Number(serviceForm.allowedVisits);
-
-    if (!Number.isFinite(duration) || duration <= 0) {
-      const msg = "Duration must be a positive number";
-      setServiceError(msg);
-      setServiceNotice({ show: true, type: "error", text: msg });
-      return;
-    }
-    if (!Number.isFinite(visits) || visits < 0) {
-      const msg = "Allowed visits must be 0 or more";
-      setServiceError(msg);
-      setServiceNotice({ show: true, type: "error", text: msg });
-      return;
-    }
-
-    try {
-      setServiceLoading(true);
-      await createService(selectedProject._id, {
-        durationYears: duration,
-        allowedVisits: visits,
-      });
-      setIsServiceOpen(false);
-      setServiceForm({ durationYears: "", allowedVisits: "" });
-      setServiceNotice({
-        show: true,
-        type: "success",
-        text: "Service details saved successfully",
-      });
-    } catch (err) {
-      const msg = typeof err === "string" ? err : (err?.message || "Failed to save service");
-      setServiceError(msg);
-      setServiceNotice({ show: true, type: "error", text: msg });
-    } finally {
-      setServiceLoading(false);
-    }
-  };
-
-  const [serviceNotice, setServiceNotice] = React.useState({
-    show: false,
-    type: "success", // "success" | "error"
-    text: "",
-  });
-
-  React.useEffect(() => {
-    if (!serviceNotice.show) return;
-    const t = setTimeout(() => {
-      setServiceNotice(prev => ({ ...prev, show: false }));
-    }, 2500); // auto-hide after 2.5s
-    return () => clearTimeout(t);
-  }, [serviceNotice.show]);
-
-
-
-
-  // Get filtered daily updates based on selected date (5 days from selected date)
+   // Get filtered daily updates based on selected date (5 days from selected date)
   const getFilteredUpdates = () => {
     if (!selectedProject.dailyUpdates?.length) return [];
 
@@ -102,13 +1173,13 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
     startDate.setDate(startDate.getDate() - 4); // 5 days total (including selected date)
 
     return selectedProject.dailyUpdates
-      .flatMap(updateGroup =>
-        updateGroup.dailyUpdates.map(update => ({
+      .flatMap((updateGroup) =>
+        updateGroup.dailyUpdates.map((update) => ({
           ...update,
-          date: new Date(update.createdAt)
+          date: new Date(update.createdAt),
         }))
       )
-      .filter(update => {
+      .filter((update) => {
         const updateDate = new Date(update.date.toDateString());
         const start = new Date(startDate.toDateString());
         const end = new Date(endDate.toDateString());
@@ -129,8 +1200,18 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
     const daysInMonth = lastDayOfMonth.getDate();
 
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
 
     const days = [];
@@ -147,8 +1228,8 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
       const isToday = today.toDateString() === date.toDateString();
 
       // Check if there are updates on this date
-      const hasUpdates = selectedProject.dailyUpdates?.some(updateGroup =>
-        updateGroup.dailyUpdates.some(update => {
+      const hasUpdates = selectedProject.dailyUpdates?.some((updateGroup) =>
+        updateGroup.dailyUpdates.some((update) => {
           const updateDate = new Date(update.createdAt);
           return updateDate.toDateString() === date.toDateString();
         })
@@ -163,13 +1244,14 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
           }}
           className={`
             h-8 w-8 rounded-full text-sm font-medium transition-colors
-            ${isSelected
-              ? 'bg-blue-600 text-white'
-              : isToday
-                ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
+            ${
+              isSelected
+                ? "bg-blue-600 text-white"
+                : isToday
+                ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300"
                 : hasUpdates
-                  ? 'bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
-                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                ? "bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50"
+                : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
             }
           `}
         >
@@ -187,13 +1269,17 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
         >
           <Calendar className="w-4 h-4" />
           <span className="text-sm font-medium">
-            {selectedDate.toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric'
+            {selectedDate.toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
             })}
           </span>
-          <ChevronDown className={`w-4 h-4 transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${
+              isCalendarOpen ? "rotate-180" : ""
+            }`}
+          />
         </button>
 
         {/* Dropdown Calendar */}
@@ -220,16 +1306,17 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
             </div>
 
             <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                <div
+                  key={day}
+                  className="h-8 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400"
+                >
                   {day}
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-1">
-              {days}
-            </div>
+            <div className="grid grid-cols-7 gap-1">{days}</div>
 
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
               <div className="flex items-center gap-4">
@@ -279,14 +1366,18 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
     }
 
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${config.bg} ${config.text} ${config.border}`}>
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium border ${config.bg} ${config.text} ${config.border}`}
+      >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
 
   const InfoCard = ({ icon, title, children, className = "" }) => (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 ${className}`}>
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 ${className}`}
+    >
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
         {icon}
         {title}
@@ -308,6 +1399,9 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
   );
 
   const filteredUpdates = getFilteredUpdates();
+
+
+  // Place your functions here or keep them as before
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -339,158 +1433,50 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                       {selectedProject.title}
                     </h1>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {selectedProject.category}
-                      </span>
-                      {selectedProject.designStatus && getStatusBadge(selectedProject.designStatus)}
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{selectedProject.category}</span>
+                      {/* status badge */}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <button
-                onClick={toggleService}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span className="text-sm font-medium">Service</span>
-              </button>
-
-
-
-              <button
-                onClick={navigateToEdit}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span className="text-sm font-medium">Edit Project</span>
-              </button>
+              {/* Service and Edit buttons side by side */}
+              <div className="flex items-center gap-2">
+                <ServiceActionButton selectedProject={selectedProject} onClick={() => setServicePanelOpen(true)} />
+                <button
+                  onClick={navigateToEdit}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span className="text-sm font-medium">Edit Project</span>
+                </button>
+              </div>
             </div>
 
             {selectedProject.description && (
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-gray-700 dark:text-gray-300 text-sm">
-                  {selectedProject.description}
-                </p>
-
-                {/* Service form panel */}
-                <div
-                  className={`
-        overflow-hidden transition-all duration-300
-        ${isServiceOpen ? "max-h-[500px] mt-4" : "max-h-0"}
-      `}
-                >
-                  <form
-                    onSubmit={handleServiceSubmit}
-                    className="mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-                  >
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                      Service Details
-                    </h4>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                          Duration (years)
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          step="1"
-                          name="durationYears"
-                          value={serviceForm.durationYears}
-                          onChange={handleServiceChange}
-                          className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="e.g. 2"
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                          Allowed Visits
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          name="allowedVisits"
-                          value={serviceForm.allowedVisits}
-                          onChange={handleServiceChange}
-                          className="w-full px-3 py-2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="e.g. 4"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-2">
-                      <button
-                        type="submit"
-                        disabled={serviceLoading}
-                        className={`px-4 py-2 rounded-lg transition
-    ${serviceLoading
-                            ? "bg-blue-400 cursor-not-allowed opacity-70"
-                            : "bg-blue-600 hover:bg-blue-700"
-                          }
-    text-white disabled:pointer-events-none`}
-                      >
-                        {serviceLoading ? "Saving..." : "Save"}
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={serviceLoading}
-                        onClick={() => setIsServiceOpen(false)}
-                        className={`px-4 py-2 rounded-lg transition
-    ${serviceLoading
-                            ? "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-                            : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
-                          }`}
-                      >
-                        Cancel
-                      </button>
-
-                    </div>
-                  </form>
-                </div>
+                <p className="text-gray-700 dark:text-gray-300 text-sm">{selectedProject.description}</p>
               </div>
             )}
-
-            {serviceNotice.show && (
-              <div
-                role="alert"
-                className={`mb-3 flex items-start gap-2 rounded-lg border p-3 text-sm
-      ${serviceNotice.type === "success"
-                    ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200"
-                    : "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"
-                  }`}
-              >
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/60 dark:bg-white/10">
-                  {serviceNotice.type === "success" ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                </span>
-                <div className="flex-1">{serviceNotice.text}</div>
-                <button
-                  type="button"
-                  onClick={() => setServiceNotice(prev => ({ ...prev, show: false }))}
-                  className="ml-2 rounded px-1 text-xs opacity-70 hover:opacity-100"
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-
           </div>
         </div>
 
-        {/* Main Content Grid */}
+        {/* Show service forms panel */}
+        {servicePanelOpen && (
+          <ProjectService selectedProject={selectedProject} onClose={() => setServicePanelOpen(false)} />
+        )}
+
+        {/* ... Rest of ProjectDetails content remain unchanged */}
+
+ {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Left Side - Project Information */}
           <div className="xl:col-span-2 space-y-6">
             {/* Budget & Timeline */}
-            <InfoCard icon={<DollarSign className="w-5 h-5" />} title="Budget & Timeline">
+            <InfoCard
+              icon={<DollarSign className="w-5 h-5" />}
+              title="Budget & Timeline"
+            >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
                   <div className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
@@ -516,10 +1502,12 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
               <div className="mt-4 space-y-2">
                 <InfoItem
                   label="Starting Date"
-                  value={new Date(selectedProject.startingDate).toLocaleDateString('en-IN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
+                  value={new Date(
+                    selectedProject.startingDate
+                  ).toLocaleDateString("en-IN", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
                   })}
                   icon={<Calendar className="w-4 h-4" />}
                 />
@@ -537,7 +1525,10 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
             </InfoCard>
 
             {/* Customer Information */}
-            <InfoCard icon={<User className="w-5 h-5" />} title="Customer Information">
+            <InfoCard
+              icon={<User className="w-5 h-5" />}
+              title="Customer Information"
+            >
               <div className="space-y-2">
                 <InfoItem
                   label="Customer Name"
@@ -549,7 +1540,12 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                   value={selectedProject.client?.phone}
                   icon={<Phone className="w-4 h-4" />}
                 />
-                {selectedProject.customerEmail && (
+                <InfoItem
+                  label="Email"
+                  value={selectedProject.client?.email}
+                  icon={<Mail className="w-4 h-4" />}
+                />
+                {/* {selectedProject.customerEmail && (
                   <InfoItem
                     label="Email"
                     value={selectedProject.client?.email}
@@ -562,37 +1558,90 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                     value={selectedProject.client?.address}
                     icon={<MapPin className="w-4 h-4" />}
                   />
-                )}
+                )} */}
               </div>
             </InfoCard>
 
             {/* Team Information */}
-            <InfoCard icon={<Users className="w-5 h-5" />} title="Team Information">
-              <div className="space-y-2">
-                <InfoItem
-                  label="Salesperson"
-                  value={selectedProject.salesperson?.name}
-                  icon={<User className="w-4 h-4" />}
-                />
-                <InfoItem
-                  label="Designer"
-                  value={selectedProject.designer?.name}
-                  icon={<User className="w-4 h-4" />}
-                />
-                <InfoItem
-                  label="Carpenter"
-                  value={selectedProject.carpenter?.name}
-                  icon={<Users className="w-4 h-4" />}
-                />
-              </div>
-            </InfoCard>
+<InfoCard
+  icon={<Users className="w-5 h-5" />}
+  title="Team Information"
+>
+  <div className="space-y-4">
+    {/* Salesperson */}
+    <div className="p-3 rounded border">
+      <InfoItem
+        label="Salesperson Name"
+        value={selectedProject.salesperson?.name || "N/A"}
+        icon={<User className="w-4 h-4" />}
+      />
+      <p className="text-sm">
+        <InfoItem
+        label="Salesperson Phone Number"
+        value={selectedProject.salesperson?.phone || "N/A"}
+        icon={<User className="w-4 h-4" />}
+      />
+        <InfoItem
+        label="Salesperson Email"
+        value={selectedProject.salesperson?.email || "N/A"}
+        icon={<User className="w-4 h-4" />}
+      />
+      </p>
+    </div>
+
+    {/* Designer */}
+    <div className="p-3 rounded border">
+      <InfoItem
+        label="Designer"
+        value={selectedProject.designer?.name || "N/A"}
+        icon={<User className="w-4 h-4" />}
+      />
+      <p className="text-sm">
+        <InfoItem
+        label="Designer Phone Number"
+        value={selectedProject.designer?.phone || "N/A"}
+        icon={<User className="w-4 h-4" />}
+      />
+        <InfoItem
+        label="Designer Email"
+        value={selectedProject.designer?.email || "N/A"}
+        icon={<User className="w-4 h-4" />}
+      />
+      </p>
+    </div>
+
+    {/* Carpenter */}
+    <div className="p-3 rounded border ">
+      <InfoItem
+        label="Carpenter"
+        value={selectedProject.carpenter?.name || "N/A"}
+        icon={<Users className="w-4 h-4" />}
+      />
+      <p className="text-sm">
+        <InfoItem
+        label="Carpenter Phone Number"
+        value={selectedProject.carpenter?.phone || "N/A"}
+        icon={<User className="w-4 h-4" />}
+      />
+        <InfoItem
+        label="Carpenter Email"
+        value={selectedProject.carpenter?.email || "N/A"}
+        icon={<User className="w-4 h-4" />}
+      />
+      </p>
+    </div>
+  </div>
+</InfoCard>
+
           </div>
 
           {/* Right Side - Documents and Designs */}
           <div className="xl:col-span-2 space-y-6">
-
             {/* Services Section */}
-            <InfoCard icon={<FileText className="w-5 h-5" />} title="Service Details & Visit History">
+            <InfoCard
+              icon={<FileText className="w-5 h-5" />}
+              title="Service Details & Visit History"
+            >
               <div className="space-y-6">
                 {selectedProject.service ? (
                   <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800">
@@ -603,32 +1652,47 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                       </h4>
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset
-              ${selectedProject.service.isExpired
-                            ? "bg-red-50 text-red-700 ring-red-200 dark:bg-red-900/30 dark:text-red-200 dark:ring-red-800"
-                            : "bg-green-50 text-green-700 ring-green-200 dark:bg-green-900/30 dark:text-green-200 dark:ring-green-800"
-                          }`}
+              ${
+                selectedProject.service.isExpired
+                  ? "bg-red-50 text-red-700 ring-red-200 dark:bg-red-900/30 dark:text-red-200 dark:ring-red-800"
+                  : "bg-green-50 text-green-700 ring-green-200 dark:bg-green-900/30 dark:text-green-200 dark:ring-green-800"
+              }`}
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full ${selectedProject.service.isExpired ? "bg-red-500" : "bg-green-500"}`} />
-                        {selectedProject.service.isExpired ? "Expired" : "Active"}
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            selectedProject.service.isExpired
+                              ? "bg-red-500"
+                              : "bg-green-500"
+                          }`}
+                        />
+                        {selectedProject.service.isExpired
+                          ? "Expired"
+                          : "Active"}
                       </span>
                     </div>
 
                     {/* Key stats */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
                       <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Duration</div>
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          Duration
+                        </div>
                         <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
                           {selectedProject.service.durationYears} Years
                         </div>
                       </div>
                       <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Allowed Visits</div>
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          Allowed Visits
+                        </div>
                         <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
                           {selectedProject.service.allowedVisits}
                         </div>
                       </div>
                       <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
-                        <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Used Visits</div>
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          Used Visits
+                        </div>
                         <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
                           {selectedProject.service.usedVisits}
                         </div>
@@ -649,14 +1713,19 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                               <span className="absolute -start-1.5 mt-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 ring-4 ring-white dark:ring-gray-800"></span>
                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                                 <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                  {new Date(visit.visitDate).toLocaleDateString("en-IN")}
+                                  {new Date(visit.visitDate).toLocaleDateString(
+                                    "en-IN"
+                                  )}
                                 </div>
                                 <span className="inline-flex w-fit rounded-md bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:text-blue-200 ring-1 ring-blue-200 dark:ring-blue-800">
                                   Visit #{i + 1}
                                 </span>
                               </div>
                               <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                                <span className="font-semibold text-gray-800 dark:text-gray-100">Remarks:</span> {visit.remarks || "N/A"}
+                                <span className="font-semibold text-gray-800 dark:text-gray-100">
+                                  Remarks:
+                                </span>{" "}
+                                {visit.remarks || "N/A"}
                               </p>
                             </li>
                           ))}
@@ -665,7 +1734,9 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                         <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 py-8">
                           <div className="text-center">
                             <FileText className="w-8 h-8 mx-auto mb-2 opacity-60 text-gray-400" />
-                            <p className="text-sm text-gray-500 dark:text-gray-400">No visits recorded yet</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              No visits recorded yet
+                            </p>
                           </div>
                         </div>
                       )}
@@ -674,13 +1745,13 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                 ) : (
                   <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 py-10 text-center">
                     <FileText className="w-8 h-8 mx-auto mb-2 opacity-60 text-gray-400" />
-                    <p className="text-sm text-gray-600 dark:text-gray-400">No service details available</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      No service details available
+                    </p>
                   </div>
                 )}
               </div>
             </InfoCard>
-
-
 
             {/* Documents Section */}
             <InfoCard icon={<FileText className="w-5 h-5" />} title="Documents">
@@ -696,11 +1767,13 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                         </span>
                       </div>
                       <button
-                        onClick={() => handleDownloadDocument(
-                          selectedProject._id,
-                          'roughQuotation',
-                          selectedProject.documents.roughQuotation.filename
-                        )}
+                        onClick={() =>
+                          handleDownloadDocument(
+                            selectedProject._id,
+                            "roughQuotation",
+                            selectedProject.documents.roughQuotation.filename
+                          )
+                        }
                         className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
                       >
                         <Download className="w-4 h-4" />
@@ -710,7 +1783,8 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                       {selectedProject.documents.roughQuotation.filename}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Uploaded: {selectedProject.documents.roughQuotation.uploadDate}
+                      Uploaded:{" "}
+                      {selectedProject.documents.roughQuotation.uploadDate}
                     </div>
                   </div>
                 )}
@@ -726,11 +1800,13 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                         </span>
                       </div>
                       <button
-                        onClick={() => handleDownloadDocument(
-                          selectedProject._id,
-                          'finalQuotation',
-                          selectedProject.documents.finalQuotation.filename
-                        )}
+                        onClick={() =>
+                          handleDownloadDocument(
+                            selectedProject._id,
+                            "finalQuotation",
+                            selectedProject.documents.finalQuotation.filename
+                          )
+                        }
                         className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
                       >
                         <Download className="w-4 h-4" />
@@ -740,7 +1816,8 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                       {selectedProject.documents.finalQuotation.filename}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Uploaded: {selectedProject.documents.finalQuotation.uploadDate}
+                      Uploaded:{" "}
+                      {selectedProject.documents.finalQuotation.uploadDate}
                     </div>
                   </div>
                 )}
@@ -757,11 +1834,17 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
             </InfoCard>
 
             {/* Designs Section */}
-            <InfoCard icon={<FileText className="w-5 h-5" />} title="Design Files & Approval History">
+            <InfoCard
+              icon={<FileText className="w-5 h-5" />}
+              title="Design Files & Approval History"
+            >
               <div className="space-y-8">
                 {selectedProject.designs?.length > 0 ? (
                   selectedProject.designs.map((design, designIndex) => (
-                    <div key={design._id || designIndex} className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                    <div
+                      key={design._id || designIndex}
+                      className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden"
+                    >
                       <div className="bg-gray-50 dark:bg-gray-700 p-3 border-b border-gray-200 dark:border-gray-600">
                         <div className="flex items-center justify-between">
                           <div>
@@ -769,7 +1852,12 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                               Design #{designIndex + 1}
                             </h4>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Created: {design.createdAt ? new Date(design.createdAt).toLocaleDateString('en-IN') : "N/A"}
+                              Created:{" "}
+                              {design.createdAt
+                                ? new Date(design.createdAt).toLocaleDateString(
+                                    "en-IN"
+                                  )
+                                : "N/A"}
                             </p>
                           </div>
                         </div>
@@ -779,9 +1867,9 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                         {design.pdfs?.length > 0 ? (
                           <div className="space-y-6">
                             {design.pdfs.map((pdf, pdfIndex) => {
-                              const pdfFeedbackHistory = (design.approvalHistory || []).filter(
-                                (h) => h.versionSelect === pdf.version
-                              );
+                              const pdfFeedbackHistory = (
+                                design.approvalHistory || []
+                              ).filter((h) => h.versionSelect === pdf.version);
                               return (
                                 <div
                                   key={pdf._id || pdfIndex}
@@ -790,22 +1878,32 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                                   <div className="flex items-center justify-between">
                                     <div>
                                       <div className="font-medium text-gray-900 dark:text-white">
-                                        Document {designIndex + 1}.{pdfIndex + 1}: {pdf.message || "Untitled Design PDF"}
+                                        Document {designIndex + 1}.
+                                        {pdfIndex + 1}:{" "}
+                                        {pdf.message || "Untitled Design PDF"}
                                       </div>
                                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 space-y-1">
                                         <div>
-                                          <strong>Version:</strong> {pdf.version}
+                                          <strong>Version:</strong>{" "}
+                                          {pdf.version}
                                         </div>
                                         <div>
-                                          <strong>Uploaded:</strong> {new Date(pdf.uploadedAt).toLocaleString("en-IN")}
+                                          <strong>Uploaded:</strong>{" "}
+                                          {new Date(
+                                            pdf.uploadedAt
+                                          ).toLocaleString("en-IN")}
                                         </div>
                                         <div>
-                                          <strong>By:</strong> {pdf.uploadedBy?.name} ({pdf.uploadedBy?.email})
+                                          <strong>By:</strong>{" "}
+                                          {pdf.uploadedBy?.name} (
+                                          {pdf.uploadedBy?.email})
                                         </div>
                                       </div>
                                     </div>
                                     <button
-                                      onClick={() => window.open(pdf.pdfUrl, "_blank")}
+                                      onClick={() =>
+                                        window.open(pdf.pdfUrl, "_blank")
+                                      }
                                       className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
                                       title="Download"
                                     >
@@ -821,13 +1919,30 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                                       </h5>
                                       <ul className="space-y-2 text-gray-600 dark:text-gray-300 text-sm">
                                         {pdfFeedbackHistory.map((h, hi) => (
-                                          <li key={h._id || hi} className="border-b border-gray-100 dark:border-gray-700 pb-1">
-                                            <span className={`mr-2 font-bold ${h.isApproved ? "text-green-700" : "text-red-700"}`}>
-                                              {h.isApproved ? "Approved" : "Rejected"}
+                                          <li
+                                            key={h._id || hi}
+                                            className="border-b border-gray-100 dark:border-gray-700 pb-1"
+                                          >
+                                            <span
+                                              className={`mr-2 font-bold ${
+                                                h.isApproved
+                                                  ? "text-green-700"
+                                                  : "text-red-700"
+                                              }`}
+                                            >
+                                              {h.isApproved
+                                                ? "Approved"
+                                                : "Rejected"}
                                             </span>
-                                            (Document {designIndex + 1} Version {h.versionSelect}) - {h.feedbackMessage}
+                                            (Document {designIndex + 1} Version{" "}
+                                            {h.versionSelect}) -{" "}
+                                            {h.feedbackMessage}
                                             <span className="ml-2 text-xs text-gray-400">
-                                              {h.updatedAt ? new Date(h.updatedAt).toLocaleDateString("en-IN") : ""}
+                                              {h.updatedAt
+                                                ? new Date(
+                                                    h.updatedAt
+                                                  ).toLocaleDateString("en-IN")
+                                                : ""}
                                             </span>
                                           </li>
                                         ))}
@@ -855,7 +1970,6 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                 )}
               </div>
             </InfoCard>
-
           </div>
         </div>
 
@@ -878,14 +1992,15 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                 {/* Date Range Display */}
                 <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                   <div className="text-sm text-blue-800 dark:text-blue-300">
-                    <strong>Date Range:</strong> {
-                      (() => {
-                        const endDate = new Date(selectedDate);
-                        const startDate = new Date(selectedDate);
-                        startDate.setDate(startDate.getDate() - 4);
-                        return `${startDate.toLocaleDateString('en-IN')} to ${endDate.toLocaleDateString('en-IN')}`;
-                      })()
-                    }
+                    <strong>Date Range:</strong>{" "}
+                    {(() => {
+                      const endDate = new Date(selectedDate);
+                      const startDate = new Date(selectedDate);
+                      startDate.setDate(startDate.getDate() - 4);
+                      return `${startDate.toLocaleDateString(
+                        "en-IN"
+                      )} to ${endDate.toLocaleDateString("en-IN")}`;
+                    })()}
                   </div>
                 </div>
               </div>
@@ -908,11 +2023,17 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                         <React.Fragment key={update._id}>
                           <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             <td className="px-4 py-2">
-                              {update.date.toLocaleDateString('en-IN')}
+                              {update.date.toLocaleDateString("en-IN")}
                             </td>
-                            <td className="px-4 py-2 capitalize">{update.type}</td>
-                            <td className="px-4 py-2">{update.uploadedBy?.name}</td>
-                            <td className="px-4 py-2">{update.uploadedBy?.role}</td>
+                            <td className="px-4 py-2 capitalize">
+                              {update.type}
+                            </td>
+                            <td className="px-4 py-2">
+                              {update.uploadedBy?.name}
+                            </td>
+                            <td className="px-4 py-2">
+                              {update.uploadedBy?.role}
+                            </td>
                             <td className="px-4 py-2">
                               <button
                                 onClick={() =>
@@ -942,7 +2063,9 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
                                         src={img.url}
                                         alt={`Update Image ${i + 1}`}
                                         className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:opacity-80 transition-opacity"
-                                        onClick={() => window.open(img.url, '_blank')}
+                                        onClick={() =>
+                                          window.open(img.url, "_blank")
+                                        }
                                       />
                                     ))}
                                   </div>
@@ -958,12 +2081,15 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
               ) : (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <Calendar1 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No updates found for the selected date range</p>
+                  <p className="text-sm">
+                    No updates found for the selected date range
+                  </p>
                 </div>
               )}
             </InfoCard>
           </div>
         )}
+
       </div>
     </div>
   );
