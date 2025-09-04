@@ -49,7 +49,8 @@ const ProjectsPage = () => {
         try {
           setLoading(true);
           const res = await getProjectById(currentId);
-          setSelectedProject(res.data.project); // Adjust key as per your API response
+          setSelectedProject(res.data.project); 
+          console.log("project id ", res)
         } catch (err) {
           console.error("Error fetching project by ID:", err);
           setError("Failed to load project details.");

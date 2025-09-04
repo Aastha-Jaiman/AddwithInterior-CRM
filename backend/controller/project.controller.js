@@ -160,7 +160,15 @@ exports.getProjectById = async (req, res) => {
       .populate("client", "name email phone address")
       .populate("salesperson", "name email phone")
       .populate("designer", "name email phone")
-      .populate("carpenter", "name email phone");
+      .populate("carpenter", "name email phone")
+      .populate({
+        path: "quotation",
+        populate: { path: "client project" }
+      })
+      .populate({
+        path: "service",
+        populate: { path: "client project" }
+      });
 
     if (!project) {
       return res.status(400).json({ message: "Project Not Found." });
@@ -200,22 +208,26 @@ exports.getAllProject = async (req, res) => {
     }
 
     const projects = await ProjectModel.find()
-  .populate("client", "name email phone address")
-  .populate("salesperson", "name email phone")
-  .populate("designer", "name email phone")
-  .populate("carpenter", "name email phone")
-  .populate({
-    path: "quotation",
-    populate: { path: "client project" } 
-  })
-  .populate({
-    path: "designs",
-    populate: { path: "pdfs.uploadedBy", select: "name email phone" } 
-  })
-  .populate({
-    path: "updates",
-    populate: { path: "dailyUpdates.uploadedBy", select: "name email phone role" }
-  });
+      .populate("client", "name email phone address")
+      .populate("salesperson", "name email phone")
+      .populate("designer", "name email phone")
+      .populate("carpenter", "name email phone")
+      .populate({
+        path: "quotation",
+        populate: { path: "client project" }
+      })
+      .populate({
+        path: "designs",
+        populate: { path: "pdfs.uploadedBy", select: "name email phone" }
+      })
+      .populate({
+        path: "updates",
+        populate: { path: "dailyUpdates.uploadedBy", select: "name email phone role" }
+      })
+      .populate({
+        path: "service",
+        populate: { path: "client project" }
+      });
 
 
     if (!projects || projects.length === 0) {
@@ -345,7 +357,15 @@ exports.getMyProjects = async (req, res) => {
       .populate("client", "name email phone address")
       .populate("salesperson", "name email phone")
       .populate("designer", "name email phone")
-      .populate("carpenter", "name email phone");
+      .populate("carpenter", "name email phone")
+      .populate({
+        path: "quotation",
+        populate: { path: "client project" }
+      })
+      .populate({
+        path: "service",
+        populate: { path: "client project" }
+      });
 
     const projectsWithDetails = await Promise.all(
       projects.map(async (project) => {
