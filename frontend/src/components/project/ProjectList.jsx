@@ -165,6 +165,9 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                       Documents
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Services
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Start Date
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -279,7 +282,17 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                             )}
                         </div>
                       </td>
-
+                      
+                      <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                        {project.service ? (
+                          <div>
+                            <div>Duration: {project.service.durationYears || 0} Years</div>
+                            <div>Allowed Visits: {project.service.allowedVisits || 0}</div>
+                          </div>
+                        ) : (
+                          "N/A"
+                        )}
+                      </td>
 
 
                       <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">

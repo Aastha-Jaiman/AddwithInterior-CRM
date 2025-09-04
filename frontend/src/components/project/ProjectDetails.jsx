@@ -590,6 +590,98 @@ const ProjectDetails = ({ selectedProject, navigateToList, navigateToEdit, handl
 
           {/* Right Side - Documents and Designs */}
           <div className="xl:col-span-2 space-y-6">
+
+            {/* Services Section */}
+            <InfoCard icon={<FileText className="w-5 h-5" />} title="Service Details & Visit History">
+              <div className="space-y-6">
+                {selectedProject.service ? (
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-800">
+                    {/* Header */}
+                    <div className="flex items-center justify-between gap-3 bg-gray-50/60 dark:bg-gray-700/60 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Service Information
+                      </h4>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset
+              ${selectedProject.service.isExpired
+                            ? "bg-red-50 text-red-700 ring-red-200 dark:bg-red-900/30 dark:text-red-200 dark:ring-red-800"
+                            : "bg-green-50 text-green-700 ring-green-200 dark:bg-green-900/30 dark:text-green-200 dark:ring-green-800"
+                          }`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${selectedProject.service.isExpired ? "bg-red-500" : "bg-green-500"}`} />
+                        {selectedProject.service.isExpired ? "Expired" : "Active"}
+                      </span>
+                    </div>
+
+                    {/* Key stats */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
+                      <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Duration</div>
+                        <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+                          {selectedProject.service.durationYears} Years
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Allowed Visits</div>
+                        <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+                          {selectedProject.service.allowedVisits}
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/40">
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Used Visits</div>
+                        <div className="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+                          {selectedProject.service.usedVisits}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Visit history */}
+                    <div className="px-4 pb-4">
+                      <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
+                        <Clock className="w-4 h-4" />
+                        Visit History
+                      </h5>
+
+                      {selectedProject.service.visits?.length > 0 ? (
+                        <ol className="relative border-s border-gray-200 dark:border-gray-700 ms-3">
+                          {selectedProject.service.visits.map((visit, i) => (
+                            <li key={visit._id || i} className="mb-4 ms-3">
+                              <span className="absolute -start-1.5 mt-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 ring-4 ring-white dark:ring-gray-800"></span>
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {new Date(visit.visitDate).toLocaleDateString("en-IN")}
+                                </div>
+                                <span className="inline-flex w-fit rounded-md bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:text-blue-200 ring-1 ring-blue-200 dark:ring-blue-800">
+                                  Visit #{i + 1}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                                <span className="font-semibold text-gray-800 dark:text-gray-100">Remarks:</span> {visit.remarks || "N/A"}
+                              </p>
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 py-8">
+                          <div className="text-center">
+                            <FileText className="w-8 h-8 mx-auto mb-2 opacity-60 text-gray-400" />
+                            <p className="text-sm text-gray-500 dark:text-gray-400">No visits recorded yet</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 py-10 text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-60 text-gray-400" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400">No service details available</p>
+                  </div>
+                )}
+              </div>
+            </InfoCard>
+
+
+
             {/* Documents Section */}
             <InfoCard icon={<FileText className="w-5 h-5" />} title="Documents">
               <div className="space-y-3">
