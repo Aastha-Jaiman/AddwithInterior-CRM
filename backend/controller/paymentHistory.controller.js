@@ -1,18 +1,29 @@
 const PaymentHistoryModel = require("../model/paymentHistory.model");
+const ProjectModel = require("../model/project.model")
 
 
 exports.addPayment = async (req, res) => {
   try {
-    const { clientId, projectId, totalPrice, amount } = req.body;
+    const { clientId, projectId, amount, message } = req.body;
 
-    if (!clientId || !projectId || !totalPrice || !amount) {
+    if (!clientId || !projectId || amount == null) {
       return res.status(400).json({
         success: false,
-        message: "Client, Project, Total Price and Amount are required",
+        message: "Client, Project and Amount are required",
       });
     }
 
-    let paymentHistory = await PaymentHistoryModel.findOne({ client: clientId, project: projectId });
+    const project = await ProjectModel.findById(projectId).select("finalBudget");
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    const totalPrice = project.finalBudget || 0;
+
+    let paymentHistory = await PaymentHistoryModel.findOne({
+      client: clientId,
+      project: projectId,
+    });
 
     if (!paymentHistory) {
       paymentHistory = new PaymentHistoryModel({
@@ -21,12 +32,12 @@ exports.addPayment = async (req, res) => {
         totalPrice,
         totalReceived: amount,
         pending: totalPrice - amount,
-        payments: [{ amount }],
+        payments: [{ amount, message }],
       });
     } else {
       paymentHistory.totalReceived += amount;
       paymentHistory.pending = paymentHistory.totalPrice - paymentHistory.totalReceived;
-      paymentHistory.payments.push({ amount });
+      paymentHistory.payments.push({ amount, message });
     }
 
     await paymentHistory.save();
@@ -49,9 +60,9 @@ exports.addPayment = async (req, res) => {
 exports.updatePayment = async (req, res) => {
   try {
     const { paymentId } = req.params;
-    const { amount } = req.body;
+    const { amount, message } = req.body;
 
-    if (!amount || amount <= 0) {
+    if (amount == null || amount <= 0) {
       return res.status(400).json({ success: false, message: "Valid amount is required" });
     }
 
@@ -60,13 +71,16 @@ exports.updatePayment = async (req, res) => {
       return res.status(404).json({ success: false, message: "Payment not found" });
     }
 
+    const project = await ProjectModel.findById(payment.project).select("finalBudget");
+    if (!project) {
+      return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    payment.totalPrice = project.finalBudget || 0;
     payment.totalReceived += amount;
     payment.pending = payment.totalPrice - payment.totalReceived;
 
-    payment.payments.push({
-      amount,
-      date: new Date()
-    });
+    payment.payments.push({ amount, message, date: new Date() });
 
     await payment.save();
 
@@ -75,7 +89,6 @@ exports.updatePayment = async (req, res) => {
       message: "Payment updated successfully",
       data: payment
     });
-
   } catch (error) {
     console.error("Error updating payment:", error);
     res.status(500).json({ success: false, message: "Server error" });

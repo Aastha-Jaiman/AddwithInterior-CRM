@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Filter, Plus, ChevronDown, ChevronRight, Calendar, DollarSign, User, Briefcase } from 'lucide-react';
 import { getAllPayments } from '@/services/paymenthistory.services';
+import { useRouter } from 'next/navigation';
 
 
 const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
@@ -27,6 +28,7 @@ const StatusBadge = ({ status, amount }) => {
 };
 
 export default function PaymentsPage() {
+   const router = useRouter();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
@@ -101,7 +103,7 @@ export default function PaymentsPage() {
   }, [filtered]);
 
   const handleAddPayment = () => {
-    alert('Add Payment functionality would be implemented here');
+    router.push('/admin/paymenthistory/add');
   };
 
   if (loading) {
