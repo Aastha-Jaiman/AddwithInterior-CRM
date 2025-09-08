@@ -12,7 +12,6 @@ exports.registerClientByAdmin = async (req, res) => {
       phone,
       password,
       address,
-      project,
       quotation,
       aadharCardNumber,
     } = req.body;
@@ -134,7 +133,6 @@ exports.registerClientByAdmin = async (req, res) => {
       address: parsedAddress,
       profile: profileData,
       idProof: idProofData,
-      project: project || null,
       quotation: quotation || null,
       isActive: true,
     });

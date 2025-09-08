@@ -26,7 +26,7 @@ exports.addProject = async (req, res) => {
       carpenterId,
       estimatedBudget,
       description,
-      startingDate,
+      startingDate
     } = req.body;
 
     if (!title || !category || !clientId) {
@@ -68,7 +68,7 @@ exports.addProject = async (req, res) => {
         if (uploaded?.secure_url) {
           projectImages.push({
             url: uploaded.secure_url,
-            public_id: uploaded.public_id,
+            public_id: uploaded.public_id
           });
         }
         if (fs.existsSync(file.path)) {
@@ -89,8 +89,14 @@ exports.addProject = async (req, res) => {
       estimatedBudget,
       description,
       startingDate,
-      projectImages,
+      projectImages
     });
+
+    await ClientModel.findByIdAndUpdate(
+      clientId,
+      { $push: { project: newProject._id } },
+      { new: true }
+    );
 
     res.status(201).json({
       success: true,
@@ -98,9 +104,8 @@ exports.addProject = async (req, res) => {
       project: newProject,
       clientDetails: client,
       salespersonDetails: salesperson || null,
-      designerDetails: designer || null,
+      designerDetails: designer || null
     });
-
   } catch (err) {
     console.error("Add Project Error:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
