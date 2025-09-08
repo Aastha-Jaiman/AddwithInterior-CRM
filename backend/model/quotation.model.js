@@ -28,6 +28,7 @@ const QuotationSchema = new mongoose.Schema(
       {
         sectionName: {
           type: String,
+          enum: ["Wooden Part", "Hardware", "Accessories", "Labour", "other"],
           required: [true, "Section name is required"],
           trim: true,
         },
@@ -47,6 +48,11 @@ const QuotationSchema = new mongoose.Schema(
               type: Number,
               default: 0,
               min: [0, "Width cannot be negative"],
+            },
+            price:{
+                type: Number,
+                required: [true, "Price is required"],
+                min: [0, "Price cannot be negative"],
             },
             calculation: {
               type: String, 

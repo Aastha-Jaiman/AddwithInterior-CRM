@@ -40,6 +40,10 @@ const PaymentHistorySchema = new mongoose.Schema(
           required: [true, "Payment amount is required"],
           min: [0, "Amount cannot be negative"],
         },
+        message: {
+          type: String,
+          trim: true,
+        },
         date: {
           type: Date,
           default: Date.now,

@@ -1,5 +1,7 @@
 const ServiceModel = require("../model/service.model");
 const ProjectModel = require("../model/project.model");
+const { uploadOnCloudinary} = require("../utils/cloudinary")
+const fs = require("fs")
 
 exports.createService = async (req, res) => {
   try {
@@ -96,10 +98,11 @@ exports.updateService = async (req, res) => {
   try {
     const { serviceId } = req.params;
     const { remarks, visitDate } = req.body;
+    const file = req.file;
 
     if (!req.user || !["admin", "salesperson"].includes(req.user.role)) {
       return res.status(403).json({
-        message: "Access denied. Only admin or salesperson can update service."
+        message: "Access denied. Only admin or salesperson can update service.",
       });
     }
 
@@ -109,33 +112,50 @@ exports.updateService = async (req, res) => {
     }
 
     if (service.isExpired || service.usedVisits >= service.allowedVisits) {
-      return res.status(400).json({ message: "Service has expired. No more visits can be added." });
+      return res
+        .status(400)
+        .json({ message: "Service has expired. No more visits can be added." });
     }
 
-    if (remarks) {
-      service.visits.push({
-        visitDate: visitDate ? new Date(visitDate) : new Date(),
-        remarks
-      });
+    let uploadedDoc;
+    if (file) {
+      try {
+        uploadedDoc = await uploadOnCloudinary(file.path, {
+          resource_type: "raw",
+          folder: "service_bills",
+        });
+      } catch (err) {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        return res
+          .status(500)
+          .json({ message: "Error uploading document", error: err.message });
+      }
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
     }
+
+    service.visits.push({
+      visitDate: visitDate ? new Date(visitDate) : new Date(),
+      remarks: remarks || "",
+      document: uploadedDoc?.secure_url || null,
+    });
 
     service.usedVisits = service.visits.length;
 
     const expiryDate = new Date(service.startDate);
     expiryDate.setFullYear(expiryDate.getFullYear() + service.durationYears);
-
-    service.isExpired = service.usedVisits >= service.allowedVisits || new Date() >= expiryDate;
+    service.isExpired =
+      service.usedVisits >= service.allowedVisits || new Date() >= expiryDate;
 
     await service.save();
 
     return res.status(200).json({
       message: "Service updated successfully",
-      data: service
+      data: service,
     });
   } catch (error) {
     return res.status(500).json({
       message: "Error updating service",
-      error: error.message
+      error: error.message,
     });
   }
 };

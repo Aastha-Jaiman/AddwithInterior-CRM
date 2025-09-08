@@ -23,28 +23,28 @@ exports.addQuotation = async (req, res) => {
       let sectionTotal = 0;
 
       const preparedItems = section.items.map((item) => {
+        const area = Number(item.height || 0) * Number(item.width || 0);
         const calculation = `${item.width} * ${item.height}`;
-
         let total = 0;
         if (userRole === "admin") {
-          total = item.total || 0;
+          const rate = Number(item.price || 0);
+          total = rate * area;
         }
-
         sectionTotal += total;
-
         return {
           itemName: item.itemName,
           height: item.height,
           width: item.width,
+          price: item.price,
           calculation,
-          total,
+          total
         };
       });
 
       return {
         sectionName: section.sectionName,
         items: preparedItems,
-        sectionTotal,
+        sectionTotal
       };
     });
 
@@ -59,7 +59,7 @@ exports.addQuotation = async (req, res) => {
       category,
       type: "rough",
       sections: preparedSections,
-      grandTotal,
+      grandTotal
     });
 
     await newQuotation.save();
@@ -72,7 +72,7 @@ exports.addQuotation = async (req, res) => {
 
     res.status(201).json({
       message: "Quotation created successfully",
-      quotation: newQuotation,
+      quotation: newQuotation
     });
   } catch (error) {
     console.error("Error adding quotation:", error);

@@ -36,6 +36,7 @@ const ServiceSchema = new mongoose.Schema(
       {
         visitDate: { type: Date, default: Date.now },
         remarks: { type: String, trim: true },
+        bill: { type: String, trim: true },
       },
     ],
   },
