@@ -20,3 +20,4 @@ export const getPaymentById = (paymentId) => {
 export const updatePayment = (paymentId, paymentData) => {
   return api.put(`/payment/update/${paymentId}`, paymentData);
 };
+

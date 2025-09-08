@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Filter, Plus, ChevronDown, ChevronRight, Calendar, DollarSign, User, Briefcase } from 'lucide-react';
+import { Search, Filter, Plus, ChevronDown, ChevronRight, Calendar, DollarSign, User, Briefcase , Pencil } from 'lucide-react';
 import { getAllPayments } from '@/services/paymenthistory.services';
 import { useRouter } from 'next/navigation';
 
@@ -353,13 +353,31 @@ export default function PaymentsPage() {
                                           {fmtINR(payment.amount)}
                                         </div>
                                         <div className="text-xs text-gray-500">
-                                          {new Date(payment.date).toLocaleString()}
+                                         Msg : {payment.message}
                                         </div>
                                       </div>
                                     </div>
                                     <div className="text-xs text-gray-400 font-mono">
+                                      <div className="text-xs text-gray-500">
+                                          {new Date(payment.date).toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-gray-400 font-mono">
                                       ID: {payment._id}
                                     </div>
+                                    <div className="text-xs text-gray-400 font-mono flex items-center gap-2">
+                                      <span>ID: {payment._id}</span>
+                                      <button
+                                        onClick={() => router.push(`/admin/paymenthistory/edit/${payment._id}`)}
+                                        className="text-blue-600 hover:text-blue-800"
+                                        title="Edit Payment"
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </button>
+                                    </div>
+
+                                    
+
                                   </div>
                                 ))}
                             </div>
