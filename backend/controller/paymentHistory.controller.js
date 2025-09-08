@@ -13,9 +13,17 @@ exports.addPayment = async (req, res) => {
       });
     }
 
-    const project = await ProjectModel.findById(projectId).select("finalBudget");
+    // Find the project & check it belongs to this client
+    const project = await ProjectModel.findById(projectId).select("finalBudget client");
     if (!project) {
       return res.status(404).json({ success: false, message: "Project not found" });
+    }
+
+    if (project.client.toString() !== clientId) {
+      return res.status(400).json({
+        success: false,
+        message: "This project does not belong to the specified client.",
+      });
     }
 
     const totalPrice = project.finalBudget || 0;
