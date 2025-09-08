@@ -80,7 +80,7 @@ exports.addQuotation = async (req, res) => {
   }
 };
 
-exports.getAllClients = async (req, res) => {
+exports.getAllClientsEmail = async (req, res) => {
   try {
     const clients = await ClientModel.find({}, "email");
     res.status(200).json(clients);
