@@ -214,9 +214,9 @@ exports.getProfile = async (req, res) => {
         .json({ success: false, message: "Unauthorized. Please login." });
     }
 
-    const client = await ClientModel.findById(clientId).select(
-      "-password -__v"
-    );
+    const client = await ClientModel.findById(clientId)
+      .select("project")                     
+      .populate("project", "title category finalBudget status");
 
     if (!client) {
       return res.status(401).json({ message: "User Not Found." });
@@ -404,7 +404,9 @@ exports.getAllClientByAdmin = async (req, res) => {
       name: { $regex: search, $options: "i" },
     };
 
-    const client = await ClientModel.find(query).select("-password -__v");
+       const clients = await ClientModel.find(query)
+      .select("-password -__v")  
+      .populate("project", "title category status finalBudget"); 
 
     res.status(200).json({
       success: true,
@@ -557,7 +559,9 @@ exports.getClientById = async (req, res) => {
         .json({ success: false, message: "Only admin can get profile" });
     }
 
-    const client = await ClientModel.findById(id).select("-password");
+     const client = await ClientModel.findById(id)
+      .select("-password -__v")
+      .populate("project", "title category status finalBudget");
 
     if (!client) {
       return res
