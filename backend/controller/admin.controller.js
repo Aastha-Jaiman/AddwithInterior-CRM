@@ -7,6 +7,7 @@ const sendEmail = require("../utils/sendMail");
 exports.createAdmin = async (req, res) => {
   try {
     const { name, email, password, phone, address, role } = req.body;
+    const file = req.file;
 
     if (!name || !email || !password || !phone || !address || !role) {
       return res.status(400).json({ message: "All fields are required" });
@@ -26,18 +27,17 @@ exports.createAdmin = async (req, res) => {
       return res.status(400).json({ message: "Phone number already exists" });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ message: "Profile image is required" });
-    }
+    let profiledata = null; 
+    if (file) {
+      const uploaded = await uploadOnCloudinary(file.path, "profile");
+      profiledata = {
+        url: uploaded.secure_url,
+        public_id: uploaded.public_id,
+      };
 
-    const uploaded = await uploadOnCloudinary(req.file.path, "profile");
-    let profiledata = {
-      url: uploaded.secure_url,
-      public_id: uploaded.public_id,
-    };
-
-    if (fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
     }
 
     const newAdmin = new AdminModel({

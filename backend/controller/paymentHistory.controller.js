@@ -1,5 +1,6 @@
 const PaymentHistoryModel = require("../model/paymentHistory.model");
 const ProjectModel = require("../model/project.model")
+const ClientModel = require("../model/client.model")
 
 
 exports.addPayment = async (req, res) => {
@@ -13,7 +14,6 @@ exports.addPayment = async (req, res) => {
       });
     }
 
-    // Find the project & check it belongs to this client
     const project = await ProjectModel.findById(projectId).select("finalBudget client");
     if (!project) {
       return res.status(404).json({ success: false, message: "Project not found" });
@@ -42,13 +42,19 @@ exports.addPayment = async (req, res) => {
         pending: totalPrice - amount,
         payments: [{ amount, message }],
       });
+      await paymentHistory.save();
+
+      await ClientModel.findByIdAndUpdate(
+        clientId,
+        { $addToSet: { paymentHistory: paymentHistory._id } },
+        { new: true }
+      );
     } else {
       paymentHistory.totalReceived += amount;
       paymentHistory.pending = paymentHistory.totalPrice - paymentHistory.totalReceived;
       paymentHistory.payments.push({ amount, message });
+      await paymentHistory.save();
     }
-
-    await paymentHistory.save();
 
     res.status(201).json({
       success: true,

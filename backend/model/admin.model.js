@@ -37,7 +37,8 @@ const AdminSchema = new mongoose.Schema({
   aadhaarNumber: {
     type: String,
     match: [/^\d{12}$/, "Aadhaar number must be 12 digits"],
-    required: true,
+    required: function() { return this.role !== "admin"; },
+    unique: function() { return this.role !== "admin"; },
   },
 
   uploadIdProof: {

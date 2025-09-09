@@ -9,28 +9,36 @@ const QuotationSchema = new mongoose.Schema(
       unique: true
     },
     client: {
-       type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Client",
       required: [true, "Client email is required"],
     },
     category: {
       type: String,
-      enum: ["modular_Kitchen", "inPlace_Furniture"],
       required: [true, "Category is required"],
     },
     type: {
       type: String,
-      enum: ["rough"],
       required: [true, "Quotation type is required"],
     },
 
     sections: [
-      {
+       {
         sectionName: {
           type: String,
-          enum: ["Wooden Part", "Hardware", "Accessories", "Labour", "other"],
+          enum: ["Wooden Part", "Hardware", "Accessories", "Labour", "Other"],
           required: [true, "Section name is required"],
           trim: true,
+        },
+        customSectionName: {
+          type: String,
+          trim: true,
+          validate: {
+            validator: function (val) {
+              return !(this.sectionName === "Other" && !val);
+            },
+            message: "Custom section name is required when sectionName is 'Other'",
+          },
         },
         items: [
           {
@@ -49,13 +57,13 @@ const QuotationSchema = new mongoose.Schema(
               default: 0,
               min: [0, "Width cannot be negative"],
             },
-            price:{
-                type: Number,
-                required: [true, "Price is required"],
-                min: [0, "Price cannot be negative"],
+            price: {
+              type: Number,
+              required: [true, "Price is required"],
+              min: [0, "Price cannot be negative"],
             },
             calculation: {
-              type: String, 
+              type: String,
               required: [true, "Calculation is required"],
               trim: true,
             },

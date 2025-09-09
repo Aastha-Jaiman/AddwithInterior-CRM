@@ -133,7 +133,6 @@ exports.registerClientByAdmin = async (req, res) => {
       address: parsedAddress,
       profile: profileData,
       idProof: idProofData,
-      project: project || null,
       quotation: quotation || null,
       isActive: true,
     });
@@ -217,7 +216,8 @@ exports.getProfile = async (req, res) => {
 
     const client = await ClientModel.findById(clientId)
       .select("project")
-      .populate("project");
+      .populate("project")
+      .populate("paymentHistory");
 
     if (!client) {
       return res.status(401).json({ message: "User Not Found." });
@@ -407,7 +407,8 @@ exports.getAllClientByAdmin = async (req, res) => {
 
     const client = await ClientModel.find(query)
       .select("-password -__v")
-      .populate("project");
+      .populate("project")
+      .populate("paymentHistory");
 
     res.status(200).json({
       success: true,
@@ -562,7 +563,8 @@ exports.getClientById = async (req, res) => {
 
     const client = await ClientModel.findById(id)
       .select("-password -__v")
-      .populate("project");
+      .populate("project")
+      .populate("paymentHistory");
 
     if (!client) {
       return res

@@ -72,6 +72,10 @@ const ClientSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Quotation",
   },
+  paymentHistory: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "PaymentHistory",
+  }],
   isActive: {
     type: Boolean,
     default: true,
