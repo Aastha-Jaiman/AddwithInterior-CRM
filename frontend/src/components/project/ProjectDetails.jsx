@@ -1466,8 +1466,6 @@ const ProjectDetails = ({
           <ProjectService selectedProject={selectedProject} onClose={() => setServicePanelOpen(false)} />
         )}
 
-        {/* ... Rest of ProjectDetails content remain unchanged */}
-
  {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Left Side - Project Information */}
@@ -1726,6 +1724,12 @@ const ProjectDetails = ({
                                   Remarks:
                                 </span>{" "}
                                 {visit.remarks || "N/A"}
+                              </p>
+                              <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                                <span className="font-semibold text-gray-800 dark:text-gray-100">
+                                  Invoice:
+                                </span>{" "}
+                                {visit.bill || "N/A"}
                               </p>
                             </li>
                           ))}

@@ -5,47 +5,60 @@ import {
   Edit3,
   CheckCircle,
   XCircle,
-  Clock,
-  FileText,
 } from "lucide-react";
 import { createService, updateService } from "@/services/service.services";
 
 export const ServiceActionButton = ({ selectedProject, onClick }) => (
   <button
     onClick={onClick}
-    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-fit"
+    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl shadow hover:to-blue-700 transition-all w-fit"
     type="button"
   >
     <Edit3 className="w-4 h-4" />
-    <span className="text-sm font-medium">
+    <span className="text-sm font-semibold tracking-wide">
       {selectedProject.service ? "Update Service" : "Create Service"}
     </span>
   </button>
 );
 
 const ProjectService = ({ selectedProject, onClose }) => {
-  const [panel, setPanel] = React.useState(selectedProject.service ? "update" : "create");
+  const [panel, setPanel] = React.useState(
+    selectedProject.service ? "update" : "create"
+  );
 
   // Create service form state
-  const [serviceForm, setServiceForm] = React.useState({ durationYears: "", allowedVisits: "" });
+  const [serviceForm, setServiceForm] = React.useState({
+    durationYears: "",
+    allowedVisits: "",
+  });
   const [serviceLoading, setServiceLoading] = React.useState(false);
   const [serviceError, setServiceError] = React.useState("");
 
-  // Update service form state
-  const [updateForm, setUpdateForm] = React.useState({ remarks: "", visitDate: "" });
+  // Update service form state (added bill)
+  const [updateForm, setUpdateForm] = React.useState({
+    remarks: "",
+    visitDate: "",
+    bill: null,
+  });
   const [updateLoading, setUpdateLoading] = React.useState(false);
 
   // Notice state for success/error messages
-  const [serviceNotice, setServiceNotice] = React.useState({ show: false, type: "success", text: "" });
+  const [serviceNotice, setServiceNotice] = React.useState({
+    show: false,
+    type: "success",
+    text: "",
+  });
 
+  // Feedback message timer
   React.useEffect(() => {
     if (!serviceNotice.show) return;
     const timeout = setTimeout(() => {
       setServiceNotice((prev) => ({ ...prev, show: false }));
-    }, 2500);
+    }, 2000);
     return () => clearTimeout(timeout);
   }, [serviceNotice.show]);
 
+  // Form field handlers
   const handleServiceChange = (e) => {
     const { name, value } = e.target;
     setServiceForm((prev) => ({ ...prev, [name]: value }));
@@ -76,12 +89,20 @@ const ProjectService = ({ selectedProject, onClose }) => {
         durationYears: duration,
         allowedVisits: visits,
       });
-      setPanel(null);
       setServiceForm({ durationYears: "", allowedVisits: "" });
-      setServiceNotice({ show: true, type: "success", text: "Service details saved successfully" });
-      if (onClose) onClose();
+      setServiceNotice({
+        show: true,
+        type: "success",
+        text: "Service details saved successfully",
+      });
+      // Delay panel close for feedback visibility
+      setTimeout(() => {
+        setPanel(null);
+        if (onClose) onClose();
+      }, 1800);
     } catch (err) {
-      const msg = typeof err === "string" ? err : err?.message || "Failed to save service";
+      const msg =
+        typeof err === "string" ? err : err?.message || "Failed to save service";
       setServiceError(msg);
       setServiceNotice({ show: true, type: "error", text: msg });
     } finally {
@@ -90,28 +111,43 @@ const ProjectService = ({ selectedProject, onClose }) => {
   };
 
   const handleUpdateChange = (e) => {
-    const { name, value } = e.target;
-    setUpdateForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target;
+    if (name === "bill") {
+      setUpdateForm((prev) => ({ ...prev, bill: files[0] }));
+    } else {
+      setUpdateForm((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
-
     if (!updateForm.remarks.trim()) {
-      setServiceNotice({ show: true, type: "error", text: "Remarks are required" });
+      setServiceNotice({
+        show: true,
+        type: "error",
+        text: "Remarks are required",
+      });
       return;
     }
-
     try {
       setUpdateLoading(true);
-      const payload = { remarks: updateForm.remarks.trim() };
-      if (updateForm.visitDate) payload.visitDate = updateForm.visitDate;
-
+      const payload = {
+        remarks: updateForm.remarks.trim(),
+        visitDate: updateForm.visitDate,
+        bill: updateForm.bill,
+      };
       await updateService(selectedProject.service._id, payload);
-      setServiceNotice({ show: true, type: "success", text: "Service updated successfully" });
-      setPanel(null);
-      setUpdateForm({ remarks: "", visitDate: "" });
-      if (onClose) onClose();
+      setUpdateForm({ remarks: "", visitDate: "", bill: null });
+      setServiceNotice({
+        show: true,
+        type: "success",
+        text: "Service updated successfully",
+      });
+      // Delay panel close for feedback visibility
+      setTimeout(() => {
+        setPanel(null);
+        if (onClose) onClose();
+      }, 1800);
     } catch (err) {
       const msg = err?.message || err?.error || "Failed to update service";
       setServiceNotice({ show: true, type: "error", text: msg });
@@ -121,8 +157,7 @@ const ProjectService = ({ selectedProject, onClose }) => {
   };
 
   return (
-    <div className="mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-md max-w-lg">
-      {/* Close button */}
+    <div className="mt-4 p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg max-w-full relative transition-shadow duration-300">
       <div className="flex justify-end">
         <button
           onClick={() => {
@@ -130,146 +165,127 @@ const ProjectService = ({ selectedProject, onClose }) => {
             if (onClose) onClose();
           }}
           aria-label="Close service panel"
-          className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition"
+          className="text-gray-400 hover:text-rose-500 transition text-2xl font-bold"
           type="button"
         >
           ×
         </button>
       </div>
 
-      {/* Create Service Form */}
-      {panel === "create" && (
-        <form onSubmit={handleServiceSubmit} className="mt-2 space-y-4">
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Create Service</h4>
-
-          {serviceNotice.show && (
-            <div
-              role="alert"
-              className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
-                serviceNotice.type === "success"
-                  ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200"
-                  : "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"
-              }`}
-            >
-              {serviceNotice.type === "success" ? (
-                <CheckCircle className="h-5 w-5" />
-              ) : (
-                <XCircle className="h-5 w-5" />
-              )}
-              <div>{serviceNotice.text}</div>
-            </div>
+      {/* Feedback Message - always shown in panel */}
+      {serviceNotice.show && (
+        <div
+          role="alert"
+          className={`flex items-center gap-2 rounded-xl border p-3 text-sm font-medium shadow transition-all
+            ${serviceNotice.type === "success"
+              ? "border-green-200 bg-green-50 text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-100"
+              : "border-red-200 bg-red-50 text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-100"
+            }`}
+          style={{
+            animation: "pop 0.35s cubic-bezier(.15,.91,.33,1.16)",
+          }}
+        >
+          {serviceNotice.type === "success" ? (
+            <CheckCircle className="h-5 w-5 shrink-0" />
+          ) : (
+            <XCircle className="h-5 w-5 shrink-0" />
           )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Duration (years)
-              </label>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                name="durationYears"
-                value={serviceForm.durationYears}
-                onChange={handleServiceChange}
-                required
-                className="w-full rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                placeholder="e.g. 2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Allowed Visits
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                name="allowedVisits"
-                value={serviceForm.allowedVisits}
-                onChange={handleServiceChange}
-                required
-                className="w-full rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                placeholder="e.g. 4"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={serviceLoading}
-              className={`flex-1 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 focus:outline-none ${
-                serviceLoading ? "opacity-70 cursor-not-allowed" : ""
-              }`}
-            >
-              {serviceLoading ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </form>
+          <div>{serviceNotice.text}</div>
+        </div>
       )}
+
+      {/* Animate feedback style */}
+      <style>
+        {`
+          @keyframes pop {
+            from { opacity: 0; transform: scale(0.90); }
+            to { opacity: 1; transform: scale(1); }
+          }
+        `}
+      </style>
 
       {/* Update Service Form */}
       {panel === "update" && (
-        <form onSubmit={handleUpdateSubmit} className="mt-2 space-y-4">
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Update Service</h4>
-
-          {serviceNotice.show && (
-            <div
-              role="alert"
-              className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
-                serviceNotice.type === "success"
-                  ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200"
-                  : "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200"
-              }`}
-            >
-              {serviceNotice.type === "success" ? (
-                <CheckCircle className="h-5 w-5" />
-              ) : (
-                <XCircle className="h-5 w-5" />
-              )}
-              <div>{serviceNotice.text}</div>
-            </div>
-          )}
+        <form
+          onSubmit={handleUpdateSubmit}
+          className="mt-3 space-y-6"
+        >
+          <h4 className="text-xl font-bold text-blue-700 dark:text-blue-300 mb-3 tracking-wide">
+            Update Service Details
+          </h4>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks</label>
+            <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
+              Remarks
+            </label>
             <textarea
               name="remarks"
               value={updateForm.remarks}
               onChange={handleUpdateChange}
               required
               rows={3}
-              className="w-full rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+              className="
+                w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white
+                focus:outline-none focus:ring-2 focus:ring-blue-600 px-3 py-2
+                transition-all duration-150
+                shadow-sm"
               placeholder="Add visit remarks..."
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Visit Date (optional)</label>
-            <input
-              type="date"
-              name="visitDate"
-              value={updateForm.visitDate}
-              onChange={handleUpdateChange}
-              className="w-full rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
+                Visit Date (optional)
+              </label>
+              <input
+                type="date"
+                name="visitDate"
+                value={updateForm.visitDate}
+                onChange={handleUpdateChange}
+                className="
+                  w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white
+                  focus:outline-none focus:ring-2 focus:ring-blue-600 px-3 py-2
+                  shadow-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
+                Upload Bill (optional)
+              </label>
+              <input
+                type="file"
+                name="bill"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleUpdateChange}
+                className="
+                  w-full text-sm rounded-xl border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800
+                  file:text-blue-700 file:bg-blue-50 file:border-none file:px-4 file:py-2
+                  file:rounded-xl file:shadow
+                  "
+              />
+            </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-2">
             <button
               type="submit"
               disabled={updateLoading}
-              className={`flex-1 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 focus:outline-none ${
-                updateLoading ? "opacity-70 cursor-not-allowed" : ""
-              }`}
+              className={`
+                flex-1 px-5 py-2 rounded-xl font-semibold text-lg tracking-wide
+                bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition
+                text-white shadow
+                ${updateLoading ? "opacity-70 cursor-not-allowed" : ""}
+              `}
             >
               {updateLoading ? "Updating..." : "Update"}
             </button>
           </div>
 
-          <p className="text-xs text-gray-500 mt-2">
-            Only admin or salesperson can add visits; service must be active and within allowed visits.
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 italic">
+            Only admin or salesperson can add visits.<br />
+            Service must be active &amp; within allowed visits.
           </p>
         </form>
       )}

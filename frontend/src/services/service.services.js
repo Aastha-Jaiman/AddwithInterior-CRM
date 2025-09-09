@@ -31,12 +31,30 @@ export const getServiceById = async (serviceId) => {
   }
 };
 
-// ✅ Update service (add remarks, update status)
-export const updateService = async (serviceId, updateData) => {
+// // ✅ Update service (add remarks, update status)
+// export const updateService = async (serviceId, updateData) => {
+//   try {
+//     const response = await api.put(`/service/update/${serviceId}`, updateData);
+//     return response.data;
+//   } catch (error) {
+//     throw error.response?.data || error;
+//   }
+// };
+
+export const updateService = async (serviceId, updatedData) => {
   try {
-    const response = await api.put(`/service/update/${serviceId}`, updateData);
-    return response.data;
+    const formData = new FormData();
+    if (updatedData.remarks) formData.append("remarks", updatedData.remarks);
+    if (updatedData.visitDate) formData.append("visitDate", updatedData.visitDate);
+    if (updatedData.bill) formData.append("bill", updatedData.bill);
+
+    const res = await api.put(`service/update/${serviceId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return res.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error.response?.data || error.message;
   }
 };

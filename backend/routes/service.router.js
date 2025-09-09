@@ -4,9 +4,9 @@ const { createService, getAllServices, getServiceById, updateService  } = requir
 const authMiddleware = require("../middleware/allAuthmiddleware");
 const upload = require("../middleware/multer");
 
-router.post("/add/:projectId",authMiddleware, upload.single("bill"), createService);
+router.post("/add/:projectId",authMiddleware, createService);
 router.get("/",authMiddleware, getAllServices);
 router.get("/:serviceId",getServiceById);
-router.put("/update/:serviceId",authMiddleware, updateService);
+router.put("/update/:serviceId",authMiddleware, upload.single("bill"), updateService);
 
 module.exports = router;
