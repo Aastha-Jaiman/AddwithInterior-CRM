@@ -1161,8 +1161,7 @@ const ProjectDetails = ({
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const [expandedDesigns, setExpandedDesigns] = React.useState({});
   const [servicePanelOpen, setServicePanelOpen] = React.useState(false);
-
-  // ... (Other unchanged logic: filtered updates, calendar dropdown, InfoCard, InfoItem, status badges, etc.)
+  const [expandedVisits, setExpandedVisits] = React.useState({});
 
    // Get filtered daily updates based on selected date (5 days from selected date)
   const getFilteredUpdates = () => {
@@ -1399,9 +1398,6 @@ const ProjectDetails = ({
   );
 
   const filteredUpdates = getFilteredUpdates();
-
-
-  // Place your functions here or keep them as before
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -1698,43 +1694,65 @@ const ProjectDetails = ({
                     </div>
 
                     {/* Visit history */}
-                    <div className="px-4 pb-4">
-                      <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
-                        <Clock className="w-4 h-4" />
-                        Visit History
-                      </h5>
+                   <div className="px-4 pb-4">
+  <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
+    <Clock className="w-4 h-4" />
+    Visit History
+  </h5>
 
-                      {selectedProject.service.visits?.length > 0 ? (
-                        <ol className="relative border-s border-gray-200 dark:border-gray-700 ms-3">
-                          {selectedProject.service.visits.map((visit, i) => (
-                            <li key={visit._id || i} className="mb-4 ms-3">
-                              <span className="absolute -start-1.5 mt-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 ring-4 ring-white dark:ring-gray-800"></span>
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                  {new Date(visit.visitDate).toLocaleDateString(
-                                    "en-IN"
-                                  )}
-                                </div>
-                                <span className="inline-flex w-fit rounded-md bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:text-blue-200 ring-1 ring-blue-200 dark:ring-blue-800">
-                                  Visit #{i + 1}
-                                </span>
-                              </div>
-                              <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                                <span className="font-semibold text-gray-800 dark:text-gray-100">
-                                  Remarks:
-                                </span>{" "}
-                                {visit.remarks || "N/A"}
-                              </p>
-                              <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                                <span className="font-semibold text-gray-800 dark:text-gray-100">
-                                  Invoice:
-                                </span>{" "}
-                                {visit.bill || "N/A"}
-                              </p>
-                            </li>
-                          ))}
-                        </ol>
-                      ) : (
+  {selectedProject.service.visits?.length > 0 ? (
+    <ol className="relative border-s border-gray-200 dark:border-gray-700 ms-3">
+      {selectedProject.service.visits.map((visit, i) => (
+        <li key={visit._id || i} className="mb-4 ms-3">
+          <span className="absolute -start-1.5 mt-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 ring-4 ring-white dark:ring-gray-800"></span>
+          <button
+            type="button"
+            className="flex items-center w-full justify-between bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-800 px-3 py-2 rounded-lg transition group"
+            onClick={() =>
+              setExpandedVisits((prev) => ({
+                ...prev,
+                [visit._id || i]: !prev[visit._id || i],
+              }))
+            }
+          >
+            <span>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {new Date(visit.visitDate).toLocaleDateString("en-IN")}
+              </span>
+              <span className="ml-4 inline-flex w-fit rounded bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-200 ring-1 ring-blue-200 dark:ring-blue-800">
+                Visit #{i + 1}
+              </span>
+            </span>
+            <span className="ml-2 flex items-center">
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${expandedVisits[visit._id || i] ? "rotate-180" : ""}`}
+              />
+              <span className="text-xs ml-2 text-gray-400 group-hover:text-blue-600">
+                {expandedVisits[visit._id || i] ? "Hide" : "Show"} Details
+              </span>
+            </span>
+          </button>
+          {expandedVisits[visit._id || i] && (
+            <div className="mt-2 pl-2 border-l border-blue-200 dark:border-blue-700">
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">
+                <span className="font-semibold text-gray-800 dark:text-gray-100">
+                  Remarks:
+                </span>{" "}
+                {visit.remarks || "N/A"}
+              </p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">
+                <span className="font-semibold text-gray-800 dark:text-gray-100">
+                  Invoice:
+                </span>{" "}
+                {visit.bill || "N/A"}
+              </p>
+              {/* Aur koi details yaha dal sakte hain if available */}
+            </div>
+          )}
+        </li>
+      ))}
+    </ol>
+  ) : (
                         <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30 py-8">
                           <div className="text-center">
                             <FileText className="w-8 h-8 mx-auto mb-2 opacity-60 text-gray-400" />

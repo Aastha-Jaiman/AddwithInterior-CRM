@@ -136,7 +136,7 @@ exports.updateService = async (req, res) => {
     service.visits.push({
       visitDate: visitDate ? new Date(visitDate) : new Date(),
       remarks: remarks || "",
-      document: uploadedDoc?.secure_url || null,
+      bill: uploadedDoc?.secure_url || null,
     });
 
     service.usedVisits = service.visits.length;

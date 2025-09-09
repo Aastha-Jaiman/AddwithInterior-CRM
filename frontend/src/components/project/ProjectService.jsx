@@ -157,7 +157,7 @@ const ProjectService = ({ selectedProject, onClose }) => {
   };
 
   return (
-    <div className="mt-4 p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg max-w-full relative transition-shadow duration-300">
+    <div className="my-4 p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg max-w-full relative transition-shadow duration-300">
       <div className="flex justify-end">
         <button
           onClick={() => {
@@ -208,7 +208,7 @@ const ProjectService = ({ selectedProject, onClose }) => {
       {panel === "update" && (
         <form
           onSubmit={handleUpdateSubmit}
-          className="mt-3 space-y-6"
+          className="m-3 space-y-6"
         >
           <h4 className="text-xl font-bold text-blue-700 dark:text-blue-300 mb-3 tracking-wide">
             Update Service Details
@@ -282,11 +282,6 @@ const ProjectService = ({ selectedProject, onClose }) => {
               {updateLoading ? "Updating..." : "Update"}
             </button>
           </div>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 italic">
-            Only admin or salesperson can add visits.<br />
-            Service must be active &amp; within allowed visits.
-          </p>
         </form>
       )}
     </div>
