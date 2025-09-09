@@ -82,7 +82,7 @@ exports.addQuotation = async (req, res) => {
 
 exports.getAllClientsEmail = async (req, res) => {
   try {
-    const clients = await ClientModel.find({}, "email");
+    const clients = await ClientModel.find({});
     res.status(200).json(clients);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -98,7 +98,7 @@ exports.getProjectsByClientEmail = async (req, res) => {
       return res.status(404).json({ message: "Client not found" });
     }
 
-    const projects = await ProjectModel.find({ client: client._id }, "title category");
+    const projects = await ProjectModel.find({ client: client._id });
 
     res.status(200).json(projects);
   } catch (error) {
