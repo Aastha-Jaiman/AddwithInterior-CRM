@@ -6,7 +6,7 @@ const fs = require("fs")
 
 exports.addQuotation = async (req, res) => {
   try {
-    const { client, project, category, sections } = req.body;
+    const { client, project, sections } = req.body;
     const userRole = req.user.role;
 
     const clientData = await ClientModel.findById(client);
@@ -19,18 +19,30 @@ exports.addQuotation = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
+    const allowedSections = ["Wooden Part", "Hardware", "Accessories", "Labour", "Other"];
+
     const preparedSections = sections.map((section) => {
       let sectionTotal = 0;
+      let sectionName = section.sectionName;
+      let customSectionName = section.customSectionName || "";
+
+      if (!allowedSections.includes(sectionName)) {
+        customSectionName = sectionName;
+        sectionName = "Other";
+      }
 
       const preparedItems = section.items.map((item) => {
         const area = Number(item.height || 0) * Number(item.width || 0);
         const calculation = `${item.width} * ${item.height}`;
         let total = 0;
+
         if (userRole === "admin") {
           const rate = Number(item.price || 0);
           total = rate * area;
         }
+
         sectionTotal += total;
+
         return {
           itemName: item.itemName,
           height: item.height,
@@ -42,7 +54,8 @@ exports.addQuotation = async (req, res) => {
       });
 
       return {
-        sectionName: section.sectionName,
+        sectionName,
+        customSectionName,
         items: preparedItems,
         sectionTotal
       };
@@ -56,7 +69,7 @@ exports.addQuotation = async (req, res) => {
     const newQuotation = new QuotationModel({
       project,
       client,
-      category,
+      category: projectData.category,
       type: "rough",
       sections: preparedSections,
       grandTotal
@@ -79,6 +92,7 @@ exports.addQuotation = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 exports.getAllClientsEmail = async (req, res) => {
   try {
@@ -106,6 +120,7 @@ exports.getProjectsByClientEmail = async (req, res) => {
   }
 };
 
+
 exports.getAllQuotations = async (req, res) => {
   try {
     const quotations = await QuotationModel.find()
@@ -126,7 +141,7 @@ exports.getAllQuotations = async (req, res) => {
     });
   }
 };
-
+ 
 exports.getQuotationById = async (req, res) => {
   try {
     const { id } = req.params; 
