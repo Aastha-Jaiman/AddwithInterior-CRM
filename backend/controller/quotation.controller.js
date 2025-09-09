@@ -120,6 +120,7 @@ exports.getProjectsByClientEmail = async (req, res) => {
   }
 };
 
+
 exports.getAllQuotations = async (req, res) => {
   try {
     const quotations = await QuotationModel.find()
@@ -140,7 +141,7 @@ exports.getAllQuotations = async (req, res) => {
     });
   }
 };
-
+ 
 exports.getQuotationById = async (req, res) => {
   try {
     const { id } = req.params; 
