@@ -31,16 +31,6 @@ export const getServiceById = async (serviceId) => {
   }
 };
 
-// // ✅ Update service (add remarks, update status)
-// export const updateService = async (serviceId, updateData) => {
-//   try {
-//     const response = await api.put(`/service/update/${serviceId}`, updateData);
-//     return response.data;
-//   } catch (error) {
-//     throw error.response?.data || error;
-//   }
-// };
-
 export const updateService = async (serviceId, updatedData) => {
   try {
     const formData = new FormData();

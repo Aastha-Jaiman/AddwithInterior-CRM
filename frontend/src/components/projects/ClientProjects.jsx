@@ -139,6 +139,7 @@ const ProjectsList = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Budget</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Documents</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Services</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Start Date</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
                 </tr>
@@ -238,6 +239,27 @@ const ProjectsList = () => {
                             )}
                         </div>
                       </td>
+
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {project.service ? (
+                        <div className="space-y-1">
+                          <div>
+                            <span className="font-semibold">Duration: </span>
+                            {project.service.durationYears ?? "N/A"} year(s)
+                          </div>
+                          <div>
+                            <span className="font-semibold">Allowed Visits: </span>
+                            {project.service.allowedVisits ?? "N/A"}
+                          </div>
+                          <div>
+                            <span className="font-semibold">Used Visits: </span>
+                            {project.service.usedVisits ?? "N/A"}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">No Service</span>
+                      )}
+                    </td>
 
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {project.startingDate

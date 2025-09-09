@@ -6,6 +6,7 @@ import { ArrowLeft, FileText, Download, MessageCircle, Eye } from "lucide-react"
 import { getProjectById } from "@/services/project.services";
 import { addFeedbackToDesign } from "@/services/design.services";
 import { useRouter } from "next/navigation"; 
+import VisitHistoryDropdown from "./VisitsDropdownForClients";
 
 const ClientProjectDetails = () => {
   const { id } = useParams();
@@ -590,6 +591,44 @@ const ClientProjectDetails = () => {
               </>
             )}
           </div>
+
+{/* Services Section with dropdown and invoice download */}
+<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6">
+  <h3 className="font-semibold text-gray-900 mb-4">Service Details</h3>
+
+  {!project.service ? (
+    <p className="text-gray-500">No service information available</p>
+  ) : (
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
+          <p className="text-xs text-gray-500 mb-1">Allowed Visits</p>
+          <p className="text-gray-900 font-semibold">{project.service.allowedVisits ?? "N/A"}</p>
+        </div>
+        <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
+          <p className="text-xs text-gray-500 mb-1">Used Visits</p>
+          <p className="text-gray-900 font-semibold">{project.service.usedVisits ?? "N/A"}</p>
+        </div>
+        <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
+          <p className="text-xs text-gray-500 mb-1">Duration (Years)</p>
+          <p className="text-gray-900 font-semibold">{project.service.durationYears ?? "N/A"}</p>
+        </div>
+        <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
+          <p className="text-xs text-gray-500 mb-1">Service Expired?</p>
+          <p className={`font-semibold ${project.service.isExpired ? 'text-red-600' : 'text-green-600'}`}>
+            {project.service.isExpired ? "Yes" : "No"}
+          </p>
+        </div>
+      </div>
+
+      {/* Visits Dropdown */}
+      <VisitHistoryDropdown visits={project.service.visits || []} />
+    </>
+  )}
+</div>
+
+
+
 
 
           {/* Project Images */}
