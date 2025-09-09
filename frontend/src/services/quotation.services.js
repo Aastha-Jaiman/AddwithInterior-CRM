@@ -1,50 +1,81 @@
+// services/quotationService.js
 import api from "./api";
 
 // Add a new quotation
 export const addQuotation = async (data) => {
-  const res = await api.post("/quotation/add", data);
-  return res.data;
+  try {
+    const response = await api.post("quotation/add", data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-// Get all clients (emails)
+// Get all clients' emails
 export const getAllClientsEmail = async () => {
-  const res = await api.get("/quotation/clients");
-  return res.data;
+  try {
+    const response = await api.get("quotation/clients");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-// Get projects by client email
+// Get all projects by client email
 export const getProjectsByClientEmail = async (email) => {
-  const res = await api.get(`/quotation/projects/${email}`);
-  return res.data;
+  try {
+    const response = await api.get(`quotation/projects/${email}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-// Get all quotations
+// Get all quotations (requires auth)
 export const getAllQuotations = async () => {
-  const res = await api.get("/quotation");
-  return res.data;
+  try {
+    const response = await api.get("quotation/");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-// Get single quotation by ID
+// Get quotation by ID
 export const getQuotationById = async (id) => {
-  const res = await api.get(`/quotation/${id}`);
-  return res.data;
+  try {
+    const response = await api.get(`quotation/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-// Upload final document (PDF)
+// Upload final PDF document for a quotation
 export const uploadFinalDocument = async (quotationId, file) => {
-  const formData = new FormData();
-  formData.append("pdf", file);
+  try {
+    const formData = new FormData();
+    formData.append("pdf", file);
 
-  const res = await api.post(`/quotation/upload/${quotationId}`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return res.data;
+    const response = await api.post(`quotation/upload/${quotationId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-// Get final document of a quotation
+// Get final PDF document
 export const getFinalDocument = async (quotationId) => {
-  const res = await api.get(`/quotation/${quotationId}/finaldocument`);
-  return res.data;
+  try {
+    const response = await api.get(`quotation/${quotationId}/finaldocument`, {
+      responseType: "blob", // important to download/view PDFs
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
