@@ -1,10 +1,17 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { DollarSign, Calendar, User, Briefcase } from 'lucide-react';
-import { deletePayment, getPaymentById } from '@/services/paymenthistory.services';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { DollarSign, Calendar, User, Briefcase } from "lucide-react";
+import {
+  deletePayment,
+  getPaymentById,
+} from "@/services/paymenthistory.services";
 
-const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+const inr = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
 const fmtINR = (n) => inr.format(n);
 
 export default function PaymentDetailPage() {
@@ -19,8 +26,9 @@ export default function PaymentDetailPage() {
         setLoading(true);
         const res = await getPaymentById(id);
         setData(res?.data?.data || null);
+        console.log("payment details", res);
       } catch (e) {
-        setErr(e?.message || 'Failed to load');
+        setErr(e?.message || "Failed to load");
       } finally {
         setLoading(false);
       }
@@ -28,27 +36,28 @@ export default function PaymentDetailPage() {
   }, [id]);
 
   const handleDeletePayment = async (paymentId) => {
-  if (!confirm("Are you sure you want to delete this payment?")) {
-    return;
-  }
-  try {
-    setLoading(true);
-    await deletePayment(paymentId);
-    // Refresh payment data after deletion
-    const res = await getPaymentById(id);
-    setData(res?.data?.data || null);
-    setErr(null);
-  } catch (error) {
-    setErr(error?.message || "Failed to delete payment");
-  } finally {
-    setLoading(false);
-  }
-};
-
+    if (!confirm("Are you sure you want to delete this payment?")) {
+      return;
+    }
+    try {
+      setLoading(true);
+      await deletePayment(paymentId);
+      // Refresh payment data after deletion
+      const res = await getPaymentById(id);
+      setData(res?.data?.data || null);
+      setErr(null);
+    } catch (error) {
+      setErr(error?.message || "Failed to delete payment");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading)
     return (
-      <div className="p-8 text-center text-gray-500 text-lg font-medium">Loading...</div>
+      <div className="p-8 text-center text-gray-500 text-lg font-medium">
+        Loading...
+      </div>
     );
   if (err)
     return (
@@ -56,7 +65,9 @@ export default function PaymentDetailPage() {
     );
   if (!data)
     return (
-      <div className="p-8 text-center text-gray-600 font-medium">No payment history found.</div>
+      <div className="p-8 text-center text-gray-600 font-medium">
+        No payment history found.
+      </div>
     );
 
   return (
@@ -71,7 +82,7 @@ export default function PaymentDetailPage() {
           <User className="text-blue-600" />
           <div>
             <p className="text-sm font-semibold text-gray-700">Client</p>
-            <p className="text-lg text-gray-900">{data.client?.name || '-'}</p>
+            <p className="text-lg text-gray-900">{data.client?.name || "-"}</p>
           </div>
         </div>
 
@@ -79,7 +90,9 @@ export default function PaymentDetailPage() {
           <Briefcase className="text-green-600" />
           <div>
             <p className="text-sm font-semibold text-gray-700">Project</p>
-            <p className="text-lg text-gray-900">{data.project?.title || '-'}</p>
+            <p className="text-lg text-gray-900">
+              {data.project?.title || "-"}
+            </p>
           </div>
         </div>
       </div>
@@ -88,15 +101,21 @@ export default function PaymentDetailPage() {
       <div className="grid grid-cols-3 gap-6 text-center mb-8">
         <div className="py-4 px-3 bg-blue-50 rounded-lg border border-blue-200">
           <p className="text-xs font-medium text-blue-700">Total Amount</p>
-          <p className="text-lg font-semibold text-blue-900">{fmtINR(data.totalPrice)}</p>
+          <p className="text-lg font-semibold text-blue-900">
+            {fmtINR(data.totalPrice)}
+          </p>
         </div>
         <div className="py-4 px-3 bg-green-50 rounded-lg border border-green-200">
           <p className="text-xs font-medium text-green-700">Received</p>
-          <p className="text-lg font-semibold text-green-900">{fmtINR(data.totalReceived)}</p>
+          <p className="text-lg font-semibold text-green-900">
+            {fmtINR(data.totalReceived)}
+          </p>
         </div>
-        <div className="py-4 px-3 bg-orange-50 rounded-lg border border-orange-200">   
+        <div className="py-4 px-3 bg-orange-50 rounded-lg border border-orange-200">
           <p className="text-xs font-medium text-orange-700">Pending</p>
-          <p className="text-lg font-semibold text-orange-900">{fmtINR(data.pending)}</p>
+          <p className="text-lg font-semibold text-orange-900">
+            {fmtINR(data.pending)}
+          </p>
         </div>
       </div>
 
@@ -112,42 +131,64 @@ export default function PaymentDetailPage() {
       </h3>
 
       <div className="space-y-4">
-{data.payments && data.payments.length > 0 ? (
-  data.payments
-    .slice()
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .map((p) => (
-      <div
-        key={p._id}
-        className="flex flex-col bg-gray-50 rounded-lg p-4 border border-gray-200 shadow-sm"
-      >
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <DollarSign className="text-green-600" />
-            <p className="font-semibold text-gray-800">{fmtINR(p.amount)}</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <p className="text-xs text-gray-500 font-mono whitespace-nowrap">
-              {new Date(p.date).toLocaleString()}
-            </p>
-            <button
-              onClick={() => handleDeletePayment(p._id)}
-              className="text-red-600 hover:text-red-800 text-xs font-semibold px-2 py-1 rounded border border-red-600 hover:bg-red-100 transition"
-              type="button"
-              aria-label="Delete Payment"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-        <p className="mt-1 text-gray-600 text-sm">Msg: {p.message || '-'}</p>
-        <p className="mt-1 text-gray-400 text-xs font-mono">ID: {p._id}</p>
-      </div>
-    ))
-) : (
-  <p className="text-center text-gray-400 font-medium">No payment records found.</p>
-)}
+        {data.payments && data.payments.length > 0 ? (
+          data.payments
+            .slice()
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .map((p) => (
+              <div
+                key={p._id}
+                className="flex flex-col bg-gray-50 rounded-lg p-4 border border-gray-200 shadow-sm"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <p className="font-semibold text-gray-800">
+                      {fmtINR(p.amount)}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <p className="text-xs text-gray-500 font-mono whitespace-nowrap">
+                      {new Date(p.date).toLocaleString()}
+                    </p>
+                    <button
+                      onClick={() => handleDeletePayment(p._id)}
+                      className="text-red-600 hover:text-red-800 text-xs font-semibold px-2 py-1 rounded border border-red-600 hover:bg-red-100 transition"
+                      type="button"
+                      aria-label="Delete Payment"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-1 text-gray-600 text-sm">
+                  Msg: {p.message || "No message available"}
+                </p>
 
+                {p.file ? (
+                  <a
+                    href={p.file}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-2 text-blue-600 hover:text-blue-800 text-sm font-semibold underline"
+                  >
+                    Download Receipt
+                  </a>
+                ) : (
+                  <p className="mt-2 text-gray-500 text-sm italic">
+                    No file available
+                  </p>
+                )}
+
+                <p className="mt-1 text-gray-400 text-xs font-mono">
+                  ID: {p._id}
+                </p>
+              </div>
+            ))
+        ) : (
+          <p className="text-center text-gray-400 font-medium">
+            No payment records found.
+          </p>
+        )}
       </div>
     </div>
   );

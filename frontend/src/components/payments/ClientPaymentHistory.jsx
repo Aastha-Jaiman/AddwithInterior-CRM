@@ -76,11 +76,10 @@ const PaymentHistory = () => {
   };
 
   const handleProjectSelect = (projectIndex) => {
-  setSelectedProject(projectIndex);
-  setIsDropdownOpen(false);
-  setSearchTerm("");
-};
-
+    setSelectedProject(projectIndex);
+    setIsDropdownOpen(false);
+    setSearchTerm("");
+  };
 
   if (isLoading) {
     return (
@@ -484,6 +483,9 @@ const PaymentHistory = () => {
                             <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                               Message
                             </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                              Receipt
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -527,6 +529,22 @@ const PaymentHistory = () => {
                                   <span className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
                                     {payment.message || "No message"}
                                   </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                  {payment.file ? (
+                                    <a
+                                      href={payment.file}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm font-medium text-blue-600 hover:text-blue-800 underline"
+                                    >
+                                      Download Receipt
+                                    </a>
+                                  ) : (
+                                    <span className="text-sm text-gray-500 italic">
+                                      No Receipt Available
+                                    </span>
+                                  )}
                                 </td>
                               </tr>
                             ))

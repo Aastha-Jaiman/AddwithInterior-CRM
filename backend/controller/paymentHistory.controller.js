@@ -8,12 +8,12 @@ const fs = require("fs");
 exports.addPayment = async (req, res) => {
   try {
     const { clientId, projectId, amount, message } = req.body;
-    const file = req.file
+    const file = req.file;
 
-    if (!clientId || !projectId || amount == null) {
+    if (!clientId || !projectId || amount == null || amount <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Client, Project and Amount are required",
+        message: "Client, Project and a valid Amount are required",
       });
     }
 
@@ -36,6 +36,19 @@ exports.addPayment = async (req, res) => {
       project: projectId,
     });
 
+      let totalReceived = 0;
+    if (paymentHistory) {
+      totalReceived = paymentHistory.payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    }
+    const pendingAmount = totalPrice - totalReceived;
+
+    if (amount > pendingAmount) {
+      return res.status(400).json({
+        success: false,
+        message: `Amount exceeds pending amount. Maximum allowed: ${pendingAmount}`,
+      });
+    }
+
     let uploadedDoc;
     if (file) {
       try {
@@ -52,27 +65,39 @@ exports.addPayment = async (req, res) => {
       if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
     }
 
+    const newPayment = {
+      amount,
+      message,
+      date: new Date(),
+      file: uploadedDoc?.secure_url,
+    };
+
     if (!paymentHistory) {
       paymentHistory = new PaymentHistoryModel({
         client: clientId,
         project: projectId,
         totalPrice,
-        totalReceived: amount,
-        pending: totalPrice - amount,
-        payments: [{ amount, message, date: new Date(), file: uploadedDoc?.secure_url }],
+        payments: [newPayment],
       });
-      await paymentHistory.save();
+    } else {
+      paymentHistory.payments.push(newPayment);
+    }
 
+    paymentHistory.totalReceived = paymentHistory.payments.reduce(
+      (acc, p) => acc + (p.amount || 0),
+      0
+    );
+    paymentHistory.pending = totalPrice - paymentHistory.totalReceived;
+    if (paymentHistory.pending < 0) paymentHistory.pending = 0;
+
+    await paymentHistory.save();
+
+    if (!paymentHistory._id) {
       await ClientModel.findByIdAndUpdate(
         clientId,
         { $addToSet: { paymentHistory: paymentHistory._id } },
         { new: true }
       );
-    } else {
-      paymentHistory.totalReceived += amount;
-      paymentHistory.pending = paymentHistory.totalPrice - paymentHistory.totalReceived;
-      paymentHistory.payments.push({ amount, message, date: new Date(), file: uploadedDoc?.secure_url });
-      await paymentHistory.save();
     }
 
     res.status(201).json({
@@ -94,50 +119,65 @@ exports.updatePayment = async (req, res) => {
   try {
     const { paymentId } = req.params;
     const { amount, message } = req.body;
-    const file = req.file
+    const file = req.file;
 
     if (amount == null || amount <= 0) {
       return res.status(400).json({ success: false, message: "Valid amount is required" });
     }
 
-    const payment = await PaymentHistoryModel.findById(paymentId);
-    if (!payment) {
+    const paymentDoc = await PaymentHistoryModel.findById(paymentId);
+    if (!paymentDoc) {
       return res.status(404).json({ success: false, message: "Payment not found" });
     }
 
-    const project = await ProjectModel.findById(payment.project).select("finalBudget");
+    const project = await ProjectModel.findById(paymentDoc.project).select("finalBudget");
     if (!project) {
       return res.status(404).json({ success: false, message: "Project not found" });
     }
 
-    payment.totalPrice = project.finalBudget || 0;
-    payment.totalReceived += amount;
-    payment.pending = payment.totalPrice - payment.totalReceived;
-
     let uploadedDoc;
-        if (file) {
-          try {
-            uploadedDoc = await uploadOnCloudinary(file.path, {
-              resource_type: "raw",
-              folder: "payment_bills",
-            });
-          } catch (err) {
-            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-            return res
-              .status(500)
-              .json({ message: "Error uploading document", error: err.message });
-          }
-          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-        }
+    if (file) {
+      try {
+        uploadedDoc = await uploadOnCloudinary(file.path, {
+          resource_type: "raw",
+          folder: "payment_bills",
+        });
+      } catch (err) {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        return res.status(500).json({ message: "Error uploading document", error: err.message });
+      }
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    }
 
-    payment.payments.push({ amount, message, date: new Date(), file: uploadedDoc?.secure_url });
+      const totalPrice = project.finalBudget || 0;
+    const totalReceived = paymentDoc.payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const pendingAmount = totalPrice - totalReceived;
 
-    await payment.save();
+    if (amount > pendingAmount) {
+      return res.status(400).json({
+        success: false,
+        message: `Amount exceeds pending amount. Maximum allowed: ${pendingAmount}`,
+      });
+    }
+
+    paymentDoc.payments.push({
+      amount,
+      message,
+      date: new Date(),
+      file: uploadedDoc?.secure_url,
+    });
+
+    paymentDoc.totalPrice = project.finalBudget || 0;
+    paymentDoc.totalReceived = paymentDoc.payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    paymentDoc.pending = paymentDoc.totalPrice - paymentDoc.totalReceived;
+    if (paymentDoc.pending < 0) paymentDoc.pending = 0;
+
+    await paymentDoc.save();
 
     res.status(200).json({
       success: true,
       message: "Payment updated successfully",
-      data: payment
+      data: paymentDoc,
     });
   } catch (error) {
     console.error("Error updating payment:", error);
