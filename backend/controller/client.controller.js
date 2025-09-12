@@ -215,7 +215,7 @@ exports.getProfile = async (req, res) => {
     }
 
     const client = await ClientModel.findById(clientId)
-      .select("project")
+      .select("-password -__v")
       .populate("project")
       .populate("paymentHistory");
 
