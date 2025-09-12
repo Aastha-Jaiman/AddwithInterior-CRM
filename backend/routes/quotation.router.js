@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { addQuotation, getAllClientsEmail, getProjectsByClientEmail, getAllQuotations, getQuotationById, uploadFinalDocument, getFinalDocument  } = require("../controller/quotation.controller");
+const { addQuotation, getAllClientsEmail, getProjectsByClientEmail, getAllQuotations, getQuotationById, uploadFinalDocument, getFinalDocument, updateQuotation  } = require("../controller/quotation.controller");
 const authMiddleware = require("../middleware/allAuthmiddleware");
 const upload = require("../middleware/multer")
 
 router.post("/add", authMiddleware, addQuotation);
+router.put("/update/:quotationId", authMiddleware, updateQuotation);
 router.get("/clients", getAllClientsEmail);
 router.get("/projects/:email", getProjectsByClientEmail);
 router.get("/", authMiddleware, getAllQuotations);

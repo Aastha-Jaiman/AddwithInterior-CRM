@@ -48,6 +48,7 @@ const PaymentHistorySchema = new mongoose.Schema(
           type: Date,
           default: Date.now,
         },
+        file: { type: String, trim: true },
       },
     ],
   },

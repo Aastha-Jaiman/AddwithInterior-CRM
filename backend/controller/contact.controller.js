@@ -32,7 +32,6 @@ exports.addContact = async (req, res) => {
   }
 };
 
-
 exports.getAllContact = async (req, res) => {
       try{
             const userRole = req.user.role;
@@ -41,7 +40,7 @@ exports.getAllContact = async (req, res) => {
                   return res.status(401).json({message: "Only admin can get all contact data."})
             }
 
-            const contact = await ContactModel.find();
+            const contact = await ContactModelc.find();
 
             if(!contact){
                   return res.status(400).json({message: "Can not found contact."})
