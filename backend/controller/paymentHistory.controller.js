@@ -36,6 +36,19 @@ exports.addPayment = async (req, res) => {
       project: projectId,
     });
 
+      let totalReceived = 0;
+    if (paymentHistory) {
+      totalReceived = paymentHistory.payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    }
+    const pendingAmount = totalPrice - totalReceived;
+
+    if (amount > pendingAmount) {
+      return res.status(400).json({
+        success: false,
+        message: `Amount exceeds pending amount. Maximum allowed: ${pendingAmount}`,
+      });
+    }
+
     let uploadedDoc;
     if (file) {
       try {
@@ -134,6 +147,17 @@ exports.updatePayment = async (req, res) => {
         return res.status(500).json({ message: "Error uploading document", error: err.message });
       }
       if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    }
+
+      const totalPrice = project.finalBudget || 0;
+    const totalReceived = paymentDoc.payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const pendingAmount = totalPrice - totalReceived;
+
+    if (amount > pendingAmount) {
+      return res.status(400).json({
+        success: false,
+        message: `Amount exceeds pending amount. Maximum allowed: ${pendingAmount}`,
+      });
     }
 
     paymentDoc.payments.push({
