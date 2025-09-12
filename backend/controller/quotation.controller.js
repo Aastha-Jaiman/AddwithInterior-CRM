@@ -3,6 +3,7 @@ const ClientModel = require("../model/client.model");
 const ProjectModel = require("../model/project.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
 const fs = require("fs")
+const defaultSections = require("../utils/quotationTemplates");
 
 exports.addQuotation = async (req, res) => {
   try {
@@ -21,7 +22,9 @@ exports.addQuotation = async (req, res) => {
 
     const allowedSections = ["Wooden Part", "Hardware", "Accessories", "Labour", "Other"];
 
-    const preparedSections = sections.map((section) => {
+    const combinedSections = [...defaultSections, ...(sections || [])];
+
+    const preparedSections = combinedSections.map((section) => {
       let sectionTotal = 0;
       let sectionName = section.sectionName;
       let customSectionName = section.customSectionName || "";
@@ -32,8 +35,10 @@ exports.addQuotation = async (req, res) => {
       }
 
       const preparedItems = section.items.map((item) => {
-        const area = Number(item.height || 0) * Number(item.width || 0);
-        const calculation = `${item.width} * ${item.height}`;
+        const height = Number(item.height ?? 1);
+        const width = Number(item.width ?? 1);
+        const area = width * height;
+        const calculation = `${width} * ${height}`;
         let total = 0;
 
         if (userRole === "admin") {
@@ -45,11 +50,11 @@ exports.addQuotation = async (req, res) => {
 
         return {
           itemName: item.itemName,
-          height: item.height,
-          width: item.width,
           price: item.price,
+          height,
+          width,
           calculation,
-          total
+          total,
         };
       });
 
@@ -57,14 +62,11 @@ exports.addQuotation = async (req, res) => {
         sectionName,
         customSectionName,
         items: preparedItems,
-        sectionTotal
+        sectionTotal,
       };
     });
 
-    const grandTotal = preparedSections.reduce(
-      (acc, sec) => acc + sec.sectionTotal,
-      0
-    );
+    const grandTotal = preparedSections.reduce((acc, sec) => acc + sec.sectionTotal, 0);
 
     const newQuotation = new QuotationModel({
       project,
@@ -72,20 +74,17 @@ exports.addQuotation = async (req, res) => {
       category: projectData.category,
       type: "rough",
       sections: preparedSections,
-      grandTotal
+      grandTotal,
+      isApproved: false,
     });
 
     await newQuotation.save();
 
-    await ProjectModel.findByIdAndUpdate(
-      project,
-      { quotation: newQuotation._id },
-      { new: true }
-    );
+    await ProjectModel.findByIdAndUpdate(project, { quotation: newQuotation._id }, { new: true });
 
     res.status(201).json({
       message: "Quotation created successfully",
-      quotation: newQuotation
+      quotation: newQuotation,
     });
   } catch (error) {
     console.error("Error adding quotation:", error);
@@ -93,6 +92,70 @@ exports.addQuotation = async (req, res) => {
   }
 };
 
+exports.updateQuotation = async (req, res) => {
+  try {
+    const { quotationId } = req.params;
+    const { sections, isApproved } = req.body;
+    const userRole = req.user.role;
+
+    const quotation = await QuotationModel.findById(quotationId);
+    if (!quotation) {
+      return res.status(404).json({ message: "Quotation not found" });
+    }
+
+    sections.forEach((sectionUpdate) => {
+      const existingSection = quotation.sections.find(
+        (sec) => sec.sectionName === sectionUpdate.sectionName
+      );
+
+      if (existingSection) {
+        sectionUpdate.items.forEach((itemUpdate) => {
+          const existingItem = existingSection.items.find(
+            (it) => it.itemName === itemUpdate.itemName
+          );
+
+          if (existingItem) {
+            const height = Number(itemUpdate.height || 0);
+            const width = Number(itemUpdate.width || 0);
+            const area = width * height;
+
+            existingItem.height = height;
+            existingItem.width = width;
+            existingItem.calculation = `${width} * ${height}`;
+
+            if (userRole === "admin") {
+              existingItem.total = Number(existingItem.price || 0) * area;
+            }
+          }
+        });
+
+        existingSection.sectionTotal = existingSection.items.reduce(
+          (acc, it) => acc + (it.total || 0),
+          0
+        );
+      }
+    });
+
+    quotation.grandTotal = quotation.sections.reduce(
+      (acc, sec) => acc + (sec.sectionTotal || 0),
+      0
+    );
+
+    if (typeof isApproved === "boolean") {
+      quotation.isApproved = isApproved;
+    }
+
+    await quotation.save();
+
+    res.status(200).json({
+      message: "Quotation updated successfully",
+      quotation,
+    });
+  } catch (error) {
+    console.error("Error updating quotation:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 exports.getAllClientsEmail = async (req, res) => {
   try {
@@ -119,7 +182,6 @@ exports.getProjectsByClientEmail = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 exports.getAllQuotations = async (req, res) => {
   try {

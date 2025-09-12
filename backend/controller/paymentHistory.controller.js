@@ -1,11 +1,14 @@
 const PaymentHistoryModel = require("../model/paymentHistory.model");
 const ProjectModel = require("../model/project.model")
 const ClientModel = require("../model/client.model")
+const { uploadOnCloudinary } = require("../utils/cloudinary");
+const fs = require("fs");
 
 
 exports.addPayment = async (req, res) => {
   try {
     const { clientId, projectId, amount, message } = req.body;
+    const file = req.file
 
     if (!clientId || !projectId || amount == null) {
       return res.status(400).json({
@@ -33,6 +36,22 @@ exports.addPayment = async (req, res) => {
       project: projectId,
     });
 
+    let uploadedDoc;
+    if (file) {
+      try {
+        uploadedDoc = await uploadOnCloudinary(file.path, {
+          resource_type: "raw",
+          folder: "payment_bills",
+        });
+      } catch (err) {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        return res
+          .status(500)
+          .json({ message: "Error uploading document", error: err.message });
+      }
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    }
+
     if (!paymentHistory) {
       paymentHistory = new PaymentHistoryModel({
         client: clientId,
@@ -40,7 +59,7 @@ exports.addPayment = async (req, res) => {
         totalPrice,
         totalReceived: amount,
         pending: totalPrice - amount,
-        payments: [{ amount, message }],
+        payments: [{ amount, message, date: new Date(), file: uploadedDoc?.secure_url }],
       });
       await paymentHistory.save();
 
@@ -52,7 +71,7 @@ exports.addPayment = async (req, res) => {
     } else {
       paymentHistory.totalReceived += amount;
       paymentHistory.pending = paymentHistory.totalPrice - paymentHistory.totalReceived;
-      paymentHistory.payments.push({ amount, message });
+      paymentHistory.payments.push({ amount, message, date: new Date(), file: uploadedDoc?.secure_url });
       await paymentHistory.save();
     }
 
@@ -75,6 +94,7 @@ exports.updatePayment = async (req, res) => {
   try {
     const { paymentId } = req.params;
     const { amount, message } = req.body;
+    const file = req.file
 
     if (amount == null || amount <= 0) {
       return res.status(400).json({ success: false, message: "Valid amount is required" });
@@ -94,7 +114,23 @@ exports.updatePayment = async (req, res) => {
     payment.totalReceived += amount;
     payment.pending = payment.totalPrice - payment.totalReceived;
 
-    payment.payments.push({ amount, message, date: new Date() });
+    let uploadedDoc;
+        if (file) {
+          try {
+            uploadedDoc = await uploadOnCloudinary(file.path, {
+              resource_type: "raw",
+              folder: "payment_bills",
+            });
+          } catch (err) {
+            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            return res
+              .status(500)
+              .json({ message: "Error uploading document", error: err.message });
+          }
+          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        }
+
+    payment.payments.push({ amount, message, date: new Date(), file: uploadedDoc?.secure_url });
 
     await payment.save();
 
