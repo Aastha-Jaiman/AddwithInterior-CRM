@@ -63,9 +63,7 @@
 // }
 
 
-
-import AdminSignupForm from '@/components/auth/CreateAdmin'
-import AdminLoginPage from '@/components/auth/login'
+import AdminLoginPage from '@/components/auth/Login'
 import React from 'react'
 
 export default function page() {
