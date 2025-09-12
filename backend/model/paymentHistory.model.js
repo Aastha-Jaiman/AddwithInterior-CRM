@@ -11,6 +11,7 @@ const PaymentHistorySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
       required: [true, "Project reference is required"],
+      unique: true,
     },
 
     totalPrice: {
