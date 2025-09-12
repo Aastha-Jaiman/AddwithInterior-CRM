@@ -202,3 +202,35 @@ exports.getPaymentById = async (req, res) => {
   }
 };
 
+exports.deletePayment = async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const paymentDoc = await PaymentHistoryModel.findOne({ "payments._id": paymentId });
+    if (!paymentDoc) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    const paymentToDelete = paymentDoc.payments.find(p => p._id.toString() === paymentId);
+    if (!paymentToDelete) {
+      return res.status(404).json({ message: "Payment not found in document" });
+    }
+
+    const amountToRemove = paymentToDelete.amount;
+    paymentDoc.payments = paymentDoc.payments.filter(p => p._id.toString() !== paymentId);
+
+    paymentDoc.totalReceived -= amountToRemove;
+    if (paymentDoc.totalReceived < 0) paymentDoc.totalReceived = 0;
+    paymentDoc.pending = paymentDoc.totalPrice - paymentDoc.totalReceived;
+    if (paymentDoc.pending < 0) paymentDoc.pending = 0;
+
+    await paymentDoc.save();
+
+    res.status(200).json({
+      message: "Payment deleted successfully",
+      paymentHistory: paymentDoc,
+    });
+  } catch (error) {
+    console.error("Error deleting payment:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
