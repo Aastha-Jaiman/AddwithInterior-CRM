@@ -26,7 +26,7 @@ const QuotationSchema = new mongoose.Schema(
        {
         sectionName: {
           type: String,
-          enum: ["Wooden Part", "Hardware", "Accessories", "Labour", "Other"],
+          enum: ["Wooden Part", "Hardware", "Accessories", "Labour", "Furniture", "Other"],
           required: [true, "Section name is required"],
           trim: true,
         },

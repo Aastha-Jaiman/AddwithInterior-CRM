@@ -2,8 +2,9 @@ const QuotationModel = require("../model/quotation.model");
 const ClientModel = require("../model/client.model");
 const ProjectModel = require("../model/project.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary");
-const fs = require("fs")
-const defaultSections = require("../utils/quotationTemplates");
+const fs = require("fs");
+const kitchenSections = require("../utils/quotationTemplates");
+const inplaceSections = require("../utils/quotationTemplate");
 
 exports.addQuotation = async (req, res) => {
   try {
@@ -11,40 +12,42 @@ exports.addQuotation = async (req, res) => {
     const userRole = req.user.role;
 
     const clientData = await ClientModel.findById(client);
-    if (!clientData) {
-      return res.status(404).json({ message: "Client not found" });
-    }
+    if (!clientData) return res.status(404).json({ message: "Client not found" });
 
     const projectData = await ProjectModel.findById(project);
-    if (!projectData) {
-      return res.status(404).json({ message: "Project not found" });
+    if (!projectData) return res.status(404).json({ message: "Project not found" });
+
+    const category = projectData.category.toLowerCase();
+
+    let defaultSections = [];
+    if (category === "modular_kitchen") defaultSections = kitchenSections;
+    else if (category === "inplace_furniture") defaultSections = inplaceSections;
+    else {
+      return res.status(400).json({ message: `Unsupported project category: ${projectData.category}` });
     }
 
-    const allowedSections = ["Wooden Part", "Hardware", "Accessories", "Labour", "Other"];
+    let combinedSections = [...defaultSections];
+    if (sections && sections.length) {
+      sections.forEach(section => combinedSections.push(section));
+    }
 
-    const combinedSections = [...defaultSections, ...(sections || [])];
-
-    const preparedSections = combinedSections.map((section) => {
+    const preparedSections = combinedSections.map(section => {
       let sectionTotal = 0;
       let sectionName = section.sectionName;
       let customSectionName = section.customSectionName || "";
 
-      if (!allowedSections.includes(sectionName)) {
+      if (!defaultSections.some(ds => ds.sectionName === sectionName)) {
         customSectionName = sectionName;
         sectionName = "Other";
       }
 
-      const preparedItems = section.items.map((item) => {
-        const height = Number(item.height ?? 1);
-        const width = Number(item.width ?? 1);
-        const area = width * height;
+      const preparedItems = section.items.map(item => {
+        const height = Number(item.height ?? 0);
+        const width = Number(item.width ?? 0);
         const calculation = `${width} * ${height}`;
         let total = 0;
 
-        if (userRole === "admin") {
-          const rate = Number(item.price || 0);
-          total = rate * area;
-        }
+        if (userRole === "admin") total = Number(item.price || 0) * height * width;
 
         sectionTotal += total;
 
@@ -80,7 +83,7 @@ exports.addQuotation = async (req, res) => {
 
     await newQuotation.save();
 
-    await ProjectModel.findByIdAndUpdate(project, { quotation: newQuotation._id }, { new: true });
+    await ProjectModel.findByIdAndUpdate(project, { quotation: newQuotation._id });
 
     res.status(201).json({
       message: "Quotation created successfully",
@@ -332,5 +335,26 @@ exports.getFinalDocument = async (req, res) => {
       message: "Internal server error",
       error: error.message,
     });
+  }
+};
+
+exports.getDefaultSections = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    const projectData = await ProjectModel.findById(projectId);
+    if (!projectData) return res.status(404).json({ message: "Project not found" });
+
+    const category = projectData.category.toLowerCase();
+
+    let defaultSections = [];
+    if (category === "modular_kitchen") defaultSections = kitchenSections;
+    else if (category === "inplace_furniture") defaultSections = inplaceSections;
+    else return res.status(400).json({ message: `Unsupported project category: ${projectData.category}` });
+
+    res.status(200).json({ sections: defaultSections, category: projectData.category });
+  } catch (error) {
+    console.error("Error fetching default sections:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
