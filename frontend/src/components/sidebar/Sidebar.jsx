@@ -26,8 +26,7 @@ import { routePermissionMap } from "../ProtectedRoute/routePermissions";
 import { logout } from "@/store/authSlice";
 import { useDispatch } from "react-redux";
 import { logoutService } from "@/services/admin.services";
-import { logoutClient } from '@/services/client.services';
-
+import { logoutClient } from "@/services/client.services";
 
 export default function SidebarLayout({ children }) {
   const pathname = usePathname();
@@ -66,13 +65,13 @@ export default function SidebarLayout({ children }) {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const checkPermission = (routePath) => {
     const required = routePermissionMap[routePath];
-    console.log(required)
+    console.log(required);
 
     // Admin bypass
     if (user?.role === "admin") return true;
@@ -102,7 +101,7 @@ export default function SidebarLayout({ children }) {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      if (userRole === 'client') {
+      if (userRole === "client") {
         await logoutClient();
       } else {
         await logoutService();
@@ -112,13 +111,12 @@ export default function SidebarLayout({ children }) {
     } finally {
       setLoading(false);
       dispatch(logout());
-      localStorage.removeItem('crm_user');
-      localStorage.removeItem('clientToken');
-      localStorage.removeItem('adminToken');
-      router.push('/login'); // Redirect to login after logout
+      localStorage.removeItem("crm_user");
+      localStorage.removeItem("clientToken");
+      localStorage.removeItem("adminToken");
+      router.push("/login"); // Redirect to login after logout
     }
   };
-
 
   const dashboardRouteByRole = {
     admin: "/admin-dashboard",
@@ -129,45 +127,39 @@ export default function SidebarLayout({ children }) {
   };
 
   const navigationItems = [
-    // { name: 'Upload Quotation', href: '/upload-quotation', icon: FileText },
-    // { name: 'View Quotations', href: '/quotations', icon: ClipboardList },
-
     {
       name: "Dashboard",
       href: dashboardRouteByRole[userRole] || "/dashboard",
       icon: LayoutDashboard,
-      alwaysVisible: true, // dashboard is always shown
+      alwaysVisible: true,
     },
 
     { name: "Quotations", href: "/quotations", icon: ClipboardList },
-
-    // { name: "Upload Design", href: "/upload-design", icon: NotebookPen },
-    // {
-    //   name: "Design Feedback",
-    //   href: "/design-feedback",
-    //   icon: MessageSquareQuote,
-    // },
     { name: "Design", href: "/design", icon: NotebookPen },
-    { name: "Profile", href: "/profile", icon: NotebookPen },
-
     { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
     { name: "Project", href: "/projects", icon: LayoutDashboard },
-    // { name: "Assign Team", href: "/projects/assign-team", icon: Users },
     { name: "Manage Users", href: "/users", icon: User2 },
     { name: "Manage Brochures", href: "/brochure", icon: FileText },
     { name: "Payments", href: "/payments", icon: ReceiptIndianRupee },
     { name: "Generate Invoice", href: "/generate-invoice", icon: FileText },
-    // { name: "Assign Service", href: "/services/assign", icon: Wrench },
-    // { name: "Track Service", href: "/services/track", icon: Wrench },
+    { name: "Profile", href: "/profile", icon: NotebookPen },
+
   ];
 
   const adminNavigationItems = [
     { name: "Dashboard", href: "/admin-dashboard", icon: LayoutDashboard },
     { name: "Quotation", href: "/admin/quotation", icon: FileText },
     { name: "Brochure", href: "/admin/brochure", icon: ReceiptIndianRupee },
-    { name: "Profile", href: "/profile", icon: NotebookPen },
-    { name: "registerstaff", href: "/admin/registerstaff", icon: MessageSquareText },
-    { name: "registerclient", href: "/admin/registerclient", icon: MessageSquareText },
+    {
+      name: "registerstaff",
+      href: "/admin/registerstaff",
+      icon: MessageSquareText,
+    },
+    {
+      name: "registerclient",
+      href: "/admin/registerclient",
+      icon: MessageSquareText,
+    },
     { name: "Staff-Users", href: "/admin/staffusers", icon: FileQuestion },
     { name: "Clients", href: "/admin/clients", icon: NotebookPen },
     { name: "Projects", href: "/admin/projects", icon: ClipboardList },
@@ -178,19 +170,20 @@ export default function SidebarLayout({ children }) {
       href: "/admin/daily-updates",
       icon: MessageSquareText,
     },
-    // { name: "Reports", href: "/admin/reports", icon: Users },
-    // { name: "Services", href: "/admin/services", icon: MessageSquareQuote },
+    { name: "Profile", href: "/profile", icon: NotebookPen },
   ];
 
   const clientNavigationItems = [
-    // { name: 'Dashboard', href: '/client-dashboard', icon: LayoutDashboard },
-    { name: 'My Projects', href: '/client/projects', icon: ClipboardList },
-    { name: 'Payments', href: '/client/payments', icon: ReceiptIndianRupee },
-    { name: 'Quotations', href: '/client/quotation', icon: FileText },
-    { name: 'Daily Updates', href: '/client/daily-updates', icon: MessageSquareText },
+    { name: "My Projects", href: "/client/projects", icon: ClipboardList },
+    { name: "Payments", href: "/client/payments", icon: ReceiptIndianRupee },
+    { name: "Quotations", href: "/client/quotation", icon: FileText },
+    {
+      name: "Daily Updates",
+      href: "/client/daily-updates",
+      icon: MessageSquareText,
+    },
     { name: "Profile", href: "/client/profile", icon: NotebookPen },
   ];
-
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -254,8 +247,8 @@ export default function SidebarLayout({ children }) {
             {(userRole === "admin"
               ? adminNavigationItems
               : userRole === "client"
-                ? clientNavigationItems
-                : navigationItems.filter(
+              ? clientNavigationItems
+              : navigationItems.filter(
                   (item) => item.alwaysVisible || checkPermission(item.href)
                 )
             ).map((item) => {
@@ -268,25 +261,29 @@ export default function SidebarLayout({ children }) {
                 <button
                   key={item.name}
                   onClick={() => handleNavigation(item.href)}
-                  className={`w-full text-left flex items-center ${collapsed ? "justify-center" : ""
-                    } px-3 py-2.5 rounded-xl group transition-all duration-200 ${isActive
+                  className={`w-full text-left flex items-center ${
+                    collapsed ? "justify-center" : ""
+                  } px-3 py-2.5 rounded-xl group transition-all duration-200 ${
+                    isActive
                       ? "bg-gradient-to-r from-indigo-50 to-blue-50 shadow-sm"
                       : "text-slate-600 hover:bg-slate-100"
-                    }`}
+                  }`}
                 >
                   <div
-                    className={`flex items-center justify-center min-w-10 h-10 rounded-lg ${isActive
-                      ? "bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-md"
-                      : "bg-slate-200 text-slate-600 group-hover:bg-slate-300"
-                      } transition-all duration-200`}
+                    className={`flex items-center justify-center min-w-10 h-10 rounded-lg ${
+                      isActive
+                        ? "bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-md"
+                        : "bg-slate-200 text-slate-600 group-hover:bg-slate-300"
+                    } transition-all duration-200`}
                   >
                     <Icon size={18} />
                   </div>
                   {!collapsed && (
                     <div className="ml-3 flex-grow">
                       <span
-                        className={`font-medium text-sm ${isActive ? "text-indigo-800" : "text-slate-700"
-                          }`}
+                        className={`font-medium text-sm ${
+                          isActive ? "text-indigo-800" : "text-slate-700"
+                        }`}
                       >
                         {item.name}
                       </span>
@@ -302,13 +299,52 @@ export default function SidebarLayout({ children }) {
         </nav>
 
         {/* Footer */}
-        <div className="px-3 py-4 border-t border-slate-100 mt-auto sticky bottom-0 bg-white z-10">
+        {/* <div className="px-3 py-4 border-t border-slate-100 mt-auto sticky bottom-0 bg-white z-10">
           <div
             className={`flex items-center ${collapsed ? "justify-center" : "justify-between"
               } text-slate-600`}
           >
             {!collapsed && (
               <div className="flex flex-col text-left">
+                <span className="text-sm font-medium capitalize">
+                  {userRole || ""}
+                </span>
+                <span className="text-xs text-slate-500 truncate max-w-[160px]">
+                  {userName}
+                </span>
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-md hover:bg-red-100 text-red-600 transition-colors duration-200"
+              title="Logout"
+            >
+              {loading ? (
+                "logging out..."
+              ) : (
+                <LogOut size={collapsed ? 20 : 18} />
+              )}
+            </button>
+          </div>
+        </div> */}
+        {/* Footer */}
+        <div className="px-3 py-4 border-t border-slate-100 mt-auto sticky bottom-0 bg-white z-10">
+          <div
+            className={`flex items-center ${
+              collapsed ? "justify-center" : "justify-between"
+            } text-slate-600`}
+          >
+            {!collapsed && (
+              <div
+                className="flex flex-col text-left cursor-pointer hover:text-indigo-600 transition-colors"
+                onClick={() => {
+                  if (userRole === "client") {
+                    router.push("/client/profile");
+                  } else {
+                    router.push("/profile");
+                  }
+                }}
+              >
                 <span className="text-sm font-medium capitalize">
                   {userRole || ""}
                 </span>

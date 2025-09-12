@@ -57,18 +57,18 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
 
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
           <div className="p-4 sm:p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   Project Management
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-gray-600 mt-1">
                   Manage your interior design projects efficiently
                 </p>
               </div>
@@ -84,18 +84,18 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
           <div className="p-4 sm:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Search */}
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600" />
                 <input
                   type="text"
                   placeholder="Search projects..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
               </div>
 
@@ -104,7 +104,7 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none transition-colors"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent  appearance-none transition-colors"
                 >
                   <option value="">All Categories</option>
                   <option value="modular_Kitchen">Modular Kitchen</option>
@@ -118,7 +118,7 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none transition-colors"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none transition-colors"
                 >
                   <option value="">All Status</option>
                   <option value="Pending">Pending</option>
@@ -137,47 +137,47 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
         </div>
 
         {/* Projects Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {filteredProjects.length > 0 ? (
             <div className="overflow-x-auto w-full">
               <table className="min-w-[1200px] w-full ">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Project Image
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Client Name
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Project Title
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Category
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Budget
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Documents
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Services
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Start Date
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-gray-200 ">
                   {filteredProjects.map((project) => (
-                    <tr key={project._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <tr key={project._id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <img
@@ -195,27 +195,27 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
 
                       <td className="px-4 py-4">
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          <div className="text-sm font-medium text-gray-900 truncate">
                             {project.client?.name || "N/A"}
                           </div>
                         </div>
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="text-sm text-gray-900 dark:text-white">{project.title}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{project.location}</div>
+                        <div className="text-sm text-gray-900 ">{project.title}</div>
+                        <div className="text-xs text-gray-500 ">{project.location}</div>
                       </td>
 
-                      <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                      <td className="px-4 py-4 text-sm text-gray-900">
                         {project.category}
                       </td>
 
                       <td className="px-4 py-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <div className="text-sm font-medium text-gray-900">
                           ₹{!isNaN(Number(project.estimatedBudget)) ? Number(project.estimatedBudget).toLocaleString() : "N/A"}
                         </div>
                         {project.finalBudget && (
-                          <div className="text-xs text-green-600 dark:text-green-400">
+                          <div className="text-xs text-green-600">
                             Final: ₹{project.finalBudget.toLocaleString()}
                           </div>
                         )}
@@ -283,7 +283,7 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                         </div>
                       </td>
                       
-                      <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                      <td className="px-4 py-4 text-sm text-gray-900 ">
                         {project.service ? (
                           <div>
                             <div>Duration: {project.service.durationYears || 0} Years</div>
@@ -295,7 +295,7 @@ const ProjectsList = ({ projects, onView, onEdit, onCreateNew, onDownloadDocumen
                       </td>
 
 
-                      <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                      <td className="px-4 py-4 text-sm text-gray-900">
                         {project.startingDate ? new Date(project.startingDate).toLocaleDateString('en-IN') : "N/A"}
                       </td>
 
