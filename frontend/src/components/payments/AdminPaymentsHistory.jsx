@@ -1,12 +1,26 @@
-'use client';
+"use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Filter, Plus, ChevronDown, ChevronRight, Calendar, DollarSign, User, Briefcase , Pencil } from 'lucide-react';
-import { getAllPayments } from '@/services/paymenthistory.services';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  Filter,
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  Calendar,
+  DollarSign,
+  User,
+  Briefcase,
+  Pencil,
+} from "lucide-react";
+import { getAllPayments } from "@/services/paymenthistory.services";
+import { useRouter } from "next/navigation";
 
-
-const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+const inr = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
 const fmtINR = (n) => inr.format(n);
 
 const StatusBadge = ({ status, amount }) => {
@@ -15,28 +29,28 @@ const StatusBadge = ({ status, amount }) => {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isFullyPaid
-          ? 'bg-green-100 text-green-800'
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        isFullyPaid
+          ? "bg-green-100 text-green-800"
           : isPartiallyPaid
-            ? 'bg-yellow-100 text-yellow-800'
-            : 'bg-red-100 text-red-800'
-        }`}
+          ? "bg-yellow-100 text-yellow-800"
+          : "bg-red-100 text-red-800"
+      }`}
     >
-      {isFullyPaid ? 'Paid' : isPartiallyPaid ? 'Partial' : 'Pending'}
+      {isFullyPaid ? "Paid" : isPartiallyPaid ? "Partial" : "Pending"}
     </span>
   );
 };
 
 export default function PaymentsPage() {
-   const router = useRouter();
+  const router = useRouter();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
-  const [query, setQuery] = useState('');
-  const [clientId, setClientId] = useState('all');
-  const [projectId, setProjectId] = useState('all');
-  const [openId, setOpenId] = useState(null);
+  const [query, setQuery] = useState("");
+  const [clientId, setClientId] = useState("all");
+  const [projectId, setProjectId] = useState("all");
 
   useEffect(() => {
     let off = false;
@@ -45,10 +59,10 @@ export default function PaymentsPage() {
         setLoading(true);
         const res = await getAllPayments();
         const data = res?.data?.data ?? [];
-        console.log("res", res)
+        console.log("res", res);
         if (!off) setRows(data);
       } catch (e) {
-        if (!off) setErr(e?.message || 'Failed to load');
+        if (!off) setErr(e?.message || "Failed to load");
       } finally {
         if (!off) setLoading(false);
       }
@@ -58,8 +72,6 @@ export default function PaymentsPage() {
     };
   }, []);
 
-
-
   const clients = useMemo(() => {
     const m = new Map();
     rows.forEach((r) => r.client?._id && m.set(r.client._id, r.client.name));
@@ -68,17 +80,20 @@ export default function PaymentsPage() {
 
   const projects = useMemo(() => {
     const m = new Map();
-    rows.forEach((r) => r.project?._id && m.set(r.project._id, r.project.title));
+    rows.forEach(
+      (r) => r.project?._id && m.set(r.project._id, r.project.title)
+    );
     return Array.from(m).map(([value, label]) => ({ value, label }));
   }, [rows]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
-      if (clientId !== 'all' && r.client?._id !== clientId) return false;
-      if (projectId !== 'all') {
-        if (projectId === 'no-project' && r.project !== null) return false;
-        if (projectId !== 'no-project' && r.project?._id !== projectId) return false;
+      if (clientId !== "all" && r.client?._id !== clientId) return false;
+      if (projectId !== "all") {
+        if (projectId === "no-project" && r.project !== null) return false;
+        if (projectId !== "no-project" && r.project?._id !== projectId)
+          return false;
       }
       if (!q) return true;
       const hay = [
@@ -89,7 +104,7 @@ export default function PaymentsPage() {
         r._id,
       ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
         .toLowerCase();
       return hay.includes(q);
     });
@@ -103,7 +118,7 @@ export default function PaymentsPage() {
   }, [filtered]);
 
   const handleAddPayment = () => {
-    router.push('/admin/paymenthistory/add');
+    router.push("/admin/paymenthistory/add");
   };
 
   if (loading) {
@@ -128,7 +143,9 @@ export default function PaymentsPage() {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
         <div className="text-center py-8">
-          <div className="text-red-500 text-lg font-medium mb-2">Error Loading Payments</div>
+          <div className="text-red-500 text-lg font-medium mb-2">
+            Error Loading Payments
+          </div>
           <div className="text-gray-500">{err}</div>
         </div>
       </div>
@@ -141,8 +158,12 @@ export default function PaymentsPage() {
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Payment History</h1>
-            <p className="text-sm text-gray-500 mt-1">{filtered.length} payment records</p>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Payment History
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {filtered.length} payment records
+            </p>
           </div>
           <button
             onClick={handleAddPayment}
@@ -163,8 +184,12 @@ export default function PaymentsPage() {
                 <DollarSign className="h-5 w-5 text-blue-600" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Total Amount</p>
-                <p className="text-lg font-semibold text-gray-900">{fmtINR(stats.totalAmount)}</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Total Amount
+                </p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {fmtINR(stats.totalAmount)}
+                </p>
               </div>
             </div>
           </div>
@@ -174,8 +199,12 @@ export default function PaymentsPage() {
                 <DollarSign className="h-5 w-5 text-green-600" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Total Received</p>
-                <p className="text-lg font-semibold text-gray-900">{fmtINR(stats.totalReceived)}</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Total Received
+                </p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {fmtINR(stats.totalReceived)}
+                </p>
               </div>
             </div>
           </div>
@@ -185,8 +214,12 @@ export default function PaymentsPage() {
                 <DollarSign className="h-5 w-5 text-orange-600" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Total Pending</p>
-                <p className="text-lg font-semibold text-gray-900">{fmtINR(stats.totalPending)}</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Total Pending
+                </p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {fmtINR(stats.totalPending)}
+                </p>
               </div>
             </div>
           </div>
@@ -244,8 +277,12 @@ export default function PaymentsPage() {
       <div className="overflow-x-auto">
         {filtered.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-500 text-lg font-medium mb-2">No payments found</div>
-            <div className="text-gray-400">Try adjusting your search or filters</div>
+            <div className="text-gray-500 text-lg font-medium mb-2">
+              No payments found
+            </div>
+            <div className="text-gray-400">
+              Try adjusting your search or filters
+            </div>
           </div>
         ) : (
           <table className="w-full">
@@ -281,9 +318,11 @@ export default function PaymentsPage() {
                     <td className="px-6 py-4">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {record.client?.name || 'Unknown Client'}
+                          {record.client?.name || "Unknown Client"}
                         </div>
-                        <div className="text-sm text-gray-500">{record.client?.email || '-'}</div>
+                        <div className="text-sm text-gray-500">
+                          {record.client?.email || "-"}
+                        </div>
                         {record.project && (
                           <div className="text-sm text-blue-600 mt-1">
                             {record.project.title} · {record.project.category}
@@ -301,7 +340,10 @@ export default function PaymentsPage() {
                       {fmtINR(record.pending)}
                     </td>
                     <td className="px-6 py-4">
-                      <StatusBadge status={record.pending === 0 ? 'paid' : 'pending'} amount={record.pending} />
+                      <StatusBadge
+                        status={record.pending === 0 ? "paid" : "pending"}
+                        amount={record.pending}
+                      />
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       <div className="flex items-center">
@@ -311,85 +353,16 @@ export default function PaymentsPage() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button
-                        onClick={() => setOpenId(openId === record._id ? null : record._id)}
+                        onClick={() =>
+                          router.push(`/admin/paymenthistory/${record._id}`)
+                        }
                         className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
-                        {openId === record._id ? (
-                          <>
-                            <ChevronDown className="h-4 w-4 mr-1" />
-                            Hide
-                          </>
-                        ) : (
-                          <>
-                            <ChevronRight className="h-4 w-4 mr-1" />
-                            Details
-                          </>
-                        )}
+                        <ChevronRight className="h-4 w-4 mr-1" />
+                        Details
                       </button>
                     </td>
                   </tr>
-
-                  {openId === record._id && (
-                    <tr>
-                      <td colSpan="7" className="px-6 py-4 bg-gray-50">
-                        <div className="bg-white rounded-lg p-4 border border-gray-200">
-                          <h4 className="text-sm font-medium text-gray-900 mb-3">Payment History</h4>
-                          {(record.payments ?? []).length > 0 ? (
-                            <div className="space-y-2">
-                              {record.payments
-                                .slice()
-                                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                .map((payment) => (
-                                  <div
-                                    key={payment._id}
-                                    className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg"
-                                  >
-                                    <div className="flex items-center">
-                                      <div className="p-1.5 bg-green-100 rounded-full mr-3">
-                                        <DollarSign className="h-3 w-3 text-green-600" />
-                                      </div>
-                                      <div>
-                                        <div className="text-sm font-medium text-gray-900">
-                                          {fmtINR(payment.amount)}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                         Msg : {payment.message}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="text-xs text-gray-400 font-mono">
-                                      <div className="text-xs text-gray-500">
-                                          {new Date(payment.date).toLocaleString()}
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-gray-400 font-mono">
-                                      ID: {payment._id}
-                                    </div>
-                                    <div className="text-xs text-gray-400 font-mono flex items-center gap-2">
-                                      <span>ID: {payment._id}</span>
-                                      <button
-                                        onClick={() => router.push(`/admin/paymenthistory/edit/${payment._id}`)}
-                                        className="text-blue-600 hover:text-blue-800"
-                                        title="Edit Payment"
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </button>
-                                    </div>
-
-                                    
-
-                                  </div>
-                                ))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-4 text-gray-500 text-sm">
-                              No payment records found
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
                 </React.Fragment>
               ))}
             </tbody>

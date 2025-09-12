@@ -261,7 +261,7 @@ const PaymentHistory = () => {
                               {project.category}
                             </span>
                             <span className="text-xs text-gray-400 mt-1">
-                              Budget: $
+                              Budget: ₹
                               {project.finalBudget?.toLocaleString() || "0"}
                             </span>
                           </div>
@@ -300,7 +300,7 @@ const PaymentHistory = () => {
               <div>
                 <p className="text-sm font-medium text-gray-500">Budget</p>
                 <p className="text-xl font-bold text-gray-900">
-                  $
+                  ₹
                   {clientData.project[
                     selectedProject
                   ]?.finalBudget?.toLocaleString() || "0"}
@@ -341,19 +341,6 @@ const PaymentHistory = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6">
             <h2 className="text-2xl font-bold text-white flex items-center">
-              <svg
-                className="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                />
-              </svg>
               Payment History
             </h2>
             <p className="text-blue-100 mt-2">
@@ -361,8 +348,6 @@ const PaymentHistory = () => {
             </p>
           </div>
           <div className="p-6 space-y-8">
-            {/* {clientData.paymentHistory?.length > 0 ? (
-              clientData.paymentHistory.map((history, index) => ( */}
             {selectedPaymentHistory?.length > 0 ? (
               selectedPaymentHistory.map((history, index) => (
                 <div
@@ -390,7 +375,7 @@ const PaymentHistory = () => {
                         Total Price
                       </p>
                       <p className="text-2xl font-bold text-gray-900">
-                        ${history.totalPrice?.toLocaleString() || "0"}
+                        ₹{history.totalPrice?.toLocaleString() || "0"}
                       </p>
                     </div>
                     <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
@@ -413,7 +398,7 @@ const PaymentHistory = () => {
                         Total Received
                       </p>
                       <p className="text-2xl font-bold text-green-600">
-                        ${history.totalReceived?.toLocaleString() || "0"}
+                        ₹{history.totalReceived?.toLocaleString() || "0"}
                       </p>
                     </div>
                     <div className="text-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
@@ -436,7 +421,7 @@ const PaymentHistory = () => {
                         Pending
                       </p>
                       <p className="text-2xl font-bold text-amber-600">
-                        ${history.pending?.toLocaleString() || "0"}
+                        ₹{history.pending?.toLocaleString() || "0"}
                       </p>
                     </div>
                   </div>
@@ -510,7 +495,7 @@ const PaymentHistory = () => {
                               >
                                 <td className="px-6 py-4">
                                   <span className="text-lg font-bold text-green-600">
-                                    ${payment.amount?.toLocaleString() || "0"}
+                                    ₹{payment.amount?.toLocaleString() || "0"}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4">
