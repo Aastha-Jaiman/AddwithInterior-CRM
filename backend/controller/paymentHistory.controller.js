@@ -92,13 +92,11 @@ exports.addPayment = async (req, res) => {
 
     await paymentHistory.save();
 
-    if (!paymentHistory._id) {
-      await ClientModel.findByIdAndUpdate(
-        clientId,
-        { $addToSet: { paymentHistory: paymentHistory._id } },
-        { new: true }
-      );
-    }
+     await ClientModel.findByIdAndUpdate(
+      clientId,
+      { $addToSet: { paymentHistory: paymentHistory._id } },
+      { new: true }
+    );
 
     res.status(201).json({
       success: true,
