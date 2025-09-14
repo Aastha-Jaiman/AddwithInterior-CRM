@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import ProjectService, { ServiceActionButton } from "./ProjectService";
+import RoughQuotationPDF from "./RoughQuotationPdf";
 
 const ProjectDetails = ({
   selectedProject,
@@ -37,7 +38,7 @@ const ProjectDetails = ({
   const [servicePanelOpen, setServicePanelOpen] = React.useState(false);
   const [expandedVisits, setExpandedVisits] = React.useState({});
 
-   // Get filtered daily updates based on selected date (5 days from selected date)
+  // Get filtered daily updates based on selected date (5 days from selected date)
   const getFilteredUpdates = () => {
     if (!selectedProject.dailyUpdates?.length) return [];
 
@@ -117,14 +118,13 @@ const ProjectDetails = ({
           }}
           className={`
             h-8 w-8 rounded-full text-sm font-medium transition-colors
-            ${
-              isSelected
-                ? "bg-blue-600 text-white"
-                : isToday
+            ${isSelected
+              ? "bg-blue-600 text-white"
+              : isToday
                 ? "bg-blue-100 text-blue-600 "
                 : hasUpdates
-                ? "bg-green-100 text-green-600 hover:bg-green-200 "
-                : "text-gray-700 hover:bg-gray-100"
+                  ? "bg-green-100 text-green-600 hover:bg-green-200 "
+                  : "text-gray-700 hover:bg-gray-100"
             }
           `}
         >
@@ -149,9 +149,8 @@ const ProjectDetails = ({
             })}
           </span>
           <ChevronDown
-            className={`w-4 h-4 transition-transform ${
-              isCalendarOpen ? "rotate-180" : ""
-            }`}
+            className={`w-4 h-4 transition-transform ${isCalendarOpen ? "rotate-180" : ""
+              }`}
           />
         </button>
 
@@ -247,6 +246,25 @@ const ProjectDetails = ({
     );
   };
 
+  const FinalQuotationDownload = ({ quotation }) => {
+    const downloadPDF = () => {
+      if (quotation.finaldocument) {
+        window.open(quotation.finaldocument, "_blank");
+      } else {
+        alert("No final quotation PDF available");
+      }
+    };
+
+    return (
+      <button
+        onClick={downloadPDF}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        Download Final Quotation PDF
+      </button>
+    );
+  };
+
   const InfoCard = ({ icon, title, children, className = "" }) => (
     <div
       className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 ${className}`}
@@ -336,7 +354,7 @@ const ProjectDetails = ({
           <ProjectService selectedProject={selectedProject} onClose={() => setServicePanelOpen(false)} />
         )}
 
- {/* Main Content Grid */}
+        {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Left Side - Project Information */}
           <div className="xl:col-span-2 space-y-6">
@@ -431,75 +449,75 @@ const ProjectDetails = ({
             </InfoCard>
 
             {/* Team Information */}
-          <InfoCard
-            icon={<Users className="w-5 h-5" />}
-            title="Team Information"
-          >
-            <div className="space-y-4">
-              {/* Salesperson */}
-              <div className="p-3 border-b">
-                <InfoItem
-                  label="Salesperson Name"
-                  value={selectedProject.salesperson?.name || "N/A"}
-                  icon={<User className="w-4 h-4" />}
-                />
-                <p className="text-sm">
+            <InfoCard
+              icon={<Users className="w-5 h-5" />}
+              title="Team Information"
+            >
+              <div className="space-y-4">
+                {/* Salesperson */}
+                <div className="p-3 border-b">
                   <InfoItem
-                  label="Salesperson Phone Number"
-                  value={selectedProject.salesperson?.phone || "N/A"}
-                  icon={<User className="w-4 h-4" />}
-                />
-                  <InfoItem
-                  label="Salesperson Email"
-                  value={selectedProject.salesperson?.email || "N/A"}
-                  icon={<User className="w-4 h-4" />}
-                />
-                </p>
-              </div>
+                    label="Salesperson Name"
+                    value={selectedProject.salesperson?.name || "N/A"}
+                    icon={<User className="w-4 h-4" />}
+                  />
+                  <p className="text-sm">
+                    <InfoItem
+                      label="Salesperson Phone Number"
+                      value={selectedProject.salesperson?.phone || "N/A"}
+                      icon={<User className="w-4 h-4" />}
+                    />
+                    <InfoItem
+                      label="Salesperson Email"
+                      value={selectedProject.salesperson?.email || "N/A"}
+                      icon={<User className="w-4 h-4" />}
+                    />
+                  </p>
+                </div>
 
-              {/* Designer */}
-              <div className="p-3 border-b">
-                <InfoItem
-                  label="Designer"
-                  value={selectedProject.designer?.name || "N/A"}
-                  icon={<User className="w-4 h-4" />}
-                />
-                <p className="text-sm">
+                {/* Designer */}
+                <div className="p-3 border-b">
                   <InfoItem
-                  label="Designer Phone Number"
-                  value={selectedProject.designer?.phone || "N/A"}
-                  icon={<User className="w-4 h-4" />}
-                />
-                  <InfoItem
-                  label="Designer Email"
-                  value={selectedProject.designer?.email || "N/A"}
-                  icon={<User className="w-4 h-4" />}
-                />
-                </p>
-              </div>
+                    label="Designer"
+                    value={selectedProject.designer?.name || "N/A"}
+                    icon={<User className="w-4 h-4" />}
+                  />
+                  <p className="text-sm">
+                    <InfoItem
+                      label="Designer Phone Number"
+                      value={selectedProject.designer?.phone || "N/A"}
+                      icon={<User className="w-4 h-4" />}
+                    />
+                    <InfoItem
+                      label="Designer Email"
+                      value={selectedProject.designer?.email || "N/A"}
+                      icon={<User className="w-4 h-4" />}
+                    />
+                  </p>
+                </div>
 
-              {/* Carpenter */}
-              <div className="p-3">
-                <InfoItem
-                  label="Carpenter"
-                  value={selectedProject.carpenter?.name || "N/A"}
-                  icon={<Users className="w-4 h-4" />}
-                />
-                <p className="text-sm">
+                {/* Carpenter */}
+                <div className="p-3">
                   <InfoItem
-                  label="Carpenter Phone Number"
-                  value={selectedProject.carpenter?.phone || "N/A"}
-                  icon={<User className="w-4 h-4" />}
-                />
-                  <InfoItem
-                  label="Carpenter Email"
-                  value={selectedProject.carpenter?.email || "N/A"}
-                  icon={<User className="w-4 h-4" />}
-                />
-                </p>
+                    label="Carpenter"
+                    value={selectedProject.carpenter?.name || "N/A"}
+                    icon={<Users className="w-4 h-4" />}
+                  />
+                  <p className="text-sm">
+                    <InfoItem
+                      label="Carpenter Phone Number"
+                      value={selectedProject.carpenter?.phone || "N/A"}
+                      icon={<User className="w-4 h-4" />}
+                    />
+                    <InfoItem
+                      label="Carpenter Email"
+                      value={selectedProject.carpenter?.email || "N/A"}
+                      icon={<User className="w-4 h-4" />}
+                    />
+                  </p>
+                </div>
               </div>
-            </div>
-          </InfoCard>
+            </InfoCard>
 
           </div>
 
@@ -520,18 +538,16 @@ const ProjectDetails = ({
                       </h4>
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset
-              ${
-                selectedProject.service.isExpired
-                  ? "bg-red-50 text-red-700 ring-red-200 "
-                  : "bg-green-50 text-green-700 ring-green-200 "
-              }`}
+              ${selectedProject.service.isExpired
+                            ? "bg-red-50 text-red-700 ring-red-200 "
+                            : "bg-green-50 text-green-700 ring-green-200 "
+                          }`}
                       >
                         <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            selectedProject.service.isExpired
-                              ? "bg-red-500"
-                              : "bg-green-500"
-                          }`}
+                          className={`h-1.5 w-1.5 rounded-full ${selectedProject.service.isExpired
+                            ? "bg-red-500"
+                            : "bg-green-500"
+                            }`}
                         />
                         {selectedProject.service.isExpired
                           ? "Expired"
@@ -568,7 +584,7 @@ const ProjectDetails = ({
                     </div>
 
                     {/* Visit history */}
-                   <div className="px-4 pb-4">
+                    <div className="px-4 pb-4">
                       <h5 className="text-sm font-semibold text-gray-800  flex items-center gap-2 mb-3">
                         <Clock className="w-4 h-4" />
                         Visit History
@@ -620,7 +636,6 @@ const ProjectDetails = ({
                                     </span>{" "}
                                     {visit.bill || "N/A"}
                                   </p>
-                                  {/* Aur koi details yaha dal sakte hain if available */}
                                 </div>
                               )}
                             </li>
@@ -649,85 +664,24 @@ const ProjectDetails = ({
               </div>
             </InfoCard>
 
-            {/* Documents Section */}
             <InfoCard icon={<FileText className="w-5 h-5" />} title="Documents">
-              <div className="space-y-3">
-                {/* Rough Quotation */}
-                {selectedProject.documents?.roughQuotation && (
-                  <div className="p-3 border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-gray-600 " />
-                        <span className="text-sm font-medium text-gray-900 ">
-                          Rough Quotation
-                        </span>
-                      </div>
-                      <button
-                        onClick={() =>
-                          handleDownloadDocument(
-                            selectedProject._id,
-                            "roughQuotation",
-                            selectedProject.documents.roughQuotation.filename
-                          )
-                        }
-                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50  rounded transition-colors"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="text-xs text-gray-500 ">
-                      {selectedProject.documents.roughQuotation.filename}
-                    </div>
-                    <div className="text-xs text-gray-500  mt-1">
-                      Uploaded:{" "}
-                      {selectedProject.documents.roughQuotation.uploadDate}
-                    </div>
-                  </div>
-                )}
+              {/* Rough Quotation PDF Generate Button */}
+              {selectedProject.quotation?.type === "rough" && (
+                <RoughQuotationPDF quotation={selectedProject.quotation} />
+              )}
 
-                {/* Final Quotation */}
-                {selectedProject.documents?.finalQuotation && (
-                  <div className="p-3 border border-gray-200  rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-gray-600 " />
-                        <span className="text-sm font-medium text-gray-900 ">
-                          Final Quotation
-                        </span>
-                      </div>
-                      <button
-                        onClick={() =>
-                          handleDownloadDocument(
-                            selectedProject._id,
-                            "finalQuotation",
-                            selectedProject.documents.finalQuotation.filename
-                          )
-                        }
-                        className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50  rounded transition-colors"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="text-xs text-gray-500 ">
-                      {selectedProject.documents.finalQuotation.filename}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Uploaded:{" "}
-                      {selectedProject.documents.finalQuotation.uploadDate}
-                    </div>
-                  </div>
-                )}
-
-                {/* Show message if no documents */}
-                {!selectedProject.documents?.roughQuotation &&
-                  !selectedProject.documents?.finalQuotation && (
-                    <div className="text-center py-8 text-gray-500 ">
-                      <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No documents uploaded yet</p>
-                    </div>
-                  )}
-              </div>
+              {selectedProject.quotation?.finaldocument ? (
+                <button
+                  onClick={() => window.open(selectedProject.quotation.finaldocument, "_blank")}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mt-4"
+                >
+                  Download Final Quotation PDF
+                </button>
+              ) : (
+                <div className="text-sm italic mt-4">Quotation PDF is not uploaded</div>
+              )}
             </InfoCard>
+
 
             {/* Designs Section */}
             <InfoCard
@@ -751,8 +705,8 @@ const ProjectDetails = ({
                               Created:{" "}
                               {design.createdAt
                                 ? new Date(design.createdAt).toLocaleDateString(
-                                    "en-IN"
-                                  )
+                                  "en-IN"
+                                )
                                 : "N/A"}
                             </p>
                           </div>
@@ -820,11 +774,10 @@ const ProjectDetails = ({
                                             className="border-b border-gray-100  pb-1"
                                           >
                                             <span
-                                              className={`mr-2 font-bold ${
-                                                h.isApproved
-                                                  ? "text-green-700"
-                                                  : "text-red-700"
-                                              }`}
+                                              className={`mr-2 font-bold ${h.isApproved
+                                                ? "text-green-700"
+                                                : "text-red-700"
+                                                }`}
                                             >
                                               {h.isApproved
                                                 ? "Approved"
@@ -836,8 +789,8 @@ const ProjectDetails = ({
                                             <span className="ml-2 text-xs text-gray-400">
                                               {h.updatedAt
                                                 ? new Date(
-                                                    h.updatedAt
-                                                  ).toLocaleDateString("en-IN")
+                                                  h.updatedAt
+                                                ).toLocaleDateString("en-IN")
                                                 : ""}
                                             </span>
                                           </li>
