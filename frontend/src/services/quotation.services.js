@@ -52,9 +52,7 @@ export const uploadFinalDocument = async (quotationId, file) => {
 
 // 8. Get final document (returns file blob, likely PDF)
 export const getFinalDocument = async (quotationId) => {
-  const response = await api.get(`quotation/${quotationId}/finaldocument`, {
-    responseType: "blob", // needed for file downloads
-  });
+  const response = await api.get(`quotation/${quotationId}/finaldocument`);
   return response;
 };
 
