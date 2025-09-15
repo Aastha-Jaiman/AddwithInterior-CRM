@@ -26,14 +26,12 @@ exports.addQuotation = async (req, res) => {
       return res.status(400).json({ message: `Unsupported project category: ${projectData.category}` });
     }
 
-    // Copy default sections to start with
 let combinedSections = defaultSections.map(sec => ({
   sectionName: sec.sectionName,
   customSectionName: sec.customSectionName || "",
   items: [...(sec.items || [])],
 }));
 
-// Merge user sections
 if (sections && sections.length) {
   sections.forEach(userSection => {
     let foundSection = combinedSections.find(
@@ -41,10 +39,8 @@ if (sections && sections.length) {
     );
 
     if (foundSection) {
-      // ✅ Agar section already hai → sirf items add karo
       foundSection.items.push(...(userSection.items || []));
     } else {
-      // ❌ Agar section default me nahi hai → new section banao
       let sectionName = userSection.sectionName;
       let customSectionName = userSection.customSectionName || "";
 
