@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { Eye, FileText, Search } from "lucide-react";
+import { Eye, FileSignature, FileText, PenTool, Search } from "lucide-react";
 import { getMyProjects } from "@/services/project.services";
 import { useRouter } from "next/navigation";
+import RoughQuotationPDF from "../project/RoughQuotationPdf";
+
 
 const ProjectsList = () => {
   const [allProjects, setAllProjects] = useState([]);
@@ -12,6 +14,19 @@ const ProjectsList = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const router = useRouter();
+
+  const [pdfTrigger, setPdfTrigger] = useState(false);
+  const [selectedQuotation, setSelectedQuotation] = useState(null);
+
+  const handleRoughQuotationDownload = (quotation) => {
+    setSelectedQuotation(quotation);
+    setPdfTrigger(true);
+  };
+
+  const handlePdfComplete = () => {
+    setPdfTrigger(false);
+    setSelectedQuotation(null);
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -207,7 +222,7 @@ const ProjectsList = () => {
                     </td>
 
 
-                    <td className="px-4 py-3">
+                    {/* <td className="px-4 py-3">
                       {project.designs?.length > 0 &&
                         project.designs.some((d) => d.pdfs?.length > 0) ? (
                         (() => {
@@ -229,7 +244,65 @@ const ProjectsList = () => {
                       ) : (
                         <span className="text-sm text-gray-500">No docs</span>
                       )}
-                    </td>
+                    </td> */}
+
+                    <td className="px-4 py-4">
+                        <div className="flex flex-wrap gap-2 items-center">
+
+                          {/* Design PDF */}
+                          {project.designs?.some((d) => d.pdfs?.length > 0) && (() => {
+                            const firstPdf = project.designs.find((d) => d.pdfs?.length > 0)?.pdfs[0];
+                            return firstPdf?.pdfUrl ? (
+                              <a
+                                href={firstPdf.pdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download
+                                title="Design"
+                                className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+                              >
+                                <PenTool className="w-4 h-4" />
+                              </a>
+                            ) : null;
+                          })()}
+
+
+                          {/* Rough Quotation */}
+                          {project.quotation?.type === "rough" ? (
+                            <button
+                              title="Rough Quotation PDF"
+                              className="text-blue-600 hover:text-blue-800"
+                              onClick={() => handleRoughQuotationDownload(project.quotation)}
+                            >
+                              <FileSignature className="w-6 h-6 cursor-pointer" />
+                            </button>
+                          ) : null}
+
+                          {/* Final Quotation */}
+                          {project.quotation?.finaldocument ? (
+                            <a
+                              href={project.quotation.finaldocument}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Final Quotation PDF"
+                              className="text-green-600 hover:text-green-800"
+                            >
+                              <FileText className="w-6 h-6 cursor-pointer" />
+                            </a>
+                          ) : null}
+
+                        </div>
+
+
+                        {/* Show message if none present */}
+                        {!(
+                          project.quotation?.type === "rough" ||
+                          project.quotation?.finaldocument ||
+                          (project.designs?.some((d) => d.pdfs?.length > 0) && project.designs.find((d) => d.pdfs?.length > 0)?.pdfs[0]?.pdfUrl)
+                        ) && (
+                            <span className="text-sm italic text-gray-400">No documents uploaded</span>
+                          )}
+                      </td>
 
 
                     <td className="px-4 py-3">
@@ -250,6 +323,16 @@ const ProjectsList = () => {
                 ))}
               </tbody>
             </table>
+            {selectedQuotation && (
+                <RoughQuotationPDF
+                  quotation={selectedQuotation}
+                  triggerPDF={pdfTrigger}
+                  onComplete={() => {
+                    setPdfTrigger(false);
+                    setSelectedQuotation(null);
+                  }}
+                />
+              )}
 
             {/* Empty State */}
             {filteredProjects.length === 0 && (

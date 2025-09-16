@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Eye, FileSignature, FileText, PenTool, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getMyProjectsForClient } from "@/services/project.services";
+import RoughQuotationPDF from "../project/RoughQuotationPdf";
 
 const ProjectsList = () => {
   const router = useRouter();
@@ -13,7 +14,19 @@ const ProjectsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
+  const [pdfTrigger, setPdfTrigger] = useState(false);
+  const [selectedQuotation, setSelectedQuotation] = useState(null);
 
+
+  const handleRoughQuotationDownload = (quotation) => {
+    setSelectedQuotation(quotation);
+    setPdfTrigger(true);
+  };
+
+  const handlePdfComplete = () => {
+    setPdfTrigger(false);
+    setSelectedQuotation(null);
+  };
   // Fetch Projects
   useEffect(() => {
     const fetchProjects = async () => {
@@ -184,21 +197,30 @@ const ProjectsList = () => {
                       </span>
                     </td>
 
+                      {/* <td className="px-4 py-4">
+                        <div className="flex flex-wrap gap-2 items-center">
+                          Design PDF
+                          {project.designs?.some((d) => d.pdfs?.length > 0) && (() => {
+                            const firstPdf = project.designs.find((d) => d.pdfs?.length > 0)?.pdfs[0];
+                            return firstPdf?.pdfUrl ? (
+                              <a
+                                href={firstPdf.pdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download
+                                title="Design"
+                                className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+                              >
+                                <PenTool className="w-4 h-4" />
+                              </a>
+                            ) : null;
+                          })()}
+
+                        </div>
+                      </td> */}
+
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-2 items-center">
-                          {/* Rough Quotation */}
-                          {project.documents?.roughQuotation?.url && (
-                            <a
-                              href={project.documents.roughQuotation.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              download
-                              title="Rough Quotation"
-                              className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
-                            >
-                              <FileText className="w-4 h-4" />
-                            </a>
-                          )}
 
                           {/* Design PDF */}
                           {project.designs?.some((d) => d.pdfs?.length > 0) && (() => {
@@ -217,27 +239,42 @@ const ProjectsList = () => {
                             ) : null;
                           })()}
 
+
+                          {/* Rough Quotation */}
+                          {project.quotation?.type === "rough" ? (
+                            <button
+                              title="Rough Quotation PDF"
+                              className="text-blue-600 hover:text-blue-800"
+                              onClick={() => handleRoughQuotationDownload(project.quotation)}
+                            >
+                              <FileSignature className="w-6 h-6 cursor-pointer" />
+                            </button>
+                          ) : null}
+
                           {/* Final Quotation */}
-                          {project.documents?.finalQuotation?.url && (
+                          {project.quotation?.finaldocument ? (
                             <a
-                              href={project.documents.finalQuotation.url}
+                              href={project.quotation.finaldocument}
                               target="_blank"
                               rel="noopener noreferrer"
-                              download
-                              title="Final Quotation"
-                              className="p-1 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded transition-colors"
+                              title="Final Quotation PDF"
+                              className="text-green-600 hover:text-green-800"
                             >
-                              <FileSignature className="w-4 h-4" />
+                              <FileText className="w-6 h-6 cursor-pointer" />
                             </a>
-                          )}
+                          ) : null}
 
-                          {/* No Docs Fallback */}
-                          {!project.documents?.roughQuotation &&
-                            !project.documents?.finalQuotation &&
-                            !project.designs?.some((d) => d.pdfs?.length > 0) && (
-                              <span className="text-xs text-gray-400 dark:text-gray-500">No docs</span>
-                            )}
                         </div>
+
+
+                        {/* Show message if none present */}
+                        {!(
+                          project.quotation?.type === "rough" ||
+                          project.quotation?.finaldocument ||
+                          (project.designs?.some((d) => d.pdfs?.length > 0) && project.designs.find((d) => d.pdfs?.length > 0)?.pdfs[0]?.pdfUrl)
+                        ) && (
+                            <span className="text-sm italic text-gray-400">No documents uploaded</span>
+                          )}
                       </td>
 
                     <td className="px-4 py-3 text-sm text-gray-700">
@@ -278,6 +315,17 @@ const ProjectsList = () => {
                 ))}
               </tbody>
             </table>
+
+            {selectedQuotation && (
+                <RoughQuotationPDF
+                  quotation={selectedQuotation}
+                  triggerPDF={pdfTrigger}
+                  onComplete={() => {
+                    setPdfTrigger(false);
+                    setSelectedQuotation(null);
+                  }}
+                />
+              )}
 
             {/* Empty State */}
             {filteredProjects.length === 0 && (

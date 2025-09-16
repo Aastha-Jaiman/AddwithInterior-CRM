@@ -7,6 +7,7 @@ import { getProjectById } from "@/services/project.services";
 import { addFeedbackToDesign } from "@/services/design.services";
 import { useRouter } from "next/navigation"; 
 import VisitHistoryDropdown from "./VisitsDropdownForClients";
+import RoughQuotationPDF from "../project/RoughQuotationPdf";
 
 const ClientProjectDetails = () => {
   const { id } = useParams();
@@ -27,7 +28,13 @@ const ClientProjectDetails = () => {
   const [showDailyUpdates, setShowDailyUpdates] = useState(true);
   const [showDocuments, setShowDocuments] = useState(true);
 
+  const [triggerPDF, setTriggerPDF] = useState(false);
 
+
+
+  const handleDownloadRoughPDF = () => {
+    setTriggerPDF(true);
+  };
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -416,7 +423,7 @@ const ClientProjectDetails = () => {
             >
               <h3 className="font-semibold text-lg text-gray-900 flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                Documents
+                Designs
               </h3>
               <button
                 type="button"
@@ -591,6 +598,47 @@ const ClientProjectDetails = () => {
               </>
             )}
           </div>
+
+                    {/* Quotation Details */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-gray-500" />
+                Quotation
+              </h3>
+              {project.quotation?.type === "rough" && (
+                <>
+                  <button
+                    onClick={handleDownloadRoughPDF}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Download Rough Quotation PDF
+                  </button>
+                  <RoughQuotationPDF
+                    quotation={project.quotation}
+                    triggerPDF={triggerPDF}
+                    onComplete={() => setTriggerPDF(false)}
+                  />
+                </>
+              )}
+
+
+              {/* Final Quotation */}
+              {project.quotation?.finaldocument ? (
+                <button
+                  onClick={() => window.open(project.quotation.finaldocument, "_blank")}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mt-4"
+                >
+                  Download Final Quotation PDF
+                </button>
+              ) : (
+                <div className="text-sm italic mt-4">Quotation PDF is not uploaded</div>
+              )}
+
+              {/* Handle missing quotation object */}
+              {!project.quotation && (
+                <div className="text-sm italic mt-4">Quotation PDF is not uploaded</div>
+              )}
+            </div>
 
 {/* Services Section with dropdown and invoice download */}
 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6">

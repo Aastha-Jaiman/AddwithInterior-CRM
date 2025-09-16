@@ -26,6 +26,7 @@ const QuotationDetails = () => {
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchQuotation();
@@ -43,15 +44,30 @@ const QuotationDetails = () => {
     }
   };
 
+  // const handleFileUpload = async (e) => {
+  //   e.preventDefault();
+  //   if (!file) return alert("Please select a file");
+  //   try {
+  //     const res = await uploadFinalDocument(id, file);
+  //     alert(res.message);
+  //     fetchQuotation();
+  //   } catch (error) {
+  //     // error logging
+  //   }
+  // };
   const handleFileUpload = async (e) => {
     e.preventDefault();
     if (!file) return alert("Please select a file");
+
     try {
+      setUploading(true); // disable button
       const res = await uploadFinalDocument(id, file);
       alert(res.message);
       fetchQuotation();
     } catch (error) {
-      // error logging
+      alert("Upload failed");
+    } finally {
+      setUploading(false); // enable button again
     }
   };
 
@@ -184,15 +200,26 @@ const QuotationDetails = () => {
             <input
               type="file"
               accept="application/pdf"
-              onChange={(e) => setFile(e.target.files)}
+              onChange={(e) => setFile(e.target.files[0])}
               className="border border-gray-300 p-2 rounded w-full"
             />
-            <button
+            {/* <button
               type="submit"
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold w-full"
             >
               Upload Final Quotation
+            </button> */}
+            <button
+              type="submit"
+              disabled={uploading}
+              className={`${uploading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
+                } text-white px-4 py-2 rounded font-semibold w-full`}
+            >
+              {uploading ? "Uploading..." : "Upload Final Quotation"}
             </button>
+
           </form>
         )}
       </div>
