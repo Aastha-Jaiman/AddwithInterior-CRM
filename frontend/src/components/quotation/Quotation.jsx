@@ -29,6 +29,7 @@ const QuotationList = () => {
       } else {
         setQuotations([]);
       }
+      console.log("first", response)
     } catch (error) {
       setQuotations([]);
     } finally {
