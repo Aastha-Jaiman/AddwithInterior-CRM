@@ -423,21 +423,19 @@ exports.getMyProjectClientEmail = async (req, res) => {
     }
 
     const projects = await ProjectModel.find(filter)
-      .populate("client", "email name phone") 
-      .select("title client");
+      .populate("client");
 
-    const clientEmails = projects.map((project) => ({
+     const clientDetails = projects.map((project) => ({
       projectId: project._id,
       projectTitle: project.title,
-      clientEmail: project.client?.email || "No email",
-      clientName: project.client?.name || "No name",
-      clientPhone: project.client?.phone || "No phone",
+      client: project.client || {},  // pura client object bhejenge
     }));
+
 
     res.status(200).json({
       success: true,
-      count: clientEmails.length,
-      clients: clientEmails,
+      count: clientDetails.length,
+      clients: clientDetails,
     });
   } catch (err) {
     res.status(500).json({
@@ -447,3 +445,4 @@ exports.getMyProjectClientEmail = async (req, res) => {
     });
   }
 };
+
