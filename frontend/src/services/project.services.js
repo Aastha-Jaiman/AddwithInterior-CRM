@@ -38,3 +38,14 @@ export const getMyProjects = async () => {
 export const getMyProjectsForClient = async () => {
   return await api.get("/project/client/my-projects");
 };
+
+// 8. Quotation
+export const getMyProjectClients = async () => {
+  try {
+    const response = await api.get("/project/my-project-clients");
+    return response.data; 
+  } catch (error) {
+    console.error("Failed to fetch project clients:", error);
+    throw error;
+  }
+};

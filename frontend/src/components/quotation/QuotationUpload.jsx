@@ -195,7 +195,7 @@ const QuotationForm = () => {
                     </div>
                     <div className="bg-white rounded-lg p-4 shadow-sm">
                       <p className="text-sm text-gray-600">Budget</p>
-                      <p className="font-medium text-gray-900">${selectedProject.finalBudget}</p>
+                      <p className="font-medium text-gray-900">₹{selectedProject.finalBudget}</p>
                     </div>
                   </div>
                 </div>
@@ -212,7 +212,7 @@ const QuotationForm = () => {
               <h2 className="text-lg font-medium text-gray-900">Quotation Items</h2>
               <div className="text-right">
                 <p className="text-xs text-gray-600">Total Amount</p>
-                <p className="text-xl font-bold text-blue-600">${getTotalAmount().toFixed(2)}</p>
+                <p className="text-xl font-bold text-blue-600">₹{getTotalAmount().toFixed(2)}</p>
               </div>
             </div>
 
@@ -281,7 +281,7 @@ const QuotationForm = () => {
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-center">
                             <div className="relative">
-                              <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs">$</span>
+                              <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs">₹</span>
                               <input
                                 type="number"
                                 value={item.price || ""}
@@ -295,7 +295,7 @@ const QuotationForm = () => {
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-center">
                             <span className="text-sm font-semibold text-green-600">
-                              ${(item.total || 0).toFixed(2)}
+                              ₹{(item.total || 0).toFixed(2)}
                             </span>
                           </td>
                         </tr>

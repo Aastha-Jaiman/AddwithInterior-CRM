@@ -6,7 +6,7 @@ export default function page() {
   return (
     <div>
         <SidebarLayout>
-            <QuotationForm />
+            <QuotationForm/>
         </SidebarLayout>
     </div>
   )

@@ -26,11 +26,37 @@ exports.addQuotation = async (req, res) => {
       return res.status(400).json({ message: `Unsupported project category: ${projectData.category}` });
     }
 
-    let combinedSections = [...defaultSections];
-    if (sections && sections.length) {
-      sections.forEach(section => combinedSections.push(section));
-    }
+let combinedSections = defaultSections.map(sec => ({
+  sectionName: sec.sectionName,
+  customSectionName: sec.customSectionName || "",
+  items: [...(sec.items || [])],
+}));
 
+if (sections && sections.length) {
+  sections.forEach(userSection => {
+    let foundSection = combinedSections.find(
+      sec => sec.sectionName === userSection.sectionName
+    );
+
+    if (foundSection) {
+      foundSection.items.push(...(userSection.items || []));
+    } else {
+      let sectionName = userSection.sectionName;
+      let customSectionName = userSection.customSectionName || "";
+
+      if (!defaultSections.some(ds => ds.sectionName === sectionName)) {
+        customSectionName = sectionName;
+        sectionName = "Other";
+      }
+
+      combinedSections.push({
+        sectionName,
+        customSectionName,
+        items: [...(userSection.items || [])],
+      });
+    }
+  });
+}
     const preparedSections = combinedSections.map(section => {
       let sectionTotal = 0;
       let sectionName = section.sectionName;

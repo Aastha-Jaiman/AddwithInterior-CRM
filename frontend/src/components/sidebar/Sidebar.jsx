@@ -134,7 +134,7 @@ export default function SidebarLayout({ children }) {
       alwaysVisible: true,
     },
 
-    { name: "Quotations", href: "/quotations", icon: ClipboardList },
+    { name: "Quotation", href: "/quotation", icon: ClipboardList },
     { name: "Design", href: "/design", icon: NotebookPen },
     { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
     { name: "Project", href: "/projects", icon: LayoutDashboard },
