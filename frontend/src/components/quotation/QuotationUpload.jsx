@@ -54,6 +54,7 @@ const QuotationForm = () => {
     }
   };
 
+  
   // Update item fields + auto calculate
   const handleItemChange = (sectionIndex, itemIndex, field, value) => {
     const updatedSections = [...sections];
@@ -72,29 +73,65 @@ const QuotationForm = () => {
     setSections(updatedSections);
   };
 
-  // Submit quotation
-  const handleSubmit = async () => {
-    if (!selectedClient || !selectedProject) {
-      alert("Please select client and project first.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const quotationData = {
-        client: selectedProject.client,
-        project: selectedProject._id,
-        sections,
-      };
-      const response = await addQuotation(quotationData);
-      alert("Quotation created successfully!");
-      console.log("Created:", response);
-    } catch (error) {
-      console.error("Error creating quotation:", error);
-      alert("Error while creating quotation");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // // Submit quotation
+  // const handleSubmit = async () => {
+  //   if (!selectedClient || !selectedProject) {
+  //     alert("Please select client and project first.");
+  //     return;
+  //   }
+  //   setLoading(true);
+  //   try {
+  //     const quotationData = {
+  //       client: selectedProject.client,
+  //       project: selectedProject._id,
+  //       sections,
+  //     };
+  //     const response = await addQuotation(quotationData);
+  //     alert("Quotation created successfully!");
+  //     console.log("Created:", response);
+  //   } catch (error) {
+  //     const message = error?.response?.data?.message || "Error while creating quotation";
+  //     alert(message);
+    
+  // } finally {
+  //   setLoading(false);
+  // }
+  // };
+const handleSubmit = async () => {
+  if (!selectedClient || !selectedProject) {
+    alert("Please select client and project first.");
+    return;
+  }
+  setLoading(true);
+  try {
+    // Filter only filled items
+    const filteredSections = sections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter(
+          (item) =>
+            item.width > 0 || item.height > 0 || item.price > 0
+        ),
+      }))
+      .filter((section) => section.items.length > 0);
+
+    const quotationData = {
+      client: selectedProject.client,
+      project: selectedProject._id,
+      sections: filteredSections,
+    };
+
+    const response = await addQuotation(quotationData);
+    alert("Quotation created successfully!");
+    console.log("Created:", response);
+  } catch (error) {
+    const message = error?.response?.data?.message || "Error while creating quotation";
+    alert(message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const getTotalAmount = () => {
     return sections.reduce((total, section) => {

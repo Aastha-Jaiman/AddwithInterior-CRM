@@ -17,6 +17,11 @@ exports.addQuotation = async (req, res) => {
     const projectData = await ProjectModel.findById(project);
     if (!projectData) return res.status(404).json({ message: "Project not found" });
 
+    const existingQuotation = await QuotationModel.findOne({ project });
+    if (existingQuotation) {
+      return res.status(400).json({ message: "Quotation for this project already exists" });
+    }
+    
     const category = projectData.category.toLowerCase();
 
     let defaultSections = [];

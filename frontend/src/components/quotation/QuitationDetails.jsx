@@ -37,24 +37,13 @@ const QuotationDetails = () => {
       setLoading(true);
       const data = await getQuotationById(id);
       setQuotation(data.data);
+      console.log("data", data)
     } catch (error) {
       // error logging
     } finally {
       setLoading(false);
     }
   };
-
-  // const handleFileUpload = async (e) => {
-  //   e.preventDefault();
-  //   if (!file) return alert("Please select a file");
-  //   try {
-  //     const res = await uploadFinalDocument(id, file);
-  //     alert(res.message);
-  //     fetchQuotation();
-  //   } catch (error) {
-  //     // error logging
-  //   }
-  // };
   const handleFileUpload = async (e) => {
     e.preventDefault();
     if (!file) return alert("Please select a file");
@@ -203,12 +192,6 @@ const QuotationDetails = () => {
               onChange={(e) => setFile(e.target.files[0])}
               className="border border-gray-300 p-2 rounded w-full"
             />
-            {/* <button
-              type="submit"
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold w-full"
-            >
-              Upload Final Quotation
-            </button> */}
             <button
               type="submit"
               disabled={uploading}
