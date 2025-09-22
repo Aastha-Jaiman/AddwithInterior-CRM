@@ -135,7 +135,7 @@ export default function SidebarLayout({ children }) {
     },
 
     { name: "Quotation", href: "/quotation", icon: ClipboardList },
-    { name: "Design", href: "/design", icon: NotebookPen },
+    // { name: "Design", href: "/design", icon: NotebookPen },
     { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
     { name: "Project", href: "/projects", icon: LayoutDashboard },
     { name: "Manage Users", href: "/users", icon: User2 },
@@ -174,14 +174,15 @@ export default function SidebarLayout({ children }) {
   ];
 
   const clientNavigationItems = [
+    { name: "Dashboard", href: "/client-dashboard", icon: ClipboardList },
     { name: "My Projects", href: "/client/projects", icon: ClipboardList },
     { name: "Payments", href: "/client/payments", icon: ReceiptIndianRupee },
-    { name: "Quotations", href: "/client/quotation", icon: FileText },
-    {
-      name: "Daily Updates",
-      href: "/client/daily-updates",
-      icon: MessageSquareText,
-    },
+    // { name: "Quotations", href: "/client/quotation", icon: FileText },
+    // {
+    //   name: "Daily Updates",
+    //   href: "/client/daily-updates",
+    //   icon: MessageSquareText,
+    // },
     { name: "Profile", href: "/client/profile", icon: NotebookPen },
   ];
 

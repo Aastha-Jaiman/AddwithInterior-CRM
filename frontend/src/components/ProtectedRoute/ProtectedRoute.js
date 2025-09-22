@@ -82,19 +82,15 @@ export default function ProtectedRoute({ children }) {
         const storedUserJSON = localStorage.getItem("crm_user");
         const storedUser = storedUserJSON ? JSON.parse(storedUserJSON) : null;
 
-        // Agar current route public hai
         if (publicPaths.some((path) => pathname.startsWith(path))) {
-          // Agar user logged in hai aur public page (login/signup/reset-password) pe hai to redirect dashboard
           if (storedUser && pathname !== "/reset-password") {
             router.replace("/dashboard");
           } else {
-            // Public page aur ya to user logged out ya reset-password page - allow access
             setLoading(false);
           }
           return;
         }
 
-        // Protected page hain? Toh user hona chahiye.
         if (!storedUser) {
           router.replace("/login");
           return;

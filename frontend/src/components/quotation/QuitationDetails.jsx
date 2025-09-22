@@ -21,12 +21,22 @@ const tableHeader =
   "bg-blue-50 text-blue-700 font-semibold uppercase text-xs";
 const tableCell = "border p-3";
 
+
+
 const QuotationDetails = () => {
   const { id } = useParams();
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Read user role on client-side after mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem("crm_user");
+    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+    setIsAdmin(parsedUser?.role === "admin");
+  }, []);
 
   useEffect(() => {
     fetchQuotation();
@@ -184,7 +194,7 @@ const QuotationDetails = () => {
             </button>
           )}
         </div>
-        {!quotation?.finaldocument && (
+        {isAdmin && !quotation?.finaldocument && (
           <form onSubmit={handleFileUpload} className="mt-6 rounded-lg bg-blue-50 p-4 max-w-lg space-y-3">
             <input
               type="file"

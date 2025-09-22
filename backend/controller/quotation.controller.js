@@ -72,13 +72,32 @@ if (sections && sections.length) {
         sectionName = "Other";
       }
 
-      const preparedItems = section.items.map(item => {
+      // const preparedItems = section.items.map(item => {
+      //   const height = Number(item.height ?? 0);
+      //   const width = Number(item.width ?? 0);
+      //   const calculation = `${width} * ${height}`;
+      //   // let total = 0;
+
+      //   // if (userRole === "admin") total = Number(item.price || 0) * height * width;
+
+      //   sectionTotal += total;
+
+      //   return {
+      //     itemName: item.itemName,
+      //     price: item.price,
+      //     height,
+      //     width,
+      //     calculation,
+      //     total,
+      //   };
+      // });
+
+        const preparedItems = section.items.map(item => {
         const height = Number(item.height ?? 0);
         const width = Number(item.width ?? 0);
         const calculation = `${width} * ${height}`;
-        let total = 0;
-
-        if (userRole === "admin") total = Number(item.price || 0) * height * width;
+        
+        const total = Number(item.price || 0) * height * width;
 
         sectionTotal += total;
 
@@ -91,6 +110,7 @@ if (sections && sections.length) {
           total,
         };
       });
+
 
       return {
         sectionName,

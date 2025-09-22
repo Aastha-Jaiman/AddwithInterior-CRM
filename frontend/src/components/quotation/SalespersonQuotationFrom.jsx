@@ -3,7 +3,6 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  getAllClientsEmail,
   getProjectsByClientEmail,
   getDefaultSections,
   addQuotation,
@@ -18,7 +17,7 @@ const QuotationForm = () => {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch clients on mount - PROPERLY EXTRACT CLIENT DATA
+  // Fetch clients on mount 
   useEffect(() => {
     const fetchClients = async () => {
       try {
@@ -28,11 +27,9 @@ const QuotationForm = () => {
         let clientsData = [];
         
         if (response && response.clients && Array.isArray(response.clients)) {
-          // Extract unique clients from the response
           const uniqueClients = new Map();
           
           response.clients.forEach(item => {
-            // Based on console, each item has: projectId, projectTitle, client object
             if (item.client && item.client.email) {
               const clientKey = item.client.email;
               if (!uniqueClients.has(clientKey)) {
@@ -41,7 +38,6 @@ const QuotationForm = () => {
                   email: item.client.email,
                   name: item.client.name,
                   phone: item.client.phone,
-                  // Add other client fields as needed
                 });
               }
             }
@@ -128,6 +124,29 @@ const QuotationForm = () => {
     setSections(updatedSections);
   };
 
+  // const handleSubmit = async () => {
+  //   if (!selectedClient || !selectedProject) {
+  //     alert("Please select client and project first.");
+  //     return;
+  //   }
+  //   setLoading(true);
+  //   try {
+  //     const quotationData = {
+  //       client: selectedProject.client,
+  //       project: selectedProject._id,
+  //       sections,
+  //     };
+  //     const response = await addQuotation(quotationData);
+  //     alert("Quotation created successfully!");
+  //     console.log("Created:", response);
+  //   } catch (error) {
+  //     console.error("Error creating quotation:", error);
+  //     alert("Error while creating quotation");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async () => {
     if (!selectedClient || !selectedProject) {
       alert("Please select client and project first.");
@@ -135,22 +154,34 @@ const QuotationForm = () => {
     }
     setLoading(true);
     try {
+      // Filter only filled items
+      const filteredSections = sections
+        .map((section) => ({
+          ...section,
+          items: section.items.filter(
+            (item) =>
+              item.width > 0 || item.height > 0 || item.price > 0
+          ),
+        }))
+        .filter((section) => section.items.length > 0);
+  
       const quotationData = {
         client: selectedProject.client,
         project: selectedProject._id,
-        sections,
+        sections: filteredSections,
       };
+  
       const response = await addQuotation(quotationData);
       alert("Quotation created successfully!");
       console.log("Created:", response);
     } catch (error) {
-      console.error("Error creating quotation:", error);
-      alert("Error while creating quotation");
+      const message = error?.response?.data?.message || "Error while creating quotation";
+      alert(message);
     } finally {
       setLoading(false);
     }
   };
-
+  
   const getTotalAmount = () => {
     return sections.reduce((total, section) => {
       return total + section.items.reduce((sectionTotal, item) => sectionTotal + (item.total || 0), 0);
@@ -310,8 +341,8 @@ const QuotationForm = () => {
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Width</th>
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Height</th>
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Price/Unit</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        {/* <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Price/Unit</th> */}
+                        {/* <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th> */}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -343,7 +374,7 @@ const QuotationForm = () => {
                               {(item.calculation || 0).toFixed(2)}
                             </span>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center">
+                          {/* <td className="px-4 py-3 whitespace-nowrap text-center">
                             <div className="relative">
                               <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs">₹</span>
                               <input
@@ -354,12 +385,12 @@ const QuotationForm = () => {
                                 placeholder="0.00"
                               />
                             </div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-center">
+                          </td> */}
+                          {/* <td className="px-4 py-3 whitespace-nowrap text-center">
                             <span className="text-sm font-semibold text-green-600">
                               ₹{(item.total || 0).toFixed(2)}
                             </span>
-                          </td>
+                          </td> */}
                         </tr>
                       ))}
                     </tbody>
