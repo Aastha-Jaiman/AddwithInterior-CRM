@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { addProject, searchAllForDropdown, getProjectById, getAllProject, updateProject, getMyProjects, getMyProjectClientEmail } = require("../controller/project.controller");
+const { addProject, searchAllForDropdown, getProjectById, getAllProject, updateProject, getMyProjects, getMyProjectClientEmail,getProjectsByClientEmail } = require("../controller/project.controller");
 const authMiddleware = require("../middleware/allAuthmiddleware");
 const clientauthMiddleware = require("../middleware/clientAuthmiddleware");
 const upload = require("../middleware/multer")
