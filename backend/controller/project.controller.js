@@ -403,3 +403,47 @@ exports.getMyProjects = async (req, res) => {
   }
 };
 
+exports.getMyProjectClientEmail = async (req, res) => {
+  try {
+    const { _id, role } = req.user;
+    let filter = {};
+
+    if (role === "admin") {
+      filter = {};
+    } else if (role === "designer") {
+      filter.designer = _id;
+    } else if (role === "salesperson") {
+      filter.salesperson = _id;
+    } else if (role === "carpenter") {
+      filter.carpenter = _id;
+    } else if (role === "client") {
+      filter.client = _id;
+    } else {
+      return res.status(403).json({ message: "Unauthorized role" });
+    }
+
+    const projects = await ProjectModel.find(filter)
+      .populate("client", "email name phone") 
+      .select("title client");
+
+    const clientEmails = projects.map((project) => ({
+      projectId: project._id,
+      projectTitle: project.title,
+      clientEmail: project.client?.email || "No email",
+      clientName: project.client?.name || "No name",
+      clientPhone: project.client?.phone || "No phone",
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: clientEmails.length,
+      clients: clientEmails,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
+  }
+};

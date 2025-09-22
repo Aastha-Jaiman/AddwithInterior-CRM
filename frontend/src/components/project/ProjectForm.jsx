@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useState, useCallback } from 'react';
-import { Search, Upload, X, User, Calendar, MapPin, DollarSign, UserCheck, CheckCircle, ArrowLeft, IndianRupee } from 'lucide-react';
+import { Search, Upload, X, User, Calendar, MapPin, DollarSign, UserCheck, CheckCircle, ArrowLeft, IndianRupee, ChevronDown, ChevronUp } from 'lucide-react';
 import { addProject, searchAllForDropdown, updateProject } from '@/services/project.services';
 
+// Toggle-based DropdownSelector
 const DropdownSelector = React.memo(({
   type,
   label,
@@ -15,75 +16,109 @@ const DropdownSelector = React.memo(({
   onSelectItem,
   onClearSelection,
   disabled = false
-}) => (
-  <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-700">{label}</label>
-    <div className="relative">
-      <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg bg-white">
-        <Icon className="w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          placeholder={placeholder || `Search ${label.toLowerCase()}...`}
-          value={searchQuery}
-          onChange={(e) => onSearch(type, e.target.value)}
-          className="flex-1 outline-none text-sm"
-          disabled={disabled}
-        />
-        <Search className="w-4 h-4 text-gray-400" />
-      </div>
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-      {!disabled && searchQuery && (
-        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-          {filteredData.map(item => (
-            <div
-              key={item._id}
-              onClick={() => onSelectItem(type, item)}
-              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-            >
-              <div className="font-medium text-sm">{item.name}</div>
-              <div className="text-xs text-gray-500">{item.email}</div>
+  // Toggle open/close
+  const handleToggle = () => {
+    if (!disabled) setIsOpen(open => !open);
+  };
+
+  // Select item and close
+  const handleSelectItem = (type, item) => {
+    onSelectItem(type, item);
+    setIsOpen(false);
+  };
+
+  // Clear selection and close
+  const handleClearSelection = (type) => {
+    onClearSelection(type);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <div className="relative">
+        {/* Toggle button */}
+        <button
+          type="button"
+          onClick={handleToggle}
+          disabled={disabled}
+          className={`flex items-center space-x-2 p-3 border border-gray-300 rounded-lg bg-white w-full justify-between ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+        >
+          <div className="flex items-center space-x-2">
+            <Icon className="w-5 h-5 text-gray-400" />
+            <span className="text-sm text-gray-700">
+              {selectedItem ? selectedItem.name : (placeholder || `Search ${label.toLowerCase()}...`)}
+            </span>
+          </div>
+          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        {/* Dropdown */}
+        {isOpen && !disabled && (
+          <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto mt-1">
+            <div className="flex items-center space-x-2 p-2 border-b border-gray-100">
+              <Search className="w-4 h-4 text-gray-400" />
+              <input
+                className="flex-1 outline-none text-sm"
+                type="text"
+                placeholder={`Search ${label.toLowerCase()}...`}
+                value={searchQuery}
+                onChange={(e) => onSearch(type, e.target.value)}
+                disabled={disabled}
+              />
             </div>
-          ))}
+            {filteredData.length > 0 ? (
+              filteredData.map(item => (
+                <div
+                  key={item._id}
+                  onClick={() => handleSelectItem(type, item)}
+                  className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                >
+                  <div className="font-medium text-sm">{item.name}</div>
+                  <div className="text-xs text-gray-500">{item.email}</div>
+                </div>
+              ))
+            ) : (
+              <div className="p-3 text-sm text-gray-500">No results found.</div>
+            )}
+          </div>
+        )}
+      </div>
+      {selectedItem && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="font-medium text-sm text-blue-900">{selectedItem.name}</div>
+              <div className="text-xs text-blue-700">{selectedItem.email}</div>
+              <div className="text-xs text-blue-700">{selectedItem.phone}</div>
+              {selectedItem.address && typeof selectedItem.address === 'object' ? (
+                <div className="text-xs text-blue-700">{selectedItem.address.addressinfo}</div>
+              ) : (
+                <div className="text-xs text-blue-700">{selectedItem.address}</div>
+              )}
+              {selectedItem.department && (
+                <div className="text-xs text-blue-600 font-medium">{selectedItem.department}</div>
+              )}
+            </div>
+            {!disabled && (
+              <button onClick={() => handleClearSelection(type)} className="text-blue-400 hover:text-blue-600">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
-
-    {selectedItem && (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="font-medium text-sm text-blue-900">{selectedItem.name}</div>
-            <div className="text-xs text-blue-700">{selectedItem.email}</div>
-            <div className="text-xs text-blue-700">{selectedItem.phone}</div>
-            {/* {selectedItem.address && (
-              <div className="text-xs text-blue-700">{selectedItem.address}</div>
-            )} */}
-            {selectedItem.address && typeof selectedItem.address === 'object' ? (
-              <div className="text-xs text-blue-700">{selectedItem.address.addressinfo}</div>
-            ) : (
-              <div className="text-xs text-blue-700">{selectedItem.address}</div>
-            )}
-
-            {selectedItem.department && (
-              <div className="text-xs text-blue-600 font-medium">{selectedItem.department}</div>
-            )}
-          </div>
-          {!disabled && (
-            <button onClick={() => onClearSelection(type)} className="text-blue-400 hover:text-blue-600">
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-    )}
-  </div>
-));
+  );
+});
 
 DropdownSelector.displayName = 'DropdownSelector';
 
+// ProjectForm unchanged except DropdownSelector toggle dropdown
 const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
   const isEditMode = !!projectToEdit;
-
 
   const [formData, setFormData] = useState({
     title: '',
@@ -99,7 +134,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
     description: '',
     startingDate: '',
   });
-
 
   const [projectImages, setProjectImages] = useState([]);
   const [dropdownData, setDropdownData] = useState({ client: [], salesperson: [], designer: [], carpenter: [] });
@@ -130,7 +164,7 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
         category: projectToEdit.category || '',
         status: projectToEdit.status || 'Pending',
         estimatedBudget: projectToEdit.estimatedBudget || '',
-        finalBudget: projectToEdit.finalBudget || '',         
+        finalBudget: '',
         description: projectToEdit.description || '',
         startingDate: projectToEdit.startingDate ? projectToEdit.startingDate.split('T')[0] : '',
         clientId: projectToEdit.client?._id || '',
@@ -138,7 +172,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
         designerId: projectToEdit.designer?._id || '',
         carpenterId: projectToEdit.carpenter?._id || '',
       });
-
 
       setSelectedItems({
         client: projectToEdit.client || null,
@@ -215,8 +248,7 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
         formDataToSend.append("title", formData.title);
         formDataToSend.append("description", formData.description);
         formDataToSend.append("status", formData.status);
-        // formDataToSend.append("finalBudget", formData.estimatedBudget);
-        formDataToSend.append("finalBudget", formData.finalBudget || formData.estimatedBudget);
+        formDataToSend.append("finalBudget", formData.finalBudget);
         formDataToSend.append("salespersonId", formData.salespersonId);
         formDataToSend.append("designerId", formData.designerId);
         formDataToSend.append("carpenterId", formData.carpenterId);
@@ -239,7 +271,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
         const res = await addProject(formDataToSend);
         setSuccessMessage("Project added successfully!");
       }
-
     } catch (err) {
       console.error("Submit error:", err);
     } finally {
@@ -289,7 +320,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
                 required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
               <input
@@ -321,7 +351,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
                 <option value="inPlace_Furniture">In Place Furniture</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <select
@@ -336,7 +365,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
                 <option value="Completed">Completed</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Starting Date</label>
               <div className="relative">
@@ -352,25 +380,7 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
               </div>
             </div>
           </div>
-
           {/* Estimated Budget */}
-          {/* <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Budget</label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-              <input
-                type="number"
-                name="estimatedBudget"
-                value={formData.estimatedBudget}
-                onChange={handleInputChange}
-                disabled={isLoading}
-                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
-                placeholder="Enter budget amount"
-              />
-            </div>
-          </div> */}
-
-          {/* Estimated Budget (disabled in edit mode) */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Budget</label>
             <div className="relative">
@@ -393,7 +403,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
                 <input
-                  // type="number"
                   name="finalBudget"
                   value={formData.finalBudget || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, finalBudget: e.target.value }))}
@@ -404,8 +413,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
               </div>
             </div>
           )}
-
-
           {/* Description */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
@@ -420,14 +427,12 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
             />
           </div>
         </div>
-
         {/* Client */}
         <div className="bg-green-50 p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <UserCheck className="w-5 h-5 mr-2 text-green-600" />
             Client Details
           </h3>
-
           <DropdownSelector
             type="client"
             label="Select Client"
@@ -442,14 +447,12 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
             disabled={isLoading || isEditMode}
           />
         </div>
-
         {/* Staff */}
         <div className="bg-blue-50 p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <User className="w-5 h-5 mr-2 text-blue-600" />
             Staff Selection
           </h3>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {['salesperson', 'designer', 'carpenter'].map((type) => (
               <DropdownSelector
@@ -469,14 +472,12 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
             ))}
           </div>
         </div>
-
         {/* Images */}
         <div className="bg-purple-50 p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <Upload className="w-5 h-5 mr-2 text-purple-600" />
             Project Images
           </h3>
-
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
             <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <div className="text-sm text-gray-600 mb-2">Click to upload images or drag and drop</div>
@@ -499,7 +500,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
               Choose Files
             </label>
           </div>
-
           {projectImages.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
               {projectImages.map(image => (
@@ -522,7 +522,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
             </div>
           )}
         </div>
-
         {/* Success Message */}
         {successMessage && (
           <div className="flex items-center justify-center p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -530,7 +529,6 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
             <span className="text-green-800 font-medium">{successMessage}</span>
           </div>
         )}
-
         {/* Buttons */}
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
