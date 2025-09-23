@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, FileText, Upload, X, Download, Trash2, Eye } from "lucide-react";
+import { ArrowLeft, FileText, Upload, X, Download, Trash2, Eye, Clock, ChevronDown } from "lucide-react";
 import { getProjectById } from "@/services/project.services";
 import { useRouter } from "next/navigation";
 import { uploadDesign, deletePdfFromDesign } from "@/services/design.services";
 import { useSelector } from "react-redux";
 import { uploadDailyUpdate, getAllDailyUpdates } from "@/services/dailyupdates.services";
 import RoughQuotationPDF from "../project/RoughQuotationPdf";
+import ProjectService from "../project/ProjectService";
 
 const StaffProjectDetails = () => {
   const { id } = useParams();
@@ -41,6 +42,12 @@ const StaffProjectDetails = () => {
   const [showDailyUpdates, setShowDailyUpdates] = useState(true);
   const [expandedUpdateId, setExpandedUpdateId] = useState(null);
   const [triggerPDF, setTriggerPDF] = useState(false);
+
+  const [showServicePanel, setShowServicePanel] = useState(false);
+const [serviceLoading, setServiceLoading] = useState(false);
+  const [expandedVisits, setExpandedVisits] = useState({});
+
+
 
   // Helper function to refresh both project and daily updates data
   const refreshData = async () => {
@@ -348,6 +355,21 @@ const StaffProjectDetails = () => {
                   {uploadingDailyUpdate ? "Uploading..." : "Upload Daily Update"}
                 </button>
               )}
+              {user?.permission?.includes("create_services") && (
+                <button
+                  onClick={() => setShowServicePanel(true)}
+                  disabled={showServicePanel || serviceLoading}
+                  className={`flex items-center text-sm text-white px-4 py-2 rounded-lg transition-colors ${
+                    showServicePanel || serviceLoading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {serviceLoading ? "Processing..." : "Manage Services"}
+                </button>
+              )}
+
             </div>
           </div>
 
@@ -396,6 +418,16 @@ const StaffProjectDetails = () => {
             </div>
             <p className="mt-4 text-gray-600 leading-relaxed">{project.description}</p>
           </div>
+
+          {showServicePanel && user?.permission?.includes("create_services") && (
+  <ProjectService 
+    selectedProject={project}
+    onClose={() => {
+      setShowServicePanel(false);
+      refreshData(); // Refresh project data after service updates
+    }}
+  />
+)}
 
           {/* Combined Section: Budget, Customer Info, and Documents */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -488,6 +520,180 @@ const StaffProjectDetails = () => {
               </div>
             </div>
           </div>
+
+          {/* ---- view Services Section ---- */}
+
+{user?.permission?.includes("view_services") && (
+  <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <FileText className="w-4 h-4 text-gray-500" />
+      Service Details
+    </h3>
+    {project.service ? (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500 mb-1">Duration</p>
+            <p className="text-gray-900 font-medium">{project.service.durationYears} years</p>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500 mb-1">Allowed Visits</p>
+            <p className="text-gray-900 font-medium">{project.service.allowedVisits}</p>
+          </div>
+        </div>
+        
+
+<div className="space-y-6">
+                {project.service ? (
+                  <div className="rounded-xl border border-gray-200  overflow-hidden bg-white ">
+                    {/* Header */}
+                    <div className="flex items-center justify-between gap-3 bg-gray-50/60  px-4 py-3 border-b border-gray-200 ">
+                      <h4 className="text-sm font-semibold text-gray-900 ">
+                        Service Information
+                      </h4>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset
+              ${project.service.isExpired
+                            ? "bg-red-50 text-red-700 ring-red-200 "
+                            : "bg-green-50 text-green-700 ring-green-200 "
+                          }`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${project.service.isExpired
+                            ? "bg-red-500"
+                            : "bg-green-500"
+                            }`}
+                        />
+                        {project.service.isExpired
+                          ? "Expired"
+                          : "Active"}
+                      </span>
+                    </div>
+
+                    {/* Key stats */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
+                      <div className="rounded-lg border border-gray-200  p-3 bg-gray-50 ">
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500 ">
+                          Duration
+                        </div>
+                        <div className="mt-1 text-base font-semibold text-gray-900 ">
+                          {project.service.durationYears} Years
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200  p-3 bg-gray-50 ">
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500 ">
+                          Allowed Visits
+                        </div>
+                        <div className="mt-1 text-base font-semibold text-gray-900 ">
+                          {project.service.allowedVisits}
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200  p-3 bg-gray-50">
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500 ">
+                          Used Visits
+                        </div>
+                        <div className="mt-1 text-base font-semibold text-gray-900 ">
+                          {project.service.usedVisits}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Visit history */}
+                    <div className="px-4 pb-4">
+                      <h5 className="text-sm font-semibold text-gray-800  flex items-center gap-2 mb-3">
+                        <Clock className="w-4 h-4" />
+                        Visit History
+                      </h5>
+
+                      {project.service.visits?.length > 0 ? (
+                        <ol className="relative border-s border-gray-200  ms-3">
+                          {project.service.visits.map((visit, i) => (
+                            <li key={visit._id || i} className="mb-4 ms-3">
+                              <span className="absolute -start-1.5 mt-1 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 ring-4 ring-white "></span>
+                              <button
+                                type="button"
+                                className="flex items-center w-full justify-between bg-gray-50  hover:bg-blue-50  px-3 py-2 rounded-lg transition group"
+                                onClick={() =>
+                                  setExpandedVisits((prev) => ({
+                                    ...prev,
+                                    [visit._id || i]: !prev[visit._id || i],
+                                  }))
+                                }
+                              >
+                                <span>
+                                  <span className="text-sm font-medium text-gray-900 ">
+                                    {new Date(visit.visitDate).toLocaleDateString("en-IN")}
+                                  </span>
+                                  <span className="ml-4 inline-flex w-fit rounded bg-blue-50  px-2 py-0.5 text-xs font-semibold text-blue-700  ring-1 ring-blue-200 ">
+                                    Visit #{i + 1}
+                                  </span>
+                                </span>
+                                <span className="ml-2 flex items-center">
+                                  <ChevronDown
+                                    className={`w-4 h-4 transition-transform ${expandedVisits[visit._id || i] ? "rotate-180" : ""}`}
+                                  />
+                                  <span className="text-xs ml-2 text-gray-400 group-hover:text-blue-600">
+                                    {expandedVisits[visit._id || i] ? "Hide" : "Show"} Details
+                                  </span>
+                                </span>
+                              </button>
+                              {expandedVisits[visit._id || i] && (
+                                <div className="mt-2 pl-2 border-l border-blue-200 dark:border-blue-700">
+                                  <p className="text-sm text-gray-700  mb-1">
+                                    <span className="font-semibold text-gray-800 ">
+                                      Remarks:
+                                    </span>{" "}
+                                    {visit.remarks || "N/A"}
+                                  </p>
+                                  <p className="text-sm text-gray-700 mb-1 flex items-center gap-2">
+                                    <span className="font-semibold text-gray-800">Invoice:</span>
+                                    {visit.bill ? (
+                                      <button
+                                        onClick={() => window.open(visit.bill, "_blank")}
+                                        className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                      >
+                                        Open Invoice
+                                      </button>
+                                    ) : (
+                                      "N/A"
+                                    )}
+                                  </p>
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </ol>
+                      ) : (
+                        <div className="flex items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50/50  py-8">
+                          <div className="text-center">
+                            <FileText className="w-8 h-8 mx-auto mb-2 opacity-60 text-gray-400" />
+                            <p className="text-sm text-gray-500 ">
+                              No visits recorded yet
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-gray-300  bg-gray-50/50  py-10 text-center">
+                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-60 text-gray-400" />
+                    <p className="text-sm text-gray-600">
+                      No service details available
+                    </p>
+                  </div>
+                )}
+              </div>  
+
+      </div>
+    ) : (
+      <div className="text-center py-6 text-gray-500">
+        No service details available
+      </div>
+    )}
+  </div>
+)}
+
 
           {/* ---- Daily Updates Section ---- */}
           {user?.permission?.includes("view_daily_updates") && (
@@ -953,6 +1159,7 @@ const StaffProjectDetails = () => {
               )}
             </div>
           )}
+
 
         </div>
       </div>

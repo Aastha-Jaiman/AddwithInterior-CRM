@@ -136,12 +136,12 @@ export default function SidebarLayout({ children }) {
 
     { name: "Quotation", href: "/quotation", icon: ClipboardList },
     // { name: "Design", href: "/design", icon: NotebookPen },
-    { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
+    // { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
     { name: "Project", href: "/projects", icon: LayoutDashboard },
-    { name: "Manage Users", href: "/users", icon: User2 },
-    { name: "Manage Brochures", href: "/brochure", icon: FileText },
+    // { name: "Manage Users", href: "/users", icon: User2 },
+    { name: "Manage Brochures", href: "/brochures", icon: FileText },
     { name: "Payments", href: "/payments", icon: ReceiptIndianRupee },
-    { name: "Generate Invoice", href: "/generate-invoice", icon: FileText },
+    // { name: "Generate Invoice", href: "/generate-invoice", icon: FileText },
     { name: "Profile", href: "/profile", icon: NotebookPen },
 
   ];

@@ -461,7 +461,7 @@ const ProjectDetails = ({
                     value={selectedProject.salesperson?.name || "N/A"}
                     icon={<User className="w-4 h-4" />}
                   />
-                  <p className="text-sm">
+                  <div className="text-sm">
                     <InfoItem
                       label="Salesperson Phone Number"
                       value={selectedProject.salesperson?.phone || "N/A"}
@@ -472,7 +472,7 @@ const ProjectDetails = ({
                       value={selectedProject.salesperson?.email || "N/A"}
                       icon={<User className="w-4 h-4" />}
                     />
-                  </p>
+                  </div>
                 </div>
 
                 {/* Designer */}
@@ -482,7 +482,7 @@ const ProjectDetails = ({
                     value={selectedProject.designer?.name || "N/A"}
                     icon={<User className="w-4 h-4" />}
                   />
-                  <p className="text-sm">
+                  <div className="text-sm">
                     <InfoItem
                       label="Designer Phone Number"
                       value={selectedProject.designer?.phone || "N/A"}
@@ -493,7 +493,7 @@ const ProjectDetails = ({
                       value={selectedProject.designer?.email || "N/A"}
                       icon={<User className="w-4 h-4" />}
                     />
-                  </p>
+                  </div>
                 </div>
 
                 {/* Carpenter */}
@@ -503,7 +503,7 @@ const ProjectDetails = ({
                     value={selectedProject.carpenter?.name || "N/A"}
                     icon={<Users className="w-4 h-4" />}
                   />
-                  <p className="text-sm">
+                  <div className="text-sm">
                     <InfoItem
                       label="Carpenter Phone Number"
                       value={selectedProject.carpenter?.phone || "N/A"}
@@ -514,7 +514,7 @@ const ProjectDetails = ({
                       value={selectedProject.carpenter?.email || "N/A"}
                       icon={<User className="w-4 h-4" />}
                     />
-                  </p>
+                  </div>
                 </div>
               </div>
             </InfoCard>
@@ -630,11 +630,24 @@ const ProjectDetails = ({
                                     </span>{" "}
                                     {visit.remarks || "N/A"}
                                   </p>
-                                  <p className="text-sm text-gray-700 mb-1">
+                                  {/* <p className="text-sm text-gray-700 mb-1">
                                     <span className="font-semibold text-gray-800 ">
                                       Invoice:
                                     </span>{" "}
                                     {visit.bill || "N/A"}
+                                  </p> */}
+                                  <p className="text-sm text-gray-700 mb-1 flex items-center gap-2">
+                                    <span className="font-semibold text-gray-800">Invoice:</span>
+                                    {visit.bill ? (
+                                      <button
+                                        onClick={() => window.open(visit.bill, "_blank")}
+                                        className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                      >
+                                        Open Invoice
+                                      </button>
+                                    ) : (
+                                      "N/A"
+                                    )}
                                   </p>
                                 </div>
                               )}

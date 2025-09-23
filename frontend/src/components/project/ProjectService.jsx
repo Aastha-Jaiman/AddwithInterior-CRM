@@ -149,10 +149,10 @@ const ProjectService = ({ selectedProject, onClose }) => {
   };
 
   const sharedInputClasses =
-    "w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 px-3 py-2 shadow-sm transition-all duration-150";
+    "w-full rounded-xl border border-gray-300 bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 px-3 py-2 shadow-sm transition-all duration-150";
 
   return (
-    <div className="my-4 p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg max-w-full relative transition-shadow duration-300">
+    <div className="my-4 p-6 bg-white border border-gray-200 rounded-2xl shadow-lg max-w-full relative transition-shadow duration-300">
       <div className="flex justify-end">
         <button
           onClick={() => {
@@ -173,8 +173,8 @@ const ProjectService = ({ selectedProject, onClose }) => {
           className={`flex items-center gap-2 rounded-xl border p-3 text-sm font-medium shadow transition-all
             ${
               serviceNotice.type === "success"
-                ? "border-green-200 bg-green-50 text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-100"
-                : "border-red-200 bg-red-50 text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-100"
+                ? "border-green-200 bg-green-50 text-green-800"
+                : "border-red-200 bg-red-50 text-red-800"
             }`}
           style={{
             animation: "pop 0.35s cubic-bezier(.15,.91,.33,1.16)",
@@ -192,13 +192,13 @@ const ProjectService = ({ selectedProject, onClose }) => {
       {/* Create Service Form */}
       {panel === "create" && (
         <form onSubmit={handleServiceSubmit} className="mt-6 space-y-6 max-w-full">
-          <h4 className="text-xl font-bold text-blue-700 dark:text-blue-300 mb-4 tracking-wide">
+          <h4 className="text-xl font-bold text-blue-700 mb-4 tracking-wide">
             Create Service
           </h4>
 
           <div>
             <label
-              className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1"
+              className="block text-sm font-medium text-gray-800 mb-1"
               htmlFor="durationYears"
             >
               Duration (years)
@@ -219,7 +219,7 @@ const ProjectService = ({ selectedProject, onClose }) => {
 
           <div>
             <label
-              className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1"
+              className="block text-sm font-medium text-gray-800 mb-1"
               htmlFor="allowedVisits"
             >
               Allowed Visits
@@ -256,14 +256,14 @@ const ProjectService = ({ selectedProject, onClose }) => {
       {/* Update Service Form */}
       {panel === "update" && (
         <form onSubmit={handleUpdateSubmit} className="m-3 space-y-6 max-w-full">
-          <h4 className="text-xl font-bold text-blue-700 dark:text-blue-300 mb-3 tracking-wide">
+          <h4 className="text-xl font-bold text-blue-700 mb-3 tracking-wide">
             Update Service Details
           </h4>
 
           <div>
             <label
               htmlFor="remarks"
-              className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1"
+              className="block text-sm font-medium text-gray-800 mb-1"
             >
               Remarks
             </label>
@@ -284,7 +284,7 @@ const ProjectService = ({ selectedProject, onClose }) => {
           <div>
             <label
               htmlFor="visitDate"
-              className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1"
+              className="block text-sm font-medium text-gray-800 mb-1"
             >
               Visit Date (optional)
             </label>
@@ -294,7 +294,7 @@ const ProjectService = ({ selectedProject, onClose }) => {
               name="visitDate"
               value={updateForm.visitDate}
               onChange={handleUpdateChange}
-              className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-gray-300 bg-white text-gray-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -302,7 +302,7 @@ const ProjectService = ({ selectedProject, onClose }) => {
           <div>
             <label
               htmlFor="bill"
-              className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1"
+              className="block text-sm font-medium text-gray-800 mb-1"
             >
               Upload Bill (optional)
             </label>
@@ -313,7 +313,7 @@ const ProjectService = ({ selectedProject, onClose }) => {
               accept=".pdf,.jpg,.jpeg,.png"
               onChange={handleUpdateChange}
               className="
-                w-full text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800
+                w-full text-sm rounded-xl border border-gray-300 bg-gray-50
                 file:text-blue-700 file:bg-blue-50 file:border-none file:px-4 file:py-2
                 file:rounded-xl file:shadow
               "

@@ -59,19 +59,42 @@ const RegisterStaff = ({ onBack, onSuccess }) => {
     // "view_invoice",
     // "generate_invoice",
 
-    "upload_quotation",
-    "view_quotations",
-    "upload_design",
-    "view_design_feedback",
-    "upload_daily_updates",
-    "view_daily_updates",
-    "create_project",
-    "manage_users",
-    "create_brochures",
-    "manage_brochures",
-    "view_client_info",
-    "view_invoice",
-    "generate_invoice",
+    // "upload_quotation",
+    // "view_quotations",
+    // "upload_design",
+    // "view_design_feedback",
+    // "upload_daily_updates",
+    // "view_daily_updates",
+    // "create_project",
+    // "manage_users",
+    // "create_brochures",
+    // "manage_brochures",
+    // "view_client_info",
+    // "view_invoice",
+    // "generate_invoice",
+
+          // Quottaions
+      "upload_quotation",
+      "view_quotations",
+
+      //Designs
+      "upload_design",
+      "view_design_feedback",
+
+      //Daily Updates
+      "upload_daily_updates",
+      "view_daily_updates",
+
+      // "create_project",
+      // "manage_users",
+
+      //Brochures
+      "create_brochures",
+      "manage_brochures",  
+      
+      //Brochures
+      "create_services",
+      "view_services",  
   ];
 
   const formatPermissionName = (permission) => {

@@ -9,33 +9,28 @@ import {
 } from 'lucide-react';
 
 const permissionsList = [
-  // "upload_quotation",
-  // "view_quotations",
-  // "upload_design",
-  // "view_design_feedback",
-  // "upload_morning_update",
-  // "upload_evening_update",
-  // "view_daily_updates",
-  // "create_project",
-  // "manage_users",
-  // "manage_brochures",
-  // "view_client_info",
-  // "view_invoice",
-  // "generate_invoice",
+        // Quottaions
+        "upload_quotation",
+        "view_quotations",
 
-  "upload_quotation",
-  "view_quotations",
-  "upload_design",
-  "view_design_feedback",
-  "upload_daily_updates",
-  "view_daily_updates",
-  "create_project",
-  "manage_users",
-  "create_brochures",
-  "manage_brochures",
-  "view_client_info",
-  "view_invoice",
-  "generate_invoice",
+        //Designs
+        "upload_design",
+        "view_design_feedback",
+
+        //Daily Updates
+        "upload_daily_updates",
+        "view_daily_updates",
+
+        // "create_project",
+        // "manage_users",
+
+        //Brochures
+        "create_brochures",
+        "manage_brochures",  
+        
+        //Brochures
+        "create_services",
+        "view_services",  
 ];
 
 const StaffDetailPage = () => {

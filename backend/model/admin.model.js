@@ -67,19 +67,32 @@ const AdminSchema = new mongoose.Schema({
   permission: {
     type: [String],
     enum: [
+      // Quottaions
       "upload_quotation",
       "view_quotations",
+
+      //Designs
       "upload_design",
       "view_design_feedback",
+
+      //Daily Updates
       "upload_daily_updates",
       "view_daily_updates",
-      "create_project",
-      "manage_users",
+
+      // "create_project",
+      // "manage_users",
+
+      //Brochures
       "create_brochures",
-      "manage_brochures",    
-      "view_client_info",
-      "view_invoice",
-      "generate_invoice",
+      "manage_brochures",  
+      
+      //Brochures
+      "create_services",
+      "view_services",  
+
+      // "view_client_info",
+      // "view_invoice",
+      // "generate_invoice",
     ],
     default: [],
   },

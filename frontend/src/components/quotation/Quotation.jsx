@@ -6,11 +6,14 @@ import { getAllQuotations } from "@/services/quotation.services";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+
 
 const QuotationList = () => {
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     fetchQuotations();
@@ -176,7 +179,7 @@ const QuotationList = () => {
 
   return (
     <div className={`p-6 min-h-screen`}>
-      <div
+      {/* <div
         className={`flex justify-between items-center mb-8 ${shadow} rounded-lg px-6 py-3 `}
       >
         <h2 className="text-2xl font-bold flex items-center gap-3 text-gray-700">
@@ -189,13 +192,14 @@ const QuotationList = () => {
         >
           <Plus className="w-5 h-5" /> Add Quotation
         </button>
-      </div>
+      </div> */}
 
-      {/* <div className={`flex justify-between items-center mb-8 ${shadow} rounded-lg px-6 py-3 `}>
+      <div className={`flex justify-between items-center mb-8 ${shadow} rounded-lg px-6 py-3 `}>
         <h2 className="text-2xl font-bold flex items-center gap-3 text-gray-700">
           <FileText className="w-6 h-6" />
           All Quotations
         </h2>
+        {(user?.role === "admin" || user?.permission?.includes("upload_quotation")) && (
         <button
           onClick={() => {
             const storedUser = localStorage.getItem("crm_user");
@@ -213,7 +217,8 @@ const QuotationList = () => {
         >
           <Plus className="w-5 h-5" /> Add Quotation
         </button>
-      </div> */}
+        )}
+      </div>
       
 
 
