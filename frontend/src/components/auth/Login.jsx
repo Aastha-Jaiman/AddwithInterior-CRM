@@ -51,27 +51,42 @@ export default function LoginPage() {
         result = await loginClient({ email, identifier: email, password });
       }
 
-      const userPayload = {
-        name: result.user.name,
-        email: result.user.email,
-        role: result.user.role || userType,
-        permission: result.user.permission || [],
-      };
+      // const userPayload = {
+      //   name: result.user.name,
+      //   email: result.user.email,
+      //   role: result.user.role || userType,
+      //   permission: result.user.permission || [],
+      // };
 
-      const isStaff =
-        userType === "admin" ||
-        userType === "salesperson" ||
-        userType === "designer" ||
-        userType === "carpenter";
+      // const isStaff =
+      //   userType === "admin" ||
+      //   userType === "salesperson" ||
+      //   userType === "designer" ||
+      //   userType === "carpenter";
 
-      localStorage.setItem("crm_user", JSON.stringify(userPayload));
-      localStorage.setItem(
-        isStaff ? "adminToken" : "clientToken",
-        result.token
-      );
+      // localStorage.setItem("crm_user", JSON.stringify(userPayload));
+      // localStorage.setItem(
+      //   isStaff ? "adminToken" : "clientToken",
+      //   result.token
+      // );
 
-      dispatch(loginSuccess(userPayload));
-      router.replace("/dashboard");
+      // dispatch(loginSuccess(userPayload));
+      // router.replace("/dashboard");
+
+        const userPayload = {
+          name: result.user.name,
+          email: result.user.email,
+          role: result.user.role || userType,
+          permission: result.user.permission || [],
+        };
+
+        dispatch(loginSuccess({
+          ...userPayload,
+          token: result.token,
+        }));
+
+        router.replace("/dashboard");
+
     } catch (err) {
       const msg = err?.response?.data?.message || "Login failed";
       setError(msg);
