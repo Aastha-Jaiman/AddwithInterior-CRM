@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSelector } from "react-redux";
 import {
   uploadFinalDocument,
   getFinalDocument,
@@ -21,22 +22,15 @@ const tableHeader =
   "bg-blue-50 text-blue-700 font-semibold uppercase text-xs";
 const tableCell = "border p-3";
 
-
-
 const QuotationDetails = () => {
   const { id } = useParams();
+  const user = useSelector((state) => state.auth.user); // Redux user
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Read user role on client-side after mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem("crm_user");
-    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-    setIsAdmin(parsedUser?.role === "admin");
-  }, []);
+  const isAdmin = user?.role === "admin"; // directly check from Redux
 
   useEffect(() => {
     fetchQuotation();
@@ -47,34 +41,33 @@ const QuotationDetails = () => {
       setLoading(true);
       const data = await getQuotationById(id);
       setQuotation(data.data);
-      console.log("data", data)
     } catch (error) {
       // error logging
     } finally {
       setLoading(false);
     }
   };
+
   const handleFileUpload = async (e) => {
     e.preventDefault();
     if (!file) return alert("Please select a file");
 
     try {
-      setUploading(true); // disable button
+      setUploading(true);
       const res = await uploadFinalDocument(id, file);
       alert(res.message);
       fetchQuotation();
     } catch (error) {
       alert("Upload failed");
     } finally {
-      setUploading(false); // enable button again
+      setUploading(false);
     }
   };
 
   const handleDownload = async () => {
     try {
       const response = await getFinalDocument(id);
-      const fileUrl =
-        response.finaldocument || response.data?.finaldocument;
+      const fileUrl = response.finaldocument || response.data?.finaldocument;
       if (fileUrl) {
         const result = await fetch(fileUrl);
         const blob = await result.blob();
@@ -212,7 +205,6 @@ const QuotationDetails = () => {
             >
               {uploading ? "Uploading..." : "Upload Final Quotation"}
             </button>
-
           </form>
         )}
       </div>

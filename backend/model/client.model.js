@@ -63,10 +63,16 @@ const ClientSchema = new mongoose.Schema({
     select: false, 
   },
 
-  project: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Project",
-  }],
+  // project: [{
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "Project",
+  // }],
+  projects: {
+  type: [mongoose.Schema.Types.ObjectId],
+  ref: "Project",
+  default: []
+},
+
 
   quotation: {
     type: mongoose.Schema.Types.ObjectId,

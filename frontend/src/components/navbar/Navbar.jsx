@@ -1,24 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { LogOut, User, Settings, Bell } from 'lucide-react';
+import { logout } from '../../store/authSlice';
 
 export default function Navbar({ onMenuClick, hasSidebar = true }) {
-  const [role, setRole] = useState('');
-  const [userName, setUserName] = useState('');
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('crm_user');
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      setRole(parsed.role);
-      setUserName(parsed.name || parsed.email || 'User');
-    }
-
     // Check sidebar state only if sidebar exists
     if (hasSidebar) {
       const checkSidebarState = () => {
@@ -35,13 +30,11 @@ export default function Navbar({ onMenuClick, hasSidebar = true }) {
   }, [hasSidebar]);
 
   const handleLogout = () => {
-    localStorage.removeItem('crm_user');
+    dispatch(logout());
     router.push('/login');
   };
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   return (
     <header className={`fixed top-0 right-0 h-16 flex items-center justify-between px-6 bg-white shadow-lg border-b border-slate-700 z-40 transition-all duration-300 ease-in-out
@@ -50,7 +43,6 @@ export default function Navbar({ onMenuClick, hasSidebar = true }) {
         : 'left-0'
       }`}>
       
-      {/* Mobile Menu Button - Only show if sidebar exists */}
       {hasSidebar && (
         <button
           onClick={onMenuClick}
@@ -62,7 +54,6 @@ export default function Navbar({ onMenuClick, hasSidebar = true }) {
         </button>
       )}
 
-      {/* Logo/Brand Section - Show on mobile when no sidebar, hidden on desktop when sidebar exists */}
       <div className={`flex items-center space-x-3 ${hasSidebar ? 'hidden md:flex' : ''}`}>
         <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-sm">C</span>
@@ -72,9 +63,7 @@ export default function Navbar({ onMenuClick, hasSidebar = true }) {
         </h1>
       </div>
 
-      {/* Right Section */}
       <div className="flex items-center space-x-4">
-        {/* Notifications */}
         <button className="relative p-2 text-slate-400 hover:text-white transition-colors duration-200 hover:bg-slate-700 rounded-lg">
           <Bell size={20} />
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
@@ -82,12 +71,10 @@ export default function Navbar({ onMenuClick, hasSidebar = true }) {
           </span>
         </button>
 
-        {/* Settings */}
         <button className="p-2 text-slate-400 hover:text-white transition-colors duration-200 hover:bg-slate-700 rounded-lg">
           <Settings size={20} />
         </button>
 
-        {/* User Profile Dropdown */}
         <div className="relative">
           <button
             onClick={toggleDropdown}
@@ -97,13 +84,11 @@ export default function Navbar({ onMenuClick, hasSidebar = true }) {
               <User size={16} className="text-white" />
             </div>
             <div className="text-left">
-              <p className="text-sm font-medium text-white">{userName}</p>
-              <p className="text-xs text-slate-400 capitalize">{role || 'Guest'}</p>
+              <p className="text-sm font-medium text-white">{user?.name || user?.email || 'User'}</p>
+              <p className="text-xs text-slate-400 capitalize">{user?.role || 'Guest'}</p>
             </div>
             <svg
-              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                isDropdownOpen ? 'rotate-180' : ''
-              }`}
+              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -112,12 +97,11 @@ export default function Navbar({ onMenuClick, hasSidebar = true }) {
             </svg>
           </button>
 
-          {/* Dropdown Menu */}
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-slate-200 py-2 z-50">
               <div className="px-4 py-3 border-b border-slate-200">
-                <p className="text-sm font-medium text-slate-900">{userName}</p>
-                <p className="text-xs text-slate-500 capitalize">{role || 'Guest'}</p>
+                <p className="text-sm font-medium text-slate-900">{user?.name || user?.email}</p>
+                <p className="text-xs text-slate-500 capitalize">{user?.role || 'Guest'}</p>
               </div>
               
               <div className="py-1">
@@ -145,13 +129,7 @@ export default function Navbar({ onMenuClick, hasSidebar = true }) {
         </div>
       </div>
 
-      {/* Click outside to close dropdown */}
-      {isDropdownOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsDropdownOpen(false)}
-        />
-      )}
+      {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />}
     </header>
   );
 }

@@ -72,31 +72,7 @@ const QuotationForm = () => {
 
     setSections(updatedSections);
   };
-
-  // // Submit quotation
-  // const handleSubmit = async () => {
-  //   if (!selectedClient || !selectedProject) {
-  //     alert("Please select client and project first.");
-  //     return;
-  //   }
-  //   setLoading(true);
-  //   try {
-  //     const quotationData = {
-  //       client: selectedProject.client,
-  //       project: selectedProject._id,
-  //       sections,
-  //     };
-  //     const response = await addQuotation(quotationData);
-  //     alert("Quotation created successfully!");
-  //     console.log("Created:", response);
-  //   } catch (error) {
-  //     const message = error?.response?.data?.message || "Error while creating quotation";
-  //     alert(message);
-    
-  // } finally {
-  //   setLoading(false);
-  // }
-  // };
+  
 const handleSubmit = async () => {
   if (!selectedClient || !selectedProject) {
     alert("Please select client and project first.");
@@ -211,7 +187,7 @@ const handleSubmit = async () => {
                   </option>
                   {projects.map((project) => (
                     <option key={project._id} value={project._id}>
-                      {project.projectName} ({project.category})
+                      {project.title} ({project.category})
                     </option>
                   ))}
                 </select>

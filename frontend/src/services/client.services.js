@@ -19,9 +19,9 @@ export const loginClient = async ({ email, identifier, password }) => {
   return res.data;
 };
 
-// 3. Get Client Profile (Client-authenticated route)
+// 3. Get client profile (authenticated client)
 export const getClientProfile = async () => {
-  const res = await api.get("/client/profile");
+  const res = await api.get('client/profile');
   return res.data;
 };
 

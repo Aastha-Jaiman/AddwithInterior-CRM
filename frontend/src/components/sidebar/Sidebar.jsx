@@ -23,33 +23,32 @@ import {
 } from "lucide-react";
 
 import { routePermissionMap } from "../ProtectedRoute/routePermissions";
-import { logout } from "@/store/authSlice";
-import { useDispatch } from "react-redux";
+import { logout } from "../../store/authSlice";
 import { logoutService } from "@/services/admin.services";
 import { logoutClient } from "@/services/client.services";
+import { useSelector, useDispatch } from "react-redux";
 
 export default function SidebarLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-
   const dispatch = useDispatch();
 
+  const { user } = useSelector((state) => state.auth);
+
+  // const [sidebarOpen, setSidebarOpen] = useState(false);
+  // const [collapsed, setCollapsed] = useState(false);
+  // const [userRole, setUserRole] = useState(null);
+  // const [userName, setUserName] = useState("");
+  // // const [user, setUser] = useState(null);
+  // const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [userRole, setUserRole] = useState(null);
-  const [userName, setUserName] = useState("");
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("crm_user");
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      console.log("Loaded User from localStorage:", parsed);
-      setUser(parsed);
-      setUserRole(parsed.role);
-      setUserName(parsed.name || parsed.email || "User");
-    }
+  const userRole = user?.role || null;
+  const userName = user?.name || user?.email || "User";
+
+    useEffect(() => {
     // Handle responsive sidebar behavior
     const handleResize = () => {
       if (window.innerWidth < 768) {
@@ -99,24 +98,21 @@ export default function SidebarLayout({ children }) {
   };
 
   const handleLogout = async () => {
-    setLoading(true);
-    try {
-      if (userRole === "client") {
-        await logoutClient();
-      } else {
-        await logoutService();
-      }
-    } catch (err) {
-      console.error("Logout API failed, proceeding with local logout", err);
-    } finally {
-      setLoading(false);
-      dispatch(logout());
-      localStorage.removeItem("crm_user");
-      localStorage.removeItem("clientToken");
-      localStorage.removeItem("adminToken");
-      router.push("/login"); // Redirect to login after logout
+  setLoading(true);
+  try {
+    if (userRole === "client") {
+      await logoutClient();
+    } else {
+      await logoutService();
     }
-  };
+  } catch (err) {
+    console.error("Logout API failed, proceeding with local logout", err);
+  } finally {
+    setLoading(false);
+    dispatch(logout());
+    router.push("/login"); 
+  }
+};
 
   const dashboardRouteByRole = {
     admin: "/admin-dashboard",
@@ -140,7 +136,7 @@ export default function SidebarLayout({ children }) {
     { name: "Project", href: "/projects", icon: LayoutDashboard },
     // { name: "Manage Users", href: "/users", icon: User2 },
     { name: "Manage Brochures", href: "/brochures", icon: FileText },
-    { name: "Payments", href: "/payments", icon: ReceiptIndianRupee },
+    // { name: "Payments", href: "/payments", icon: ReceiptIndianRupee },
     // { name: "Generate Invoice", href: "/generate-invoice", icon: FileText },
     { name: "Profile", href: "/profile", icon: NotebookPen },
 
@@ -299,35 +295,6 @@ export default function SidebarLayout({ children }) {
           </div>
         </nav>
 
-        {/* Footer */}
-        {/* <div className="px-3 py-4 border-t border-slate-100 mt-auto sticky bottom-0 bg-white z-10">
-          <div
-            className={`flex items-center ${collapsed ? "justify-center" : "justify-between"
-              } text-slate-600`}
-          >
-            {!collapsed && (
-              <div className="flex flex-col text-left">
-                <span className="text-sm font-medium capitalize">
-                  {userRole || ""}
-                </span>
-                <span className="text-xs text-slate-500 truncate max-w-[160px]">
-                  {userName}
-                </span>
-              </div>
-            )}
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-md hover:bg-red-100 text-red-600 transition-colors duration-200"
-              title="Logout"
-            >
-              {loading ? (
-                "logging out..."
-              ) : (
-                <LogOut size={collapsed ? 20 : 18} />
-              )}
-            </button>
-          </div>
-        </div> */}
         {/* Footer */}
         <div className="px-3 py-4 border-t border-slate-100 mt-auto sticky bottom-0 bg-white z-10">
           <div

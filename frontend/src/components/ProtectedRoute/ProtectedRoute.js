@@ -1,129 +1,50 @@
-// 'use client';
+'use client';
 
-// import { usePathname, useRouter } from 'next/navigation';
-// import { useEffect, useState } from 'react';
-// import { useDispatch, useSelector } from 'react-redux';
-// import { loginSuccess, logout } from '@/store/authSlice';
-// import { getProfile } from '@/services/admin.services';
-// import { toast } from 'react-toastify';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useRouter, usePathname } from 'next/navigation';
+import { loginSuccess, logout, fetchUserProfile } from '../../store/authSlice';
 
-// const publicRoutes = ['/', '/signup', '/login']; // add more if needed
-
-// export default function ProtectedRoute({ children }) {
-//   const router = useRouter();
-//   const pathname = usePathname();
-//   const dispatch = useDispatch();
-//   const { isAuthenticated, user } = useSelector((state) => state.auth);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const checkAuth = async () => {
-//       try {
-//         const res = await getProfile();
-//         if (res.success) {
-//           dispatch(loginSuccess(res.user));
-//           console.log(res)
-
-//           if (res.user.role !== 'admin') {
-//             toast.error('Only admin can access this panel');
-
-//           }
-//         } else {
-//           if (!publicRoutes.includes(pathname)) {
-//             dispatch(logout());
-//             router.replace('/login');
-//           }
-//         }
-//       } catch (err) {
-//         dispatch(logout());
-//         if (!publicRoutes.includes(pathname)) {
-//           router.replace('/login');
-//         }
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     checkAuth();
-//   }, [pathname]);
-
-//   if (loading) {
-//     return (
-//       <div className="flex justify-center items-center h-screen">
-//         <div className="animate-spin h-10 w-10 rounded-full border-t-2 border-blue-500" />
-//       </div>
-//     );
-//   }
-
-//   return <>{children}</>;
-// }
-
-"use client";
-
-import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { useRouter, usePathname } from "next/navigation";
-import { loginSuccess } from "@/store/authSlice";
-import { getProfile } from "@/services/admin.services";
-import { getClientProfile } from "@/services/client.services";
-
-const publicPaths = ["/login", "/signup", "/reset-password"]; // Add all public routes here
+const publicPaths = ['/login', '/signup', '/reset-password'];
 
 export default function ProtectedRoute({ children }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname();
-
+  const { user, status } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const verifyUser = async () => {
       try {
-        const storedUserJSON = localStorage.getItem("crm_user");
-        const storedUser = storedUserJSON ? JSON.parse(storedUserJSON) : null;
-
         if (publicPaths.some((path) => pathname.startsWith(path))) {
-          if (storedUser && pathname !== "/reset-password") {
-            router.replace("/dashboard");
-          } else {
-            setLoading(false);
+          if (user) router.replace('/dashboard');
+          else setLoading(false);
+          return;
+        }
+        if (!user) {
+          const storedUser = typeof window !== 'undefined' && sessionStorage.getItem('crm_user');
+          const role = storedUser ? JSON.parse(storedUser).role : 'client';
+          const result = await dispatch(fetchUserProfile(role)).unwrap();
+          if (!result) {
+            dispatch(logout());
+            router.replace('/login');
+            return;
           }
-          return;
         }
 
-        if (!storedUser) {
-          router.replace("/login");
-          return;
-        }
-
-        let res;
-
-        if (
-          ["admin", "salesperson", "designer", "carpenter"].includes(
-            storedUser.role
-          )
-        ) {
-          res = await getProfile();
-        } else {
-          res = await getClientProfile();
-        }
-
-        if (res && res.success) {
-          dispatch(loginSuccess(res.user));
-          setLoading(false);
-        } else {
-          router.replace("/login");
-        }
+        setLoading(false);
       } catch (err) {
-        console.error("Failed to load profile:", err);
-        router.replace("/login");
+        console.error(err);
+        dispatch(logout());
+        router.replace('/login');
       }
     };
 
     verifyUser();
-  }, [dispatch, pathname, router]);
+  }, [dispatch, pathname, router, user]);
 
-  if (loading) {
+  if (loading || status === 'loading') {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin h-10 w-10 rounded-full border-t-2 border-blue-500" />

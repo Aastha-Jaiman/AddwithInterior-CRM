@@ -216,7 +216,7 @@ exports.getProfile = async (req, res) => {
 
     const client = await ClientModel.findById(clientId)
       .select("-password -__v")
-      .populate("project")
+      .populate("projects")
       .populate("paymentHistory");
 
     if (!client) {
@@ -272,7 +272,7 @@ exports.updateClientByAdmin = async (req, res) => {
       email,
       phone,
       address,
-      project,
+      projects,
       quotation,
       aadharCardNumber,
       isActive,
@@ -341,7 +341,7 @@ exports.updateClientByAdmin = async (req, res) => {
       email,
       phone,
       address: parsedAddress,
-      project: project || null,
+      projects: projects || null,
       quotation: quotation || null,
       aadharCardNumber: aadharCardNumber || null,
       isActive: isActive !== undefined ? isActive : true,
@@ -407,7 +407,7 @@ exports.getAllClientByAdmin = async (req, res) => {
 
     const client = await ClientModel.find(query)
       .select("-password -__v")
-      .populate("project")
+      .populate("projects")
       .populate("paymentHistory");
 
     res.status(200).json({
@@ -563,7 +563,7 @@ exports.getClientById = async (req, res) => {
 
     const client = await ClientModel.findById(id)
       .select("-password -__v")
-      .populate("project")
+      .populate("projects")
       .populate("paymentHistory");
 
     if (!client) {

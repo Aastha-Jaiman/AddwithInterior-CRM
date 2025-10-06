@@ -1,15 +1,19 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
 
 export default function PublicRoute({ children }) {
   const router = useRouter();
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
-    if (localStorage.getItem('crm_user')) {
+    if (user) {
       router.replace('/dashboard');  
     }
-  }, [router]);
+  }, [router, user]);
 
   return <>{children}</>;
 }
+
+

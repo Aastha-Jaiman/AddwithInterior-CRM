@@ -12,6 +12,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { useSelector } from "react-redux";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -26,22 +27,20 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  async function handleSubmit(e) {
+  const user = useSelector((state) => state.auth.user);
+
+  const isStaff =
+    user &&
+    ["admin", "salesperson", "designer", "carpenter"].includes(user.role);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setMsg("");
     setLoading(true);
 
     try {
-      const storedUserJSON = localStorage.getItem("crm_user");
-      const storedUser = storedUserJSON ? JSON.parse(storedUserJSON) : null;
-
-      if (
-        storedUser &&
-        ["admin", "salesperson", "designer", "carpenter"].includes(
-          storedUser.role
-        )
-      ) {
+      if (isStaff) {
         await changeAdminPassword({
           token,
           newPassword: password,
@@ -54,18 +53,14 @@ export default function ResetPasswordPage() {
           confirmPassword: confirm,
         });
       }
-
       setMsg("Password reset successfully. Redirecting to login...");
       setTimeout(() => router.replace("/login"), 2000);
     } catch (err) {
-      setError(
-        err?.response?.data?.message ||
-          "Failed to reset password. Invalid or expired link?"
-      );
+      setError(err?.response?.data?.message || "Failed to reset password");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   // Password toggle button component
   const PasswordToggle = ({ isVisible, toggle }) => (

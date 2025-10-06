@@ -45,10 +45,9 @@ const StaffDetailPage = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
 
-  const fetchStaff = async () => {
+    const fetchStaff = async () => {
     try {
-      const token = localStorage.getItem("adminToken");
-      const data = await getStaffByIdService(id, token);
+      const data = await getStaffByIdService(id);
       setStaff(data.staff);
       console.log("staff data", data);
     } catch (err) {
@@ -57,7 +56,8 @@ const StaffDetailPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+    };
+
 
   useEffect(() => {
     if (id) fetchStaff();
