@@ -150,7 +150,7 @@ exports.registerClientByAdmin = async (req, res) => {
     console.error("Error registering client:", error);
     res.status(500).json({ message: "Internal server error." });
   }
-};
+}; 
 
 exports.loginClient = async (req, res) => {
   try {
