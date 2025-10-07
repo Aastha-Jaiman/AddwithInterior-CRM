@@ -272,3 +272,68 @@ exports.deletePayment = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+exports.getMyProjectPaymentHistory = async (req, res) => {
+  try {
+    const clientId = req.user?._id || req.user?.id;
+
+    if (!clientId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access. Client ID missing.",
+      });
+    }
+
+    const paymentHistories = await PaymentHistoryModel.find({ client: clientId })
+      .populate("project", "title category finalBudget")
+      .sort({ createdAt: -1 });
+
+    if (!paymentHistories || paymentHistories.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No payment history found for this client.",
+      });
+    }
+
+    const formattedData = paymentHistories.map((history) => ({
+      projectId: history.project?._id,
+      projectTitle: history.project?.title,
+      category: history.project?.category,
+      totalPrice: history.totalPrice,
+      totalSpent: history.totalReceived,
+      pending: history.pending,
+      payments: history.payments.map((p) => ({
+        _id: p._id,
+        amount: p.amount,
+        message: p.message,
+        date: p.date,
+        file: p.file,
+      })),
+    }));
+
+    const overallTotals = paymentHistories.reduce(
+      (acc, h) => {
+        acc.totalSpent += h.totalReceived;
+        acc.pending += h.pending;
+        return acc;
+      },
+      { totalSpent: 0, pending: 0 }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Client payment history fetched successfully",
+      count: formattedData.length,
+      overallTotals,
+      data: formattedData,
+    });
+  } catch (error) {
+    console.error("Error fetching client's payment history:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching payment history",
+      error: error.message,
+    });
+  }
+};
+

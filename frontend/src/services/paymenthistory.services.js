@@ -53,3 +53,13 @@ export const updatePayment = (paymentId, paymentData) => {
 export const deletePayment = (paymentId) => {
   return api.delete(`/payment/delete/${paymentId}`);
 };
+
+export const getMyProjectPaymentHistory = async () => {
+  try {
+    const response = await api.get("payment/my/history");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching client payment history:", error);
+    throw error.response?.data || error;
+  }
+};
