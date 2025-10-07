@@ -47,7 +47,8 @@ const StaffDetailPage = () => {
 
     const fetchStaff = async () => {
     try {
-      const data = await getStaffByIdService(id);
+      const token = localStorage.getItem("adminToken");
+      const data = await getStaffByIdService(id, token);
       setStaff(data.staff);
       console.log("staff data", data);
     } catch (err) {

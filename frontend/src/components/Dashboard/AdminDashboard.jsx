@@ -30,8 +30,13 @@ import {
   Plus,
   Palette,
 } from "lucide-react";
+import { useSelector } from "react-redux";
 
 const AdminDashboard = () => {
+
+  const {user} = useSelector((state)=>state.auth)
+  console.log("user", user)
+
   const statsCards = [
     {
       title: "Total Revenue",

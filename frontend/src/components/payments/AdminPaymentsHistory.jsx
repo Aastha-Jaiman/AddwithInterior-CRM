@@ -181,7 +181,8 @@ export default function PaymentsPage() {
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <DollarSign className="h-5 w-5 text-blue-600" />
+                {/* <DollarSign className="h-5 w-5 text-blue-600" /> */}
+                ₹
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-500">
@@ -196,7 +197,8 @@ export default function PaymentsPage() {
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
-                <DollarSign className="h-5 w-5 text-green-600" />
+                {/* <DollarSign className="h-5 w-5 text-green-600" /> */}
+                ₹
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-500">
@@ -211,7 +213,8 @@ export default function PaymentsPage() {
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="flex items-center">
               <div className="p-2 bg-orange-100 rounded-lg">
-                <DollarSign className="h-5 w-5 text-orange-600" />
+                {/* <DollarSign className="h-5 w-5 text-orange-600" /> */}
+                ₹
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-500">
