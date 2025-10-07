@@ -224,12 +224,12 @@ exports.login = async (req, res) => {
     });
     console.log('token at login', token)
     res.cookie("token", token, {
-      secure: false,
+      secure: true,
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: "lax",
+      sameSite: "none",
       path:"/"
-    });
+    }); 
 
     res.json({
       message: "Login successful",

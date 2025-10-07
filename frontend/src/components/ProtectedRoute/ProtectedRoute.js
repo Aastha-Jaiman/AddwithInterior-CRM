@@ -110,6 +110,9 @@ export default function ProtectedRoute({ children }) {
         }
       } catch (err) {
         console.error("Failed to load profile:", err);
+        localStorage.removeItem("crm_user");
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("clientToken");
           router.replace("/login");
       }
     };
