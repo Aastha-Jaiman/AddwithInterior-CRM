@@ -1,4 +1,4 @@
-import DesignerDashboard from "@/components/Dashboard/Designer-dashboard";
+import Dashboard from "@/components/Dashboard/Dashboard";
 import SidebarLayout from "@/components/sidebar/Sidebar";
 import React from "react";
 
@@ -6,7 +6,7 @@ export default function page() {
   return (
     <div>
       <SidebarLayout>
-        <DesignerDashboard />
+        <Dashboard />
       </SidebarLayout>
     </div>
   );

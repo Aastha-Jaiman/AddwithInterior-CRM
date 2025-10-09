@@ -39,7 +39,7 @@ const ClientPaymentHistory = () => {
     );
 
   return (
-    <div className="max-w-6xl mx-auto p-8 bg-gray-50 rounded-lg shadow-md font-sans">
+    <div className="max-w-7xl mx-auto p-8 bg-gray-50 rounded-lg font-sans">
       <h2 className="text-4xl font-bold mb-8 text-gray-800 tracking-wide border-b border-gray-300 pb-3">
         Client Payment History
       </h2>

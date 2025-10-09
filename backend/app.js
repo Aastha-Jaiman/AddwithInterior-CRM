@@ -32,6 +32,12 @@ const serviceRoute = require('./routes/service.router');
 const quotationRoute = require('./routes/quotation.router');
 const paymentHistoryRoute = require('./routes/paymentHistory.router');
 
+// dashboard
+const adminDashboardRoutes = require('./routes/dashboardRoutes/adminDashboard.routes');
+const dashboardRoutes = require('./routes/dashboardRoutes/dashboard.routes');
+
+
+
 app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/client", clientRoute);
 app.use("/api/v1/contact", contactRoute);
@@ -43,4 +49,14 @@ app.use("/api/v1/service", serviceRoute);
 app.use("/api/v1/quotation", quotationRoute);
 app.use("/api/v1/payment", paymentHistoryRoute);
 
+// dashboard
+app.use('/api/v1/dashboard/admin', adminDashboardRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+
 module.exports = app;
+
+
+
+
+
+

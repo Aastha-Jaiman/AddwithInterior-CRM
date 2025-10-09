@@ -366,6 +366,8 @@ import {
   Wrench,
   LogOut,
   FileQuestion,
+  BookImage,
+  IndianRupee,
 } from "lucide-react";
 
 import { routePermissionMap } from "../ProtectedRoute/routePermissions";
@@ -485,8 +487,8 @@ export default function SidebarLayout({ children }) {
     // { name: "Daily Updates", href: "/daily-updates", icon: ClipboardList },
     { name: "Project", href: "/projects", icon: LayoutDashboard },
     // { name: "Manage Users", href: "/users", icon: User2 },
-    { name: "Manage Brochures", href: "/brochures", icon: FileText },
-    { name: "Payments", href: "/payments", icon: ReceiptIndianRupee },
+    { name: "Manage Brochures", href: "/brochures", icon: BookImage },
+    { name: "Payments", href: "/payments", icon: IndianRupee },
     // { name: "Generate Invoice", href: "/generate-invoice", icon: FileText },
     { name: "Profile", href: "/profile", icon: NotebookPen },
 
@@ -495,7 +497,7 @@ export default function SidebarLayout({ children }) {
   const adminNavigationItems = [
     { name: "Dashboard", href: "/admin-dashboard", icon: LayoutDashboard },
     { name: "Quotation", href: "/admin/quotation", icon: FileText },
-    { name: "Brochure", href: "/admin/brochure", icon: ReceiptIndianRupee },
+    { name: "Brochure", href: "/admin/brochure", icon: BookImage },
     {
       name: "registerstaff",
       href: "/admin/registerstaff",
@@ -509,7 +511,7 @@ export default function SidebarLayout({ children }) {
     { name: "Staff-Users", href: "/admin/staffusers", icon: FileQuestion },
     { name: "Clients", href: "/admin/clients", icon: NotebookPen },
     { name: "Projects", href: "/admin/projects", icon: ClipboardList },
-    { name: "Payment History", href: "/admin/paymenthistory", icon: User2 },
+    { name: "Payment History", href: "/admin/paymenthistory", icon: IndianRupee },
     { name: "Services", href: "/admin/services", icon: User2 },
     {
       name: "Daily Updates",
@@ -522,7 +524,7 @@ export default function SidebarLayout({ children }) {
   const clientNavigationItems = [
     { name: "Dashboard", href: "/client-dashboard", icon: ClipboardList },
     { name: "My Projects", href: "/client/projects", icon: ClipboardList },
-    { name: "Payments", href: "/client/payments", icon: ReceiptIndianRupee },
+    { name: "Payments", href: "/client/payments", icon: IndianRupee },
     // { name: "Quotations", href: "/client/quotation", icon: FileText },
     // {
     //   name: "Daily Updates",

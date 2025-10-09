@@ -1,421 +1,257 @@
 "use client";
-import React, { useState } from "react";
-import {
-  LayoutDashboard,
-  FileText,
-  Calculator,
-  Users,
-  User,
-  FolderOpen,
-  CreditCard,
-  BarChart3,
-  Calendar,
-  UserPlus,
-  UserCheck,
-  Settings,
-  Bell,
-  Search,
-  Menu,
-  X,
-  TrendingUp,
-  DollarSign,
-  Clock,
-  CheckCircle,
-  Home,
-  ChevronDown,
-  Activity,
-  Star,
-  Eye,
-  Download,
-  Plus,
-  Palette,
-} from "lucide-react";
-import { useSelector } from "react-redux";
 
-const AdminDashboard = () => {
+import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { getAdminDashboard } from "@/services/dashboard/admin.dashboard.services";
+import { Users, Briefcase, FileText, DollarSign, TrendingUp, TrendingDown, RefreshCw, ArrowRight, Package } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts";
 
-  const {user} = useSelector((state)=>state.auth)
-  console.log("user", user)
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-  const statsCards = [
-    {
-      title: "Total Revenue",
-      value: "$124,500",
-      change: "+12.5%",
-      trend: "up",
-      icon: DollarSign,
-      color: "from-emerald-500 to-emerald-600",
-      bgColor: "from-emerald-50 to-emerald-100",
-      textColor: "text-emerald-600",
-    },
-    {
-      title: "Active Projects",
-      value: "28",
-      change: "+3 new",
-      trend: "up",
-      icon: FolderOpen,
-      color: "from-blue-500 to-blue-600",
-      bgColor: "from-blue-50 to-blue-100",
-      textColor: "text-blue-600",
-    },
-    {
-      title: "Total Clients",
-      value: "156",
-      change: "+8 this month",
-      trend: "up",
-      icon: User,
-      color: "from-purple-500 to-purple-600",
-      bgColor: "from-purple-50 to-purple-100",
-      textColor: "text-purple-600",
-    },
-    {
-      title: "Staff Users",
-      value: "12",
-      change: "+1 today",
-      trend: "up",
-      icon: Users,
-      color: "from-orange-500 to-orange-600",
-      bgColor: "from-orange-50 to-orange-100",
-      textColor: "text-orange-600",
-    },
-  ];
+function formatNumber(n) {
+  if (n === undefined || n === null) return "0";
+  const num = typeof n === "string" ? Number(n) : n;
+  if (!Number.isFinite(num)) return "0";
+  return Intl.NumberFormat("en-IN").format(num);
+}
 
-  const recentActivities = [
-    {
-      id: 1,
-      action: "New client registered",
-      user: "John Doe",
-      time: "2 minutes ago",
-      type: "user",
-      icon: UserPlus,
-    },
-    {
-      id: 2,
-      action: "Project milestone completed",
-      user: "Project Alpha",
-      time: "15 minutes ago",
-      type: "project",
-      icon: CheckCircle,
-    },
-    {
-      id: 3,
-      action: "Payment received",
-      user: "ABC Corp",
-      time: "1 hour ago",
-      type: "payment",
-      icon: DollarSign,
-    },
-    {
-      id: 4,
-      action: "Staff member added",
-      user: "Sarah Wilson",
-      time: "3 hours ago",
-      type: "staff",
-      icon: Users,
-    },
-    {
-      id: 5,
-      action: "Quotation sent",
-      user: "XYZ Industries",
-      time: "5 hours ago",
-      type: "quotation",
-      icon: Calculator,
-    },
-  ];
+function formatCurrency(n) {
+  if (n === undefined || n === null) return "₹0";
+  const num = typeof n === "string" ? Number(n) : n;
+  if (!Number.isFinite(num)) return "₹0";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(num);
+}
 
-  const upcomingTasks = [
-    {
-      id: 1,
-      task: "Client meeting with TechCorp",
-      time: "10:00 AM",
-      priority: "high",
-      category: "Meeting",
-    },
-    {
-      id: 2,
-      task: "Project review - Website Redesign",
-      time: "2:00 PM",
-      priority: "medium",
-      category: "Review",
-    },
-    {
-      id: 3,
-      task: "Send monthly report",
-      time: "4:30 PM",
-      priority: "low",
-      category: "Report",
-    },
-    {
-      id: 4,
-      task: "Team standup meeting",
-      time: "9:00 AM Tomorrow",
-      priority: "medium",
-      category: "Meeting",
-    },
-  ];
+function percent(part, total) {
+  if (!total || total <= 0) return 0;
+  return Math.round((part / total) * 100);
+}
 
-  const getActivityIcon = (type) => {
-    const iconMap = {
-      user: UserPlus,
-      project: CheckCircle,
-      payment: DollarSign,
-      staff: Users,
-      quotation: Calculator,
-    };
-    return iconMap[type] || Activity;
-  };
+export default function AdminDashboard() {
+  const [data, setData] = useState(null);
+  const [role, setRole] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  async function loadDashboard(signal) {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await getAdminDashboard();
+      if (!res?.success) throw new Error("Failed to load dashboard");
+      setData(res.data);
+      setRole(res.role || "");
+    } catch (e) {
+      setError(e?.message || "Unable to fetch dashboard");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadDashboard(controller.signal);
+    return () => controller.abort();
+  }, []);
+
+  const statusChartData = useMemo(() => {
+    if (!data?.projectsByStatus) return [];
+    return Object.entries(data.projectsByStatus).map(([name, value]) => ({ name, value }));
+  }, [data?.projectsByStatus]);
+
+  const categoryChartData = useMemo(() => {
+    if (!data?.projectsByCategory) return [];
+    return Object.entries(data.projectsByCategory).map(([name, value]) => ({ 
+      name: name.replace(/_/g, " "), 
+      value 
+    }));
+  }, [data?.projectsByCategory]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-blue-50/40 flex">
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Header */}
-        <div className="bg-white/90 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-40 shadow-sm">
-          <div className="px-8 py-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            {role && <span className="inline-block mt-1 text-sm text-gray-600">{role}</span>}
+          </div>
+          <button
+            onClick={() => loadDashboard()}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">{error}</div>
+        )}
+
+        {/* KPIs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  Dashboard
-                </h1>
-                <p className="text-sm text-gray-500 font-medium">
-                  {new Date().toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                <p className="text-sm text-gray-600">Clients</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {loading ? "..." : formatNumber(data?.totalClients)}
                 </p>
               </div>
+              <Users className="w-10 h-10 text-blue-500 opacity-80" />
+            </div>
+          </div>
 
-              <div className="flex items-center space-x-4">
-                <div className="relative sm:flex hidden">
-                  <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 shadow-sm transition-all w-64"
-                  />
-                </div>
-                <button className="relative p-3 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors duration-200 shadow-sm">
-                  <Bell size={20} className="text-gray-600" />
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                    3
-                  </div>
-                </button>
+          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Projects</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {loading ? "..." : formatNumber(data?.totalProjects)}
+                </p>
               </div>
+              <Briefcase className="w-10 h-10 text-indigo-500 opacity-80" />
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Quotations</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {loading ? "..." : formatNumber(data?.totalQuotations)}
+                </p>
+              </div>
+              <FileText className="w-10 h-10 text-orange-500 opacity-80" />
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Brochures</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {loading ? "..." : formatNumber(data?.totalBrochures)}
+                  {!loading && data?.newBrochures != null && (
+                    <span className="text-sm font-normal text-gray-500 ml-1">({data.newBrochures})</span>
+                  )}
+                </p>
+              </div>
+              <Package className="w-10 h-10 text-purple-500 opacity-80" />
             </div>
           </div>
         </div>
 
-        {/* Page Content */}
-        <main className="flex-1 p-8">
-          <div className="space-y-8">
-            <div className="relative mb-10 lg:hidden md:hidden w-full">
-              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-300 shadow-sm transition-all w-64"
-              />
-            </div>
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Projects by Status</h3>
+            {loading ? (
+              <div className="h-64 animate-pulse bg-gray-100 rounded-lg" />
+            ) : statusChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={statusChartData}>
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#6366f1" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-gray-500 text-center py-12">No data</p>
+            )}
+          </div>
 
-            {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-blue-600 via-blue-600 to-blue-700 rounded-2xl p-8 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-              <div className="relative z-10">
-                <h1 className="text-3xl font-bold mb-2">
-                  Good morning, Admin!
-                </h1>
-                <p className="text-blue-100 text-lg">
-                  Here's what's happening with your business today.
-                </p>
-              </div>
-            </div>
+          <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Projects by Category</h3>
+            {loading ? (
+              <div className="h-64 animate-pulse bg-gray-100 rounded-lg" />
+            ) : categoryChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={categoryChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {categoryChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-gray-500 text-center py-12">No data</p>
+            )}
+          </div>
+        </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {statsCards.map((stat, index) => (
-                <div
-                  key={index}
-                  className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-sm hover:shadow-lg transition-all duration-300 p-6 group"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div
-                      className={`w-14 h-14 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
-                    >
-                      <stat.icon className="w-7 h-7 text-white" />
-                    </div>
-                    <div
-                      className={`flex items-center space-x-1 ${stat.textColor} text-sm font-medium`}
-                    >
-                      <TrendingUp className="w-4 h-4" />
-                      <span>{stat.change}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">
-                      {stat.title}
-                    </p>
-                    <p className="text-3xl font-bold text-gray-900">
-                      {stat.value}
-                    </p>
-                  </div>
-                </div>
+        {/* Recent Projects */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
+          <div className="flex items-center justify-between p-5 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Projects</h3>
+            <Link href="/admin/projects" className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              View all <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          {loading ? (
+            <div className="space-y-2 p-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-16 animate-pulse bg-gray-100 rounded-lg" />
               ))}
             </div>
-
-            {/* Charts and Activities */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Recent Activities */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-sm">
-                <div className="p-6 border-b border-gray-200/50">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      Recent Activities
-                    </h3>
-                    <div className="flex items-center space-x-2">
-                      <Activity className="w-5 h-5 text-blue-500" />
-                      <span className="text-sm text-gray-500">Live</span>
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-5">
-                    {recentActivities.map((activity) => {
-                      const IconComponent = getActivityIcon(activity.type);
-                      return (
-                        <div
-                          key={activity.id}
-                          className="flex items-center space-x-4 p-3 rounded-xl hover:bg-gray-50 transition-colors duration-150"
-                        >
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-100 rounded-lg flex items-center justify-center">
-                            <IconComponent className="w-5 h-5 text-blue-600" />
+          ) : (!data.recentProjects || data.recentProjects.length === 0) ? (
+            <p className="text-gray-500 text-center py-8">No recent projects</p>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {data.recentProjects.slice(0, 5).map((p) => {
+                const img = p.projectImages?.[0]?.url;
+                return (
+                  <div key={p._id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="h-14 w-14 flex-shrink-0 rounded-lg bg-gray-100 overflow-hidden border border-gray-200">
+                        {img ? (
+                          <img src={img} alt={p.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-gray-400 text-xs">
+                            No Img
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">
-                              {activity.action}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {activity.user}
-                            </p>
-                          </div>
-                          <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                            {activity.time}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Upcoming Tasks */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-sm">
-                <div className="p-6 border-b border-gray-200/50">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      Upcoming Tasks
-                    </h3>
-                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1">
-                      <Plus className="w-4 h-4" />
-                      <span>Add Task</span>
-                    </button>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {upcomingTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors duration-150 group"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div
-                            className={`w-4 h-4 rounded-full ${
-                              task.priority === "high"
-                                ? "bg-red-500 shadow-lg shadow-red-200"
-                                : task.priority === "medium"
-                                ? "bg-yellow-500 shadow-lg shadow-yellow-200"
-                                : "bg-green-500 shadow-lg shadow-green-200"
-                            }`}
-                          ></div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {task.task}
-                            </p>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <span className="text-xs text-gray-500">
-                                {task.time}
-                              </span>
-                              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                                {task.category}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <CheckCircle
-                          size={20}
-                          className="text-gray-300 hover:text-green-500 cursor-pointer group-hover:scale-110 transition-all duration-200"
-                        />
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-sm p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">
-                Quick Actions
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  {
-                    label: "Add Client",
-                    icon: UserPlus,
-                    color: "from-blue-500 to-blue-600",
-                  },
-                  {
-                    label: "Create Quote",
-                    icon: Calculator,
-                    color: "from-purple-500 to-purple-600",
-                  },
-                  {
-                    label: "New Project",
-                    icon: FolderOpen,
-                    color: "from-emerald-500 to-emerald-600",
-                  },
-                  {
-                    label: "Generate Report",
-                    icon: BarChart3,
-                    color: "from-orange-500 to-orange-600",
-                  },
-                ].map((action, index) => (
-                  <button
-                    key={index}
-                    className="p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-300 group"
-                  >
-                    <div
-                      className={`w-12 h-12 bg-gradient-to-r ${action.color} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300 shadow-lg`}
-                    >
-                      <action.icon className="w-6 h-6 text-white" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-gray-900 truncate">{p.title}</p>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                            {p.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {p.location || "N/A"} · {p.category?.replace(/_/g, " ") || "No category"}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Est: {formatCurrency(p.estimatedBudget || 0)}
+                          {p.finalBudget && ` · Final: ${formatCurrency(p.finalBudget)}`}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors duration-300">
-                      {action.label}
-                    </p>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        </main>
+          )}
+        </div>
       </div>
     </div>
   );
-};
-
-export default AdminDashboard;
+}
