@@ -370,15 +370,30 @@ const QuotationDetails = () => {
       14,
       62
     );
-    let currentY = 70;
     quotation.sections?.forEach((section, index) => {
+      const itemMap = new Map();
+      (section.items || []).forEach(item => {
+        const key = item.itemName;
+        if (!itemMap.has(key)) {
+          itemMap.set(key, item);
+        } else {
+          const current = itemMap.get(key);
+          const hasMeasurements = (item.height > 0 && item.width > 0) || (item.total > 0);
+          const currentHasMeasurements = (current.height > 0 && current.width > 0) || (current.total > 0);
+          if (hasMeasurements && !currentHasMeasurements) {
+            itemMap.set(key, item);
+          }
+        }
+      });
+      const uniqueItems = Array.from(itemMap.values());
+
       doc.setFontSize(14);
       doc.text(
         `Section: ${section.customSectionName || section.sectionName}`,
         14,
         currentY
       );
-      const tableData = section.items.map((item, i) => [
+      const tableData = uniqueItems.map((item, i) => [
         i + 1,
         item.itemName || "N/A",
         item.height || 0,
@@ -484,41 +499,59 @@ const QuotationDetails = () => {
           Sections & Items
         </h3>
         {quotation?.sections?.length > 0 ? (
-          quotation.sections.map((section, i) => (
-            <div key={i} className="mb-6 rounded-lg border border-blue-100 p-4 shadow-sm bg-blue-50/40">
-              <h4 className="font-bold text-blue-800 mb-2">
-                {section.customSectionName || section.sectionName}
-              </h4>
-              <div className="overflow-x-auto">
-                <table className="min-w-[800px] w-full border border-gray-300 rounded">
-                  <thead>
-                    <tr className={tableHeader}>
-                      <th className={tableCell}>#</th>
-                      <th className={tableCell}>Item Name</th>
-                      <th className={tableCell}>Height</th>
-                      <th className={tableCell}>Width</th>
-                      <th className={tableCell}>Calculation</th>
-                      <th className={tableCell}>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.items.map((item, idx) => (
-                      <tr key={idx} className="bg-white hover:bg-blue-100 transition">
-                        <td className={tableCell}>{idx + 1}</td>
-                        <td className={tableCell}>{item.itemName}</td>
-                        <td className={tableCell}>{item.height}</td>
-                        <td className={tableCell}>{item.width}</td>
-                        <td className={tableCell}>{item.calculation}</td>
-                        <td className={tableCell}>
-                          ₹{item.total || 0}
-                        </td>
+          quotation.sections.map((section, i) => {
+            const itemMap = new Map();
+            (section.items || []).forEach(item => {
+              const key = item.itemName;
+              if (!itemMap.has(key)) {
+                itemMap.set(key, item);
+              } else {
+                const current = itemMap.get(key);
+                const hasMeasurements = (item.height > 0 && item.width > 0) || (item.total > 0);
+                const currentHasMeasurements = (current.height > 0 && current.width > 0) || (current.total > 0);
+                if (hasMeasurements && !currentHasMeasurements) {
+                  itemMap.set(key, item);
+                }
+              }
+            });
+            const uniqueItems = Array.from(itemMap.values());
+
+            return (
+              <div key={i} className="mb-6 rounded-lg border border-blue-100 p-4 shadow-sm bg-blue-50/40">
+                <h4 className="font-bold text-blue-800 mb-2">
+                  {section.customSectionName || section.sectionName}
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-[800px] w-full border border-gray-300 rounded">
+                    <thead>
+                      <tr className={tableHeader}>
+                        <th className={tableCell}>#</th>
+                        <th className={tableCell}>Item Name</th>
+                        <th className={tableCell}>Height</th>
+                        <th className={tableCell}>Width</th>
+                        <th className={tableCell}>Calculation</th>
+                        <th className={tableCell}>Total</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {uniqueItems.map((item, idx) => (
+                        <tr key={idx} className="bg-white hover:bg-blue-100 transition">
+                          <td className={tableCell}>{idx + 1}</td>
+                          <td className={tableCell}>{item.itemName}</td>
+                          <td className={tableCell}>{item.height}</td>
+                          <td className={tableCell}>{item.width}</td>
+                          <td className={tableCell}>{item.calculation}</td>
+                          <td className={tableCell}>
+                            ₹{item.total || 0}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="p-4 text-gray-400 text-base font-semibold">
             No sections found.

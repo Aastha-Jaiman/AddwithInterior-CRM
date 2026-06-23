@@ -38,6 +38,22 @@ const RoughQuotationPDF = ({ quotation, triggerPDF, onComplete }) => {
 
   // --- Sections ---
   quotation.sections?.forEach((section, index) => {
+    const itemMap = new Map();
+    (section.items || []).forEach(item => {
+      const key = item.itemName;
+      if (!itemMap.has(key)) {
+        itemMap.set(key, item);
+      } else {
+        const current = itemMap.get(key);
+        const hasMeasurements = (item.height > 0 && item.width > 0) || (item.total > 0);
+        const currentHasMeasurements = (current.height > 0 && current.width > 0) || (current.total > 0);
+        if (hasMeasurements && !currentHasMeasurements) {
+          itemMap.set(key, item);
+        }
+      }
+    });
+    const uniqueItems = Array.from(itemMap.values());
+
     doc.setFontSize(14);
     doc.setTextColor(41, 128, 185);
     doc.text(
@@ -46,7 +62,7 @@ const RoughQuotationPDF = ({ quotation, triggerPDF, onComplete }) => {
       currentY
     );
 
-    const tableData = section.items.map((item, i) => [
+    const tableData = uniqueItems.map((item, i) => [
       i + 1,
       item.itemName || "N/A",
       item.height || 0,

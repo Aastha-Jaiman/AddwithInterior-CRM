@@ -9,6 +9,7 @@ const fs = require("fs")
 // create project
 exports.addProject = async (req, res) => {
   try {
+    console.log("PROJECT CREATION BODY:", req.body);
     const user = req.user;
 
     if (!user || user.role !== "admin") {
@@ -94,7 +95,7 @@ exports.addProject = async (req, res) => {
 
     await ClientModel.findByIdAndUpdate(
       clientId,
-      { $push: { project: newProject._id } },
+      { $push: { projects: newProject._id } },
       { new: true }
     );
 

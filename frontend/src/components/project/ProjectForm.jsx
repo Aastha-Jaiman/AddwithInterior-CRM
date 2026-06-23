@@ -116,6 +116,74 @@ const DropdownSelector = React.memo(({
 
 DropdownSelector.displayName = 'DropdownSelector';
 
+const KITCHEN_SECTIONS = [
+  {
+    sectionName: "Wooden Part",
+    customSectionName: "",
+    items: [
+      { itemName: "Shutter", height: 0, width: 0, price: 50, calculation: 0, total: 0 },
+      { itemName: "Carcase", height: 0, width: 0, price: 80, calculation: 0, total: 0 },
+      { itemName: "Profile Shutter", height: 0, width: 0, price: 50, calculation: 0, total: 0 },
+      { itemName: "Shelves", height: 0, width: 0, price: 80, calculation: 0, total: 0 },
+      { itemName: "Counter Top", height: 0, width: 0, price: 80, calculation: 0, total: 0 },
+    ],
+    sectionTotal: 0,
+  },
+  {
+    sectionName: "Hardware",
+    customSectionName: "",
+    items: [
+      { itemName: "Hinges", height: 0, width: 0, price: 40, calculation: 0, total: 0 },
+      { itemName: "Drawer Channels'", height: 0, width: 0, price: 60, calculation: 0, total: 0 },
+      { itemName: "Handles", height: 0, width: 0, price: 20, calculation: 0, total: 0 },
+      { itemName: "Soft Close", height: 0, width: 0, price: 100, calculation: 0, total: 0 },
+      { itemName: "Corner Solutions", height: 0, width: 0, price: 30, calculation: 0, total: 0 },
+    ],
+    sectionTotal: 0,
+  },
+  {
+    sectionName: "Accessories",
+    customSectionName: "",
+    items: [
+      { itemName: "Pull Out Baskets", height: 0, width: 0, price: 120, calculation: 0, total: 0 },
+      { itemName: "Bottle Pull Out", height: 0, width: 0, price: 80, calculation: 0, total: 0 },
+      { itemName: "Cutlery Tray", height: 0, width: 0, price: 150, calculation: 0, total: 0 },
+      { itemName: "Corner Carousel", height: 0, width: 0, price: 180, calculation: 0, total: 0 },
+      { itemName: "Pantry Unit", height: 0, width: 0, price: 80, calculation: 0, total: 0 },
+    ],
+    sectionTotal: 0,
+  },
+  {
+    sectionName: "Labour",
+    customSectionName: "",
+    items: [
+      { itemName: "Installation", height: 0, width: 0, price: 500, calculation: 0, total: 0 },
+      { itemName: "Transportation", height: 0, width: 0, price: 80, calculation: 0, total: 0 },
+      { itemName: "Design Consultation", height: 0, width: 0, price: 150, calculation: 0, total: 0 },
+      { itemName: "Site Measurement", height: 0, width: 0, price: 180, calculation: 0, total: 0 },
+    ],
+    sectionTotal: 0,
+  },
+];
+
+const INPLACE_SECTIONS = [
+  {
+    sectionName: "Furniture",
+    customSectionName: "",
+    items: [
+      { itemName: "Box", height: 0, width: 0, price: 10, calculation: 0, total: 0 },
+      { itemName: "Extra Drawer", height: 0, width: 0, price: 10, calculation: 0, total: 0 },
+      { itemName: "One Side Color", height: 0, width: 0, price: 10, calculation: 0, total: 0 },
+      { itemName: "Wall Panelling", height: 0, width: 0, price: 10, calculation: 0, total: 0 },
+      { itemName: "Side Table", height: 0, width: 0, price: 10, calculation: 0, total: 0 },
+      { itemName: "Vanity", height: 0, width: 0, price: 10, calculation: 0, total: 0, vanityType: "2F" },
+      { itemName: "TV Unit", height: 0, width: 0, price: 10, calculation: 0, total: 0 },
+      { itemName: "Chapas Wardrobe", height: 0, width: 0, price: 10, calculation: 0, total: 0 },
+    ],
+    sectionTotal: 0,
+  },
+];
+
 // ProjectForm unchanged except DropdownSelector toggle dropdown
 const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
   const isEditMode = !!projectToEdit;
@@ -141,6 +209,63 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
   const [selectedItems, setSelectedItems] = useState({ client: null, salesperson: null, designer: null, carpenter: null });
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // States for Rough quotation calculator modal
+  const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
+  const [calcSections, setCalcSections] = useState([]);
+
+  const openRoughCalculator = () => {
+    if (!formData.category) {
+      alert("Please select category first.");
+      return;
+    }
+    const category = formData.category.toLowerCase();
+    let template = [];
+    if (category === "modular_kitchen") {
+      template = KITCHEN_SECTIONS;
+    } else if (category === "inplace_furniture") {
+      template = INPLACE_SECTIONS;
+    } else {
+      alert(`Unsupported project category: ${formData.category}`);
+      return;
+    }
+    // Deep clone template
+    setCalcSections(JSON.parse(JSON.stringify(template)));
+    setIsCalcModalOpen(true);
+  };
+
+  const handleCalcItemChange = (sectionIndex, itemIndex, field, value) => {
+    const updated = [...calcSections];
+    const item = { ...updated[sectionIndex].items[itemIndex] };
+    
+    item[field] = value;
+    
+    const width = parseFloat(item.width) || 0;
+    const height = parseFloat(item.height) || 0;
+    const price = parseFloat(item.price) || 0;
+    
+    item.calculation = width * height;
+    item.total = item.calculation * price;
+    
+    updated[sectionIndex].items[itemIndex] = item;
+    
+    // Recalculate section total
+    updated[sectionIndex].sectionTotal = updated[sectionIndex].items.reduce(
+      (sum, it) => sum + (it.total || 0), 0
+    );
+    
+    setCalcSections(updated);
+  };
+
+  const getCalcGrandTotal = () => {
+    return calcSections.reduce((sum, sec) => sum + (sec.sectionTotal || 0), 0);
+  };
+
+  const applyCalcTotal = () => {
+    const grandTotal = getCalcGrandTotal();
+    setFormData(prev => ({ ...prev, estimatedBudget: Math.round(grandTotal) }));
+    setIsCalcModalOpen(false);
+  };
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -264,10 +389,14 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
 
         console.log("res", res)
       } else {
+        console.log("Submitting formData:", formData);
         Object.entries(formData).forEach(([key, value]) => formDataToSend.append(key, value));
         projectImages.forEach((image) => {
           formDataToSend.append("projectImage", image.file);
         });
+        for (let pair of formDataToSend.entries()) {
+          console.log("formDataToSend Entry:", pair[0], pair[1]);
+        }
         const res = await addProject(formDataToSend);
         setSuccessMessage("Project added successfully!");
       }
@@ -383,17 +512,29 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
           {/* Estimated Budget */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Budget</label>
-            <div className="relative">
-              <IndianRupee className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-              <input
-                type="number"
-                name="estimatedBudget"
-                value={formData.estimatedBudget}
-                onChange={handleInputChange}
-                disabled={isLoading || isEditMode}
-                className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
-                placeholder="Enter budget amount"
-              />
+            <div className="flex gap-3 items-stretch">
+              <div className="relative flex-1">
+                <IndianRupee className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                <input
+                  type="number"
+                  name="estimatedBudget"
+                  value={formData.estimatedBudget}
+                  onChange={handleInputChange}
+                  disabled={isLoading || isEditMode}
+                  className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100"
+                  placeholder="Enter budget amount"
+                />
+              </div>
+              {!isEditMode && (
+                <button
+                  type="button"
+                  onClick={openRoughCalculator}
+                  className="px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition-colors font-medium text-sm flex items-center gap-2 whitespace-nowrap"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  Rough Calculation
+                </button>
+              )}
             </div>
           </div>
           {/* Final Budget - Only in Edit Mode */}
@@ -555,6 +696,130 @@ const ProjectForm = ({ navigateToList, projectToEdit = null }) => {
           </button>
         </div>
       </form>
+
+      {/* Modal */}
+      {isCalcModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 animate-in fade-in-50 zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Quotation Calculator (Rough Estimate)</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Category: <span className="font-semibold text-blue-600">{formData.category === 'modular_Kitchen' ? 'Modular Kitchen' : 'In Place Furniture'}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCalcModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1.5 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {calcSections.map((section, sIndex) => (
+                <div key={sIndex} className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h4 className="font-semibold text-gray-800 text-sm uppercase tracking-wider">{section.sectionName}</h4>
+                    <span className="text-sm font-semibold text-blue-700">Section Total: ₹{Number(section.sectionTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-gray-50/50 text-xs text-gray-700 uppercase border-b border-gray-200">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Item Name</th>
+                          <th className="px-4 py-3 text-center font-medium w-24">Width (ft)</th>
+                          <th className="px-4 py-3 text-center font-medium w-24">Height (ft)</th>
+                          <th className="px-4 py-3 text-center font-medium w-24">Area (sq ft)</th>
+                          <th className="px-4 py-3 text-center font-medium w-28">Price / sq ft</th>
+                          <th className="px-4 py-3 text-right font-medium w-32">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {section.items.map((item, iIndex) => (
+                          <tr key={iIndex} className="hover:bg-gray-50/50">
+                            <td className="px-4 py-3.5 font-medium text-gray-900">{item.itemName}</td>
+                            <td className="px-4 py-3 text-center">
+                              <input
+                                type="number"
+                                min="0"
+                                step="any"
+                                value={item.width || ''}
+                                onChange={(e) => handleCalcItemChange(sIndex, iIndex, 'width', e.target.value)}
+                                className="w-20 px-2 py-1.5 border border-gray-300 rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                placeholder="0"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <input
+                                type="number"
+                                min="0"
+                                step="any"
+                                value={item.height || ''}
+                                onChange={(e) => handleCalcItemChange(sIndex, iIndex, 'height', e.target.value)}
+                                className="w-20 px-2 py-1.5 border border-gray-300 rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                placeholder="0"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center text-gray-500 font-medium">
+                              {Number(item.calculation || 0).toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="relative inline-block">
+                                <span className="absolute left-2 top-2 text-gray-400 text-xs">₹</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={item.price || ''}
+                                  onChange={(e) => handleCalcItemChange(sIndex, iIndex, 'price', e.target.value)}
+                                  className="w-24 pl-5 pr-2 py-1.5 border border-gray-300 rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                  placeholder="0"
+                                />
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right font-semibold text-green-600">
+                              ₹{Number(item.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
+              <div className="text-left">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Grand Total</span>
+                <span className="text-2xl font-bold text-gray-900">₹{Number(getCalcGrandTotal() || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCalcModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={applyCalcTotal}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-1.5"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Apply to Budget
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

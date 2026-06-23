@@ -34,7 +34,7 @@ exports.addQuotation = async (req, res) => {
 let combinedSections = defaultSections.map(sec => ({
   sectionName: sec.sectionName,
   customSectionName: sec.customSectionName || "",
-  items: [...(sec.items || [])],
+  items: (sec.items || []).map(item => ({ ...item })),
 }));
 
 if (sections && sections.length) {
@@ -44,7 +44,19 @@ if (sections && sections.length) {
     );
 
     if (foundSection) {
-      foundSection.items.push(...(userSection.items || []));
+      userSection.items.forEach(userItem => {
+        const existingItemIndex = foundSection.items.findIndex(
+          item => item.itemName === userItem.itemName
+        );
+        if (existingItemIndex > -1) {
+          foundSection.items[existingItemIndex] = {
+            ...foundSection.items[existingItemIndex],
+            ...userItem
+          };
+        } else {
+          foundSection.items.push(userItem);
+        }
+      });
     } else {
       let sectionName = userSection.sectionName;
       let customSectionName = userSection.customSectionName || "";
@@ -57,7 +69,7 @@ if (sections && sections.length) {
       combinedSections.push({
         sectionName,
         customSectionName,
-        items: [...(userSection.items || [])],
+        items: (userSection.items || []).map(item => ({ ...item })),
       });
     }
   });
@@ -72,33 +84,12 @@ if (sections && sections.length) {
         sectionName = "Other";
       }
 
-      // const preparedItems = section.items.map(item => {
-      //   const height = Number(item.height ?? 0);
-      //   const width = Number(item.width ?? 0);
-      //   const calculation = `${width} * ${height}`;
-      //   // let total = 0;
-
-      //   // if (userRole === "admin") total = Number(item.price || 0) * height * width;
-
-      //   sectionTotal += total;
-
-      //   return {
-      //     itemName: item.itemName,
-      //     price: item.price,
-      //     height,
-      //     width,
-      //     calculation,
-      //     total,
-      //   };
-      // });
-
-        const preparedItems = section.items.map(item => {
+      const preparedItems = section.items.map(item => {
         const height = Number(item.height ?? 0);
         const width = Number(item.width ?? 0);
         const calculation = `${width} * ${height}`;
         
         const total = Number(item.price || 0) * height * width;
-
         sectionTotal += total;
 
         return {
@@ -110,7 +101,6 @@ if (sections && sections.length) {
           total,
         };
       });
-
 
       return {
         sectionName,
