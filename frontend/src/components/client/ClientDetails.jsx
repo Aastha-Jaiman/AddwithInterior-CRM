@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getClientByIdService, updateClientByAdmin } from "@/services/client.services";
 import {
   User, Mail, Phone, MapPin, Activity, Calendar, Edit3, Save, X,
@@ -262,6 +262,7 @@ const ClientDetailsPage = () => {
     ? `${primaryAddress.street || ''}, ${primaryAddress.city || ''}, ${primaryAddress.state || ''}, ${primaryAddress.country || ''} - ${primaryAddress.pincode || ''}`
     : 'No address provided';
 
+    const router = useRouter();
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 px-4">
       <div className=" envie max-w-6xl mx-auto">
@@ -654,6 +655,8 @@ const ClientDetailsPage = () => {
             </div>
           </div>
         ) : (
+          <div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Contact Information */}
             <div className="lg:col-span-2">
@@ -731,6 +734,8 @@ const ClientDetailsPage = () => {
                   </div>
                 )}
               </div>
+
+
             </div>
 
             {/* Activity Summary */}
@@ -777,9 +782,98 @@ const ClientDetailsPage = () => {
                       {client.address ? client.address.length : 0}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Projects</span>
+                    <span className="font-bold text-2xl text-indigo-600">
+                      {client.projects ? client.projects.length : 0}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+                        {/* Projects Information */}
+              <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
+                <div className="flex items-center justify-between mb-6">
+
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                  <Briefcase className="w-6 h-6 mr-2 text-indigo-600" />
+                  Projects Information
+                </h2>
+                    <span className="px-3 py-1 bg-indigo-50 text-indigo-500 rounded text-sm font-medium">
+                      {client.projects?.length || 0} Project{client.projects?.length !== 1 && "s"}
+                    </span>
+               </div>
+                {client.projects && client.projects.length > 0 ? (
+                  <div className="space-y-4">
+                    {client.projects.map((project, index) => {
+                      if (!project) return null;
+                      return (
+                        <div  key={project._id}
+            onClick={() =>
+              router.push(`/admin/projects?view=details&id=${project._id}`)
+            }
+             className="p-4 border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          {project.projectImages?.[0]?.url ? (
+                            <img
+                              src={project.projectImages[0].url}
+                              alt={project.title}
+                              className="w-20 h-20 rounded-lg object-cover border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 rounded-lg bg-indigo-100 border border-indigo-200 flex items-center justify-center">
+                              <span className="text-2xl font-bold text-indigo-700 uppercase">
+                                {project.title?.charAt(0) || "P"}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex-1">
+                            <h3 className="font-bold text-gray-900 text-lg">{project.title}</h3>
+
+                            <p className="text-sm text-gray-600 mt-1 capitalize">
+                              Category: {project.category?.replace("_", " ")}
+                            </p>
+
+                            {project.location && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Location: {project.location}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                          <div className="text-right">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-semibold ${
+                                project.status === "Completed"
+                                  ? "bg-green-100 text-green-800"
+                                  : project.status === "In-Process"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {project.status || "Pending"}
+                            </span>
+
+                            {project.estimatedBudget && (
+                              <p className="text-sm font-medium text-gray-900 mt-2">
+                                Budget: ₹{project.estimatedBudget}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No projects associated with this client</p>
+                  </div>
+                )}
+              </div>
           </div>
         )}
       </div>
