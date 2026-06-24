@@ -435,7 +435,7 @@ const ClientDetailsPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <Mail className="inline mr-1" size={16} />
                       Email Address *
-                    </label>
+                    </label> 
                     <input
                       type="email"
                       name="email"
